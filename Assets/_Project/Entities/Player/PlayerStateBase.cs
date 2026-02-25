@@ -129,10 +129,18 @@ public class AttackingState : PlayerStateBase
     public AttackingState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState GetStateType() => PlayerState.Attacking;
+    
     public int GetCancelWindow() => currentFrameData.cancelWindowStartFrame;
+
     public override void Enter()
     {
         bufferedAttackInput = InputFlags.None;
+
+        if (stateMachine.GetCurrentCommand() != null)
+        {
+            UpdateCurrentFrameData();
+            return;
+        }
 
         if (stateMachine.GetComboSequence().Count == 0)
         {
@@ -142,8 +150,8 @@ public class AttackingState : PlayerStateBase
             InputFlags initialAttack = stateMachine.currentInput.flags & (attackMask | dirMask);
             stateMachine.AddToComboSequence(initialAttack);
             
-            bool isValidCombo = EvaluateNextComboAttack();
-            if (!isValidCombo)
+            bool isComboValid = EvaluateNextComboAttack();
+            if (!isComboValid)
             {
                 stateMachine.ClearComboSequence();
                 stateMachine.TransitionTo(PlayerState.Idle);
@@ -194,9 +202,9 @@ public class AttackingState : PlayerStateBase
         if (currentFrame >= currentFrameData.cancelWindowStartFrame && bufferedAttackInput != InputFlags.None)
         {
             stateMachine.AddToComboSequence(bufferedAttackInput);
-            bool isValidCombo = EvaluateNextComboAttack();
+            bool isComboValid = EvaluateNextComboAttack();
             
-            if (isValidCombo)
+            if (isComboValid)
             {
                 stateMachine.ClearCurrentCommand();
                 stateMachine.ResetStateFrameCounter();
