@@ -43,50 +43,55 @@ public class InputBuffer
         return null;
     }
 
-    private bool CheckSequence(CommandDefinition command, int currentFrame)
+private bool CheckSequence(CommandDefinition command, int currentFrame)
+{
+    if (command.sequence == null || command.sequence.Count == 0) return false;
+
+    int stepIndex = command.sequence.Count - 1;
+    int frameLimit = currentFrame - command.timeWindowFrames;
+
+    var latestInput = buffer.First.Value;
+    if (!CheckStepMatch(command.sequence[stepIndex], latestInput.flags)) return false;
+    
+    if (buffer.Count > 1)
     {
-        if (command.sequence == null || command.sequence.Count == 0) return false;
-
-        int stepIndex = command.sequence.Count - 1;
-        int frameLimit = currentFrame - command.timeWindowFrames;
-
-        foreach (var buffered in buffer)
-        {
-            if (buffered.frame < frameLimit) return false;
-
-            CommandStep currentStep = command.sequence[stepIndex];
-            bool isMatch = CheckStepMatch(currentStep, buffered.flags);
-
-            if (isMatch)
-            {
-                stepIndex--;
-                if (stepIndex < 0) return true;
-            }
-            else
-            {
-                if (stepIndex < command.sequence.Count - 1)
-                {
-
-                    CommandStep previousMatchedStep = command.sequence[stepIndex + 1];
-                    bool isHoldingPrevious = CheckStepMatch(previousMatchedStep, buffered.flags);
-                    
-
-                    if (!isHoldingPrevious)
-                    {
-                        return false;
-                    }
-                }
-
-            }
-        }
-
-        return false;
+        var prevInput = buffer.First.Next.Value;
+        if (CheckStepMatch(command.sequence[stepIndex], prevInput.flags)) return false;
     }
 
+    stepIndex--; 
+
+    foreach (var buffered in buffer)
+    {
+        if (buffered.frame < frameLimit) break;
+        if (stepIndex < 0) return true;
+
+        CommandStep currentStep = command.sequence[stepIndex];
+        
+        if (CheckStepMatch(currentStep, buffered.flags))
+        {
+            stepIndex--;
+        }
+        else
+        {
+           
+            if (buffered.flags != InputFlags.None)
+            {
+                CommandStep nextStep = command.sequence[stepIndex + 1];
+                if (!CheckStepMatch(nextStep, buffered.flags))
+                {
+                    return false; 
+                }
+            }
+        }
+    }
+
+    return stepIndex < 0;
+}
 
     private bool CheckStepMatch(CommandStep step, InputFlags flags)
     {
-        if (step.requireExactMatch)
+        if (step.isExactMatchRequired)
         {
             return flags == step.requiredFlags;
         }

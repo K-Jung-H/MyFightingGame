@@ -72,6 +72,14 @@ public class GameLoopManager : MonoBehaviour
         isSimulationRunning = true;
     }
 
+    private void Update()
+    {
+        if (isSimulationRunning && inputProvider != null)
+        {
+            inputProvider.AccumulateInputFlags();
+        }
+    }
+
     private void FixedUpdate()
     {
         if (isSimulationRunning)
@@ -158,23 +166,61 @@ public class GameLoopManager : MonoBehaviour
     {
         if (playerOneVisual != null && playerOneStateMachine != null)
         {
+            bool triggerCombo = playerOneStateMachine.GetCurrentState() == PlayerState.Attacking && playerOneStateMachine.GetStateFrameCounter() == 1;
+            
+            int comboHash = 0;
+            if (triggerCombo)
+            {
+                comboHash = playerOneStateMachine.GetCurrentAttackTriggerHash();
+                if (comboHash == 0)
+                {
+                    triggerCombo = false;
+                }
+            }
+
+            bool triggerCommand = playerOneStateMachine.CheckAndConsumeCommandAction(out int commandHash);
+
+            bool finalTrigger = triggerCombo || triggerCommand;
+            int finalHash = triggerCommand ? commandHash : comboHash;
+
             playerOneVisual.SyncWithLogic(
                 playerOneStateMachine.GetPosition(), 
                 playerOneStateMachine.GetCurrentState(), 
                 playerOneStateMachine.GetCurrentSpeed(),
                 playerOneStateMachine.GetDirection(),
-                playerOneStateMachine.GetLookDirection()
+                playerOneStateMachine.GetLookDirection(),
+                finalTrigger,
+                finalHash
             );
         }
 
         if (playerTwoVisual != null && playerTwoStateMachine != null)
         {
+            bool triggerCombo = playerTwoStateMachine.GetCurrentState() == PlayerState.Attacking && playerTwoStateMachine.GetStateFrameCounter() == 1;
+            
+            int comboHash = 0;
+            if (triggerCombo)
+            {
+                comboHash = playerTwoStateMachine.GetCurrentAttackTriggerHash();
+                if (comboHash == 0)
+                {
+                    triggerCombo = false;
+                }
+            }
+
+            bool triggerCommand = playerTwoStateMachine.CheckAndConsumeCommandAction(out int commandHash);
+
+            bool finalTrigger = triggerCombo || triggerCommand;
+            int finalHash = triggerCommand ? commandHash : comboHash;
+
             playerTwoVisual.SyncWithLogic(
                 playerTwoStateMachine.GetPosition(), 
                 playerTwoStateMachine.GetCurrentState(), 
                 playerTwoStateMachine.GetCurrentSpeed(),
                 playerTwoStateMachine.GetDirection(),
-                playerTwoStateMachine.GetLookDirection()
+                playerTwoStateMachine.GetLookDirection(),
+                finalTrigger,
+                finalHash
             );
         }
     }

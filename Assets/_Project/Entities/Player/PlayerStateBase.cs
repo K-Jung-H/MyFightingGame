@@ -124,65 +124,115 @@ public class SprintingState : PlayerStateBase
 public class AttackingState : PlayerStateBase
 {
     private InputFlags bufferedAttackInput;
+    private AnimationFrameData currentFrameData;
 
     public AttackingState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState GetStateType() => PlayerState.Attacking;
-
+    public int GetCancelWindow() => currentFrameData.cancelWindowStartFrame;
     public override void Enter()
     {
         bufferedAttackInput = InputFlags.None;
 
         if (stateMachine.GetComboSequence().Count == 0)
         {
-            InputFlags initialAttack = stateMachine.GetPreviousInput().flags & (InputFlags.LightAttack | InputFlags.HeavyAttack);
+            InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
+            InputFlags dirMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
+            
+            InputFlags initialAttack = stateMachine.currentInput.flags & (attackMask | dirMask);
             stateMachine.AddToComboSequence(initialAttack);
-        }
-    }
-
-    public override void UpdateTick(PlayerInput input)
-    {
-        InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
-        InputFlags dirMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
-
-        if (stateMachine.GetStateFrameCounter() < config.attackFrameLimit)
-        {
-            if ((input.flags & attackMask) != 0 && bufferedAttackInput == InputFlags.None)
-            {
-                bufferedAttackInput = input.flags & (attackMask | dirMask);
-            }
-        }
-
-        if (stateMachine.GetStateFrameCounter() >= config.attackFrameLimit)
-        {
-            if (bufferedAttackInput != InputFlags.None)
-            {
-                stateMachine.AddToComboSequence(bufferedAttackInput);
-                bool isValidCombo = EvaluateNextComboAttack();
-                
-                if (isValidCombo)
-                {
-                    stateMachine.ResetStateFrameCounter();
-                    bufferedAttackInput = InputFlags.None;
-                }
-                else
-                {
-                    stateMachine.ClearComboSequence();
-                    stateMachine.TransitionTo(PlayerState.Idle);
-                }
-            }
-            else
+            
+            bool isValidCombo = EvaluateNextComboAttack();
+            if (!isValidCombo)
             {
                 stateMachine.ClearComboSequence();
                 stateMachine.TransitionTo(PlayerState.Idle);
             }
         }
+        else
+        {
+            UpdateCurrentFrameData();
+        }
+    }
+    
+    private void UpdateCurrentFrameData()
+    {
+        CommandDefinition currentCommand = stateMachine.GetCurrentCommand();
+        if (currentCommand != null)
+        {
+            currentFrameData = currentCommand.frameData;
+            return;
+        }
+
+        ComboNode currentNode = stateMachine.GetCurrentComboNode();
+        if (currentNode != null)
+        {
+            currentFrameData = currentNode.frameData;
+        }
+        else
+        {
+            currentFrameData = new AnimationFrameData();
+        }
+    }
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        int currentFrame = stateMachine.GetStateFrameCounter();
+        int totalFrames = currentFrameData.totalFrames;
+
+        InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
+        InputFlags dirMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
+        
+        InputFlags newlyPressedAttack = stateMachine.GetKeyDownFlags() & attackMask;
+
+        if (newlyPressedAttack != InputFlags.None && bufferedAttackInput == InputFlags.None)
+        {
+            InputFlags currentDirection = input.flags & dirMask;
+            bufferedAttackInput = newlyPressedAttack | currentDirection;
+        }
+
+        if (currentFrame >= currentFrameData.cancelWindowStartFrame && bufferedAttackInput != InputFlags.None)
+        {
+            stateMachine.AddToComboSequence(bufferedAttackInput);
+            bool isValidCombo = EvaluateNextComboAttack();
+            
+            if (isValidCombo)
+            {
+                stateMachine.ClearCurrentCommand();
+                stateMachine.ResetStateFrameCounter();
+                bufferedAttackInput = InputFlags.None;
+                return;
+            }
+            else
+            {
+                stateMachine.ClearComboSequence();
+                bufferedAttackInput = InputFlags.None;
+            }
+        }
+
+        if (currentFrame >= totalFrames)
+        {
+            stateMachine.ClearComboSequence();
+            stateMachine.ClearCurrentCommand();
+            stateMachine.TransitionTo(PlayerState.Idle);
+        }
     }
 
     private bool EvaluateNextComboAttack()
     {
-        List<InputFlags> currentCombo = stateMachine.GetComboSequence();
-        
-        return true; 
+        ComboTreeSO tree = stateMachine.GetComboTree();
+        if (tree == null) return false;
+
+        List<InputFlags> currentSequence = stateMachine.GetComboSequence();
+        ComboNode matchedNode = tree.GetNodeFromSequence(currentSequence);
+
+        if (matchedNode != null)
+        {
+            stateMachine.SetCurrentComboNode(matchedNode);
+            UpdateCurrentFrameData();
+            return true;
+        }
+
+        return false;
     }
 }

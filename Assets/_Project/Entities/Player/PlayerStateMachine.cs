@@ -5,7 +5,7 @@ public class PlayerStateMachine : ITargetable
 {
     private Dictionary<PlayerState, PlayerStateBase> states;
     private PlayerStateBase currentStateObject;
-    
+    public PlayerInput currentInput { get; private set; }
     protected PlayerState currentState;
     protected Vector3 position;
     protected Vector3 currentDirection;
@@ -13,6 +13,7 @@ public class PlayerStateMachine : ITargetable
     protected ITargetable targetEntity;
     
     protected PlayerInput previousInput;
+    protected InputFlags currentKeyDownFlags;
     protected InputFlags lastTappedDirection;
     protected int lastTapFrame;
     protected int consecutiveTaps;
@@ -28,6 +29,11 @@ public class PlayerStateMachine : ITargetable
     private ComboNode currentComboNode;
     protected List<InputFlags> comboSequence = new List<InputFlags>();
 
+    private bool isCommandActionTriggered;
+    private int currentCommandActionHash;
+    private CommandDefinition currentCommand;
+
+    private Dictionary<string, int> animationHashCache = new Dictionary<string, int>();
 
     public virtual void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
     {
@@ -92,20 +98,35 @@ public class PlayerStateMachine : ITargetable
 
     public virtual void UpdateTick(PlayerInput input)
     {
+        currentInput = input;
+        currentKeyDownFlags = input.flags & ~previousInput.flags;
         currentFrame++;
         stateFrameCounter++;
         
+        
         inputBuffer.AddInput(input);
-        UpdateTapContext(input.flags);
         UpdateLookDirection();
+        UpdateTapContext(input.flags);
+        bool isCancelable = true;
+        if (currentState == PlayerState.Attacking)
+        {
+            int cancelFrame = currentStateObject is AttackingState atkState ? atkState.GetCancelWindow() : 999;
+            isCancelable = stateFrameCounter >= cancelFrame;
+        }
 
-        if (commandList != null)
+        if (isCancelable && !isCommandActionTriggered)
         {
             CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
             if (matchedCommand != null)
             {
-                Debug.Log($"[Frame {currentFrame}] Command Triggered: {matchedCommand.commandName} -> State: {matchedCommand.targetState}");
-                inputBuffer.Clear();
+                inputBuffer.Clear(); 
+                currentCommand = matchedCommand;
+
+                if (!string.IsNullOrEmpty(matchedCommand.animationStateName))
+                {
+                    isCommandActionTriggered = true;
+                    currentCommandActionHash = Animator.StringToHash(matchedCommand.animationStateName);
+                }
 
                 TransitionTo(matchedCommand.targetState);
                 previousInput = input;
@@ -120,7 +141,7 @@ public class PlayerStateMachine : ITargetable
 
         previousInput = input;
     }
-
+    
     private void UpdateTapContext(InputFlags currentFlags)
     {
         InputFlags dirMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
@@ -208,7 +229,6 @@ public class PlayerStateMachine : ITargetable
     public PlayerState GetCurrentState() => currentState;
     public int GetConsecutiveTaps() => consecutiveTaps;
 
-
     public float GetCurrentSpeed()
     {
         if (currentState == PlayerState.Walking) return 1.0f;
@@ -227,4 +247,36 @@ public class PlayerStateMachine : ITargetable
     public ComboNode GetCurrentComboNode() => currentComboNode;
 
     public PlayerInput GetPreviousInput() => previousInput;
+    public InputFlags GetKeyDownFlags() => currentKeyDownFlags;
+    
+    public CommandDefinition GetCurrentCommand() => currentCommand;
+    public void ClearCurrentCommand() => currentCommand = null;
+
+    public int GetCurrentAttackTriggerHash()
+    {
+        if (currentComboNode != null && !string.IsNullOrEmpty(currentComboNode.animationStateName))
+        {
+            return GetAnimationHash(currentComboNode.animationStateName);        
+        }
+        return 0;
+    }
+
+    public bool CheckAndConsumeCommandAction(out int actionHash)
+    {
+        actionHash = currentCommandActionHash;
+        bool triggered = isCommandActionTriggered;
+        isCommandActionTriggered = false;
+        return triggered;
+    }
+
+    public int GetAnimationHash(string stateName)
+    {
+        if (string.IsNullOrEmpty(stateName)) return 0;
+        if (!animationHashCache.TryGetValue(stateName, out int hash))
+        {
+            hash = Animator.StringToHash(stateName);
+            animationHashCache.Add(stateName, hash);
+        }
+        return hash;
+    }
 }
