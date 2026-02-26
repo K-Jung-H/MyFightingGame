@@ -5,9 +5,7 @@ using UnityEngine;
 public class ComboNode
 {
     public InputFlags requiredInput;
-    public AnimationClip animationClip;
-    public string animationStateName;
-    public AnimationFrameData frameData;
+    public ActionDataSO actionData;
     public List<ComboNode> nextAttacks = new List<ComboNode>();
 }
 
@@ -46,52 +44,5 @@ public class ComboTreeSO : ScriptableObject
         }
 
         return currentNode;
-    }
-
-    private void OnValidate()
-    {
-        if (startingAttacks != null)
-        {
-            foreach (var node in startingAttacks)
-            {
-                CalculateFrameDataRecursive(node);
-            }
-        }
-    }
-
-    private void CalculateFrameDataRecursive(ComboNode node)
-    {
-        if (node == null) return;
-
-        if (node.animationClip != null)
-        {
-            int calculatedTotalFrames = Mathf.RoundToInt(node.animationClip.length / Time.fixedDeltaTime);
-
-            if (node.frameData.totalFrames != calculatedTotalFrames)
-            {
-                node.frameData.totalFrames = calculatedTotalFrames;
-                
-                int baseSplit = calculatedTotalFrames / 3;
-                int remainderFrames = calculatedTotalFrames % 3;
-
-                node.frameData.startupFrames = baseSplit;
-                node.frameData.activeFrames = baseSplit;
-                node.frameData.recoveryFrames = baseSplit + remainderFrames;
-                node.frameData.cancelWindowStartFrame = node.frameData.startupFrames + node.frameData.activeFrames;
-
-                if (string.IsNullOrEmpty(node.animationStateName))
-                {
-                    node.animationStateName = node.animationClip.name;
-                }
-            }
-        }
-
-        if (node.nextAttacks != null)
-        {
-            foreach (var nextNode in node.nextAttacks)
-            {
-                CalculateFrameDataRecursive(nextNode);
-            }
-        }
     }
 }

@@ -16,6 +16,21 @@ MonoBehaviour:
   runSpeed: 0.18
   sprintSpeed: 0.25
   turnLerpSpeed: 0.2
+  defaultHurtboxes:
+  - type: 0
+    boxes:
+    - localPosition: {x: 0, y: 0.75, z: 0}
+      extents: {x: 0.25, y: 1, z: 0.25}
+  - type: 1
+    boxes:
+    - localPosition: {x: 0, y: 0.5, z: 0}
+      extents: {x: 0.25, y: 1, z: 0.25}
+  - type: 2
+    boxes:
+    - localPosition: {x: 0, y: 0, z: 0}
+      extents: {x: 0, y: 0, z: 0}
+  - type: 3
+    boxes: []
   tapWindowFrames: 15
   autoSprintFrames: 60
   attackFrameLimit: 30

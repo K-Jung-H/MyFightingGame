@@ -24,7 +24,7 @@ public class InputBuffer
         buffer.Clear();
     }
 
-    public CommandDefinition CheckCommands(CommandListSO commandList, int currentFrame, PlayerState currentState)
+    public CommandDefinition CheckCommands(CommandListSO commandList, int currentFrame, PlayerState_Type currentState)
     {
         if (commandList == null || commandList.commands == null) return null;
 

@@ -1,11 +1,12 @@
 using UnityEngine;
 
-public enum PlayerState
+public enum PlayerState_Type
 {
     Idle,
     Stun,
     Walking,
     Running,
     Sprinting,
-    Attacking
+    Attacking,
+    Hit,
 }

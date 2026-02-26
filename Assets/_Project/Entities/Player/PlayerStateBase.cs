@@ -12,7 +12,7 @@ public abstract class PlayerStateBase
         config = cfg;
     }
 
-    public abstract PlayerState GetStateType();
+    public abstract PlayerState_Type GetStateType();
     public virtual void Enter() { }
     public virtual void Exit() { }
     public abstract void UpdateTick(PlayerInput input);
@@ -22,19 +22,19 @@ public class IdleState : PlayerStateBase
 {
     public IdleState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState GetStateType() => PlayerState.Idle;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Idle;
 
     public override void UpdateTick(PlayerInput input)
     {
         if ((input.flags & (InputFlags.LightAttack | InputFlags.HeavyAttack)) != 0)
         {
-            stateMachine.TransitionTo(PlayerState.Attacking);
+            stateMachine.TransitionTo(PlayerState_Type.Attacking);
             return;
         }
 
         if (stateMachine.GetRawInputVector(input.flags) != Vector3.zero)
         {
-            stateMachine.TransitionTo(PlayerState.Walking);
+            stateMachine.TransitionTo(PlayerState_Type.Walking);
         }
     }
 }
@@ -43,7 +43,7 @@ public class StunState : PlayerStateBase
 {
     public StunState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState GetStateType() => PlayerState.Stun;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Stun;
 
     public override void UpdateTick(PlayerInput input) { }
 }
@@ -52,13 +52,13 @@ public class WalkingState : PlayerStateBase
 {
     public WalkingState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState GetStateType() => PlayerState.Walking;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Walking;
 
     public override void UpdateTick(PlayerInput input)
     {
         if ((input.flags & (InputFlags.LightAttack | InputFlags.HeavyAttack)) != 0)
         {
-            stateMachine.TransitionTo(PlayerState.Attacking);
+            stateMachine.TransitionTo(PlayerState_Type.Attacking);
             return;
         }
 
@@ -71,13 +71,13 @@ public class RunningState : PlayerStateBase
 {
     public RunningState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState GetStateType() => PlayerState.Running;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Running;
 
     public override void UpdateTick(PlayerInput input)
     {
         if ((input.flags & (InputFlags.LightAttack | InputFlags.HeavyAttack)) != 0)
         {
-            stateMachine.TransitionTo(PlayerState.Attacking);
+            stateMachine.TransitionTo(PlayerState_Type.Attacking);
             return;
         }
 
@@ -90,7 +90,7 @@ public class RunningState : PlayerStateBase
             stateMachine.IncrementRunningForwardFrames();
             if (stateMachine.GetRunningForwardFrames() >= config.autoSprintFrames)
             {
-                stateMachine.TransitionTo(PlayerState.Sprinting);
+                stateMachine.TransitionTo(PlayerState_Type.Sprinting);
             }
         }
     }
@@ -100,13 +100,13 @@ public class SprintingState : PlayerStateBase
 {
     public SprintingState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState GetStateType() => PlayerState.Sprinting;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Sprinting;
 
     public override void UpdateTick(PlayerInput input)
     {
         if ((input.flags & (InputFlags.LightAttack | InputFlags.HeavyAttack)) != 0)
         {
-            stateMachine.TransitionTo(PlayerState.Attacking);
+            stateMachine.TransitionTo(PlayerState_Type.Attacking);
             return;
         }
 
@@ -116,7 +116,7 @@ public class SprintingState : PlayerStateBase
         
         if (!isForward)
         {
-            stateMachine.TransitionTo(PlayerState.Running);
+            stateMachine.TransitionTo(PlayerState_Type.Running);
         }
     }
 }
@@ -128,9 +128,9 @@ public class AttackingState : PlayerStateBase
 
     public AttackingState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState GetStateType() => PlayerState.Attacking;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Attacking;
     
-    public int GetCancelWindow() => currentFrameData.cancelWindowStartFrame;
+    public int GetCancelWindow() => currentFrameData.logicData.cancelWindowStartFrame;
 
     public override void Enter()
     {
@@ -154,7 +154,7 @@ public class AttackingState : PlayerStateBase
             if (!isComboValid)
             {
                 stateMachine.ClearComboSequence();
-                stateMachine.TransitionTo(PlayerState.Idle);
+                stateMachine.TransitionTo(PlayerState_Type.Idle);
             }
         }
         else
@@ -166,16 +166,16 @@ public class AttackingState : PlayerStateBase
     private void UpdateCurrentFrameData()
     {
         CommandDefinition currentCommand = stateMachine.GetCurrentCommand();
-        if (currentCommand != null)
+        if (currentCommand != null && currentCommand.actionData != null)
         {
-            currentFrameData = currentCommand.frameData;
+            currentFrameData = currentCommand.actionData.frameData;
             return;
         }
 
         ComboNode currentNode = stateMachine.GetCurrentComboNode();
-        if (currentNode != null)
+        if (currentNode != null && currentNode.actionData != null)
         {
-            currentFrameData = currentNode.frameData;
+            currentFrameData = currentNode.actionData.frameData;
         }
         else
         {
@@ -186,7 +186,7 @@ public class AttackingState : PlayerStateBase
     public override void UpdateTick(PlayerInput input)
     {
         int currentFrame = stateMachine.GetStateFrameCounter();
-        int totalFrames = currentFrameData.totalFrames;
+        int totalFrames = currentFrameData.logicData.totalFrames;
 
         InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
         InputFlags dirMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
@@ -199,7 +199,7 @@ public class AttackingState : PlayerStateBase
             bufferedAttackInput = newlyPressedAttack | currentDirection;
         }
 
-        if (currentFrame >= currentFrameData.cancelWindowStartFrame && bufferedAttackInput != InputFlags.None)
+        if (currentFrame >= currentFrameData.logicData.cancelWindowStartFrame && bufferedAttackInput != InputFlags.None)
         {
             stateMachine.AddToComboSequence(bufferedAttackInput);
             bool isComboValid = EvaluateNextComboAttack();
@@ -222,7 +222,7 @@ public class AttackingState : PlayerStateBase
         {
             stateMachine.ClearComboSequence();
             stateMachine.ClearCurrentCommand();
-            stateMachine.TransitionTo(PlayerState.Idle);
+            stateMachine.TransitionTo(PlayerState_Type.Idle);
         }
     }
 

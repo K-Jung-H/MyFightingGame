@@ -25,14 +25,7 @@ MonoBehaviour:
     timeWindowFrames: 30
     targetState: 3
     validStates: 0000000002000000
-    animationClip: {fileID: 0}
-    animationStateName: 
-    frameData:
-      totalFrames: 0
-      startupFrames: 0
-      activeFrames: 0
-      recoveryFrames: 0
-      cancelWindowStartFrame: 0
+    actionData: {fileID: 0}
   - commandName: Sprint
     priority: 20
     sequence:
@@ -49,14 +42,7 @@ MonoBehaviour:
     timeWindowFrames: 60
     targetState: 4
     validStates: 000000000200000003000000
-    animationClip: {fileID: 0}
-    animationStateName: 
-    frameData:
-      totalFrames: 0
-      startupFrames: 0
-      activeFrames: 0
-      recoveryFrames: 0
-      cancelWindowStartFrame: 0
+    actionData: {fileID: 0}
   - commandName: Skill Attack_0
     priority: 10
     sequence:
@@ -71,11 +57,4 @@ MonoBehaviour:
     timeWindowFrames: 60
     targetState: 5
     validStates: 0000000002000000
-    animationClip: {fileID: 3094330708855449807, guid: 2c2c84ffdf3b64f4195f0b9a4931e399, type: 3}
-    animationStateName: HumanM@Attack1H04_R
-    frameData:
-      totalFrames: 58
-      startupFrames: 19
-      activeFrames: 19
-      recoveryFrames: 20
-      cancelWindowStartFrame: 38
+    actionData: {fileID: 11400000, guid: 5a5fe94b6f07c19468c02b1c3a0530f5, type: 2}

@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Punch_L_0
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 3094330708855449807, guid: fcae9c41b8da9dc46974f5351a44bb66, type: 3}
+  animationStateName: Punch_L_0
+  frameData:
+    logicData:
+      totalFrames: 55
+      startupFrames: 18
+      recoveryFrames: 19
+      cancelWindowStartFrame: 36
+    hitboxEvents:
+    - activeStartFrame: 12
+      boxPath:
+      - localPosition: {x: -0.24728176, y: 0.6490142, z: 0.07062709}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.24675836, y: 0.66785353, z: 0.3005942}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.23705633, y: 0.6365995, z: 0.59653074}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.012075849, y: 0.8141778, z: 1.037378}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.024863489, y: 0.80614746, z: 1.1194333}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.012382701, y: 0.7884902, z: 1.1447531}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.005465284, y: 0.78941214, z: 1.1566253}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 1
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: 0.38464442, y: 0.941573, z: -0.16923249}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 55
+      hurtboxType: 0

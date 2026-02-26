@@ -9,16 +9,14 @@ public class CharacterVisual : MonoBehaviour
     private Vector3 targetLookDirection;
     private float currentSpeed;
     private Vector3 currentDirection;
-    private PlayerState previousState;
+    private PlayerState_Type previousState;
     
     private static readonly int MoveSpeedHash = Animator.StringToHash("MoveSpeed");
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
-    private static readonly int StunBoolHash = Animator.StringToHash("IsStunned");
-    
     private static readonly int LocomotionHash = Animator.StringToHash("Move Blend Tree");
 
-    public void SyncWithLogic(Vector3 logicPosition, PlayerState state, float speed, Vector3 direction, Vector3 lookDirection, bool triggerAction, int customActionHash)
+    public void SyncWithLogic(Vector3 logicPosition, PlayerState_Type state, float speed, Vector3 direction, Vector3 lookDirection, bool triggerAction, int customActionHash)
     {
         targetPosition = logicPosition;
         targetSpeed = speed;
@@ -32,16 +30,15 @@ public class CharacterVisual : MonoBehaviour
 
         if (previousState != state)
         {
-            characterAnimator.SetBool(StunBoolHash, state == PlayerState.Stun);
-
-            bool isCurrentLocomotion = state == PlayerState.Idle || state == PlayerState.Walking || state == PlayerState.Running || state == PlayerState.Sprinting;
-            bool isPreviousAction = previousState == PlayerState.Attacking || previousState == PlayerState.Stun;
+            bool isCurrentLocomotion = state == PlayerState_Type.Idle || state == PlayerState_Type.Walking || state == PlayerState_Type.Running || state == PlayerState_Type.Sprinting;
+            bool isPreviousAction = previousState == PlayerState_Type.Attacking || previousState == PlayerState_Type.Stun || previousState == PlayerState_Type.Hit;
 
             if (isCurrentLocomotion && isPreviousAction)
             {
                 characterAnimator.CrossFadeInFixedTime(LocomotionHash, 0.1f, 0);
             }
         }
+
         previousState = state;
     }
 

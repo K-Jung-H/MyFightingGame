@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: DoubleAttack_0
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 3094330708855449807, guid: 81ae9e97c51ac17498f6e7ccda0bb15d, type: 3}
+  animationStateName: DoubleAttack_0
+  frameData:
+    logicData:
+      totalFrames: 78
+      startupFrames: 26
+      recoveryFrames: 26
+      cancelWindowStartFrame: 52
+    hitboxEvents:
+    - activeStartFrame: 34
+      boxPath:
+      - localPosition: {x: 0.14533623, y: 1.666909, z: 0.31171978}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.090841085, y: 1.3817217, z: 0.72211456}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.051696587, y: 0.7546145, z: 0.7408594}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.13681388, y: 0.5364227, z: 0.52752095}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 1
+    - activeStartFrame: 34
+      boxPath:
+      - localPosition: {x: 0.067541614, y: 1.6974313, z: 0.18722117}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.046282332, y: 1.4939349, z: 0.63614976}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.060478073, y: 0.9144502, z: 0.84074324}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.068454534, y: 0.5041676, z: 0.6363714}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 78
+      hurtboxType: 0

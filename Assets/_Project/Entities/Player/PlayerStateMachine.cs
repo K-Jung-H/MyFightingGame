@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 public class PlayerStateMachine : ITargetable
 {
-    private Dictionary<PlayerState, PlayerStateBase> states;
+    private Dictionary<PlayerState_Type, PlayerStateBase> states;
     private PlayerStateBase currentStateObject;
     public PlayerInput currentInput { get; private set; }
-    protected PlayerState currentState;
+    protected PlayerState_Type currentState;
     protected Vector3 position;
     protected Vector3 currentDirection;
     protected Vector3 lookDirection;
@@ -35,6 +35,14 @@ public class PlayerStateMachine : ITargetable
 
     private Dictionary<string, int> animationHashCache = new Dictionary<string, int>();
 
+    private HitInfo currentHitInfo;
+    private HashSet<int> registeredHitGroupIds = new HashSet<int>();
+
+    public HitInfo GetCurrentHitInfo()
+    {
+        return currentHitInfo;
+    }
+
     public virtual void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
     {
         position = startPosition;
@@ -55,32 +63,44 @@ public class PlayerStateMachine : ITargetable
 
         InitializeStates();
 
-        currentState = (PlayerState)(-1); 
+        currentState = (PlayerState_Type)(-1); 
         
-        TransitionTo(PlayerState.Idle);
+        TransitionTo(PlayerState_Type.Idle);
     }
 
     private void InitializeStates()
     {
-        states = new Dictionary<PlayerState, PlayerStateBase>();
-        states.Add(PlayerState.Idle, new IdleState(this, config));
-        states.Add(PlayerState.Walking, new WalkingState(this, config));
-        states.Add(PlayerState.Running, new RunningState(this, config));
-        states.Add(PlayerState.Sprinting, new SprintingState(this, config));
-        states.Add(PlayerState.Attacking, new AttackingState(this, config));
-        states.Add(PlayerState.Stun, new StunState(this, config));
+        states = new Dictionary<PlayerState_Type, PlayerStateBase>();
+        states.Add(PlayerState_Type.Idle, new IdleState(this, config));
+        states.Add(PlayerState_Type.Walking, new WalkingState(this, config));
+        states.Add(PlayerState_Type.Running, new RunningState(this, config));
+        states.Add(PlayerState_Type.Sprinting, new SprintingState(this, config));
+        states.Add(PlayerState_Type.Attacking, new AttackingState(this, config));
+        states.Add(PlayerState_Type.Stun, new StunState(this, config));
+        states.Add(PlayerState_Type.Hit, new HitState(this, config));    
     }
 
-    public void TransitionTo(PlayerState newState)
+    public void ApplyHit(HitInfo hitData)
+    {
+        currentHitInfo = hitData;
+        TransitionTo(PlayerState_Type.Hit, true);
+    }
+
+    public void TransitionTo(PlayerState_Type newState, bool forceTransition = false)
     {
         if (states == null || !states.ContainsKey(newState)) return;
-        if (currentState == newState) return;
+        if (!forceTransition && currentState == newState) return;
 
         if (currentStateObject != null) currentStateObject.Exit();
 
         currentState = newState;
         currentStateObject = states[newState];
         stateFrameCounter = 0;
+
+        if (newState != PlayerState_Type.Attacking)
+        {
+            registeredHitGroupIds.Clear();
+        }
         
         currentStateObject.Enter();
     }
@@ -103,12 +123,12 @@ public class PlayerStateMachine : ITargetable
         currentFrame++;
         stateFrameCounter++;
         
-        
         inputBuffer.AddInput(input);
         UpdateLookDirection();
         UpdateTapContext(input.flags);
         bool isCancelable = true;
-        if (currentState == PlayerState.Attacking)
+        
+        if (currentState == PlayerState_Type.Attacking)
         {
             int cancelFrame = currentStateObject is AttackingState atkState ? atkState.GetCancelWindow() : 999;
             isCancelable = stateFrameCounter >= cancelFrame;
@@ -122,10 +142,10 @@ public class PlayerStateMachine : ITargetable
                 inputBuffer.Clear(); 
                 currentCommand = matchedCommand;
 
-                if (!string.IsNullOrEmpty(matchedCommand.animationStateName))
+                if (matchedCommand.actionData != null && !string.IsNullOrEmpty(matchedCommand.actionData.animationStateName))
                 {
                     isCommandActionTriggered = true;
-                    currentCommandActionHash = Animator.StringToHash(matchedCommand.animationStateName);
+                    currentCommandActionHash = Animator.StringToHash(matchedCommand.actionData.animationStateName);
                 }
 
                 TransitionTo(matchedCommand.targetState);
@@ -174,7 +194,7 @@ public class PlayerStateMachine : ITargetable
         }
         else
         {
-            TransitionTo(PlayerState.Idle);
+            TransitionTo(PlayerState_Type.Idle);
             runningForwardFrames = 0;
             consecutiveTaps = 0;
         }
@@ -202,8 +222,8 @@ public class PlayerStateMachine : ITargetable
     private void ApplyMovement()
     {
         float speed = config.walkSpeed;
-        if (currentState == PlayerState.Running) speed = config.runSpeed;
-        else if (currentState == PlayerState.Sprinting) speed = config.sprintSpeed;
+        if (currentState == PlayerState_Type.Running) speed = config.runSpeed;
+        else if (currentState == PlayerState_Type.Sprinting) speed = config.sprintSpeed;
 
         Vector3 worldMoveDir = Quaternion.LookRotation(lookDirection) * currentDirection;
         position += worldMoveDir * speed;
@@ -211,7 +231,7 @@ public class PlayerStateMachine : ITargetable
 
     protected virtual void UpdateLookDirection()
     {
-        if (targetEntity == null || currentState == PlayerState.Attacking || currentState == PlayerState.Stun) return;
+        if (targetEntity == null || currentState == PlayerState_Type.Attacking || currentState == PlayerState_Type.Stun) return;
         Vector3 diff = targetEntity.GetPosition() - position;
         diff.y = 0;
         if (diff.sqrMagnitude > 0.0001f) lookDirection = diff.normalized;
@@ -226,14 +246,14 @@ public class PlayerStateMachine : ITargetable
     public Vector3 GetPosition() => position;
     public Vector3 GetDirection() => currentDirection;
     public Vector3 GetLookDirection() => lookDirection;
-    public PlayerState GetCurrentState() => currentState;
+    public PlayerState_Type GetCurrentState() => currentState;
     public int GetConsecutiveTaps() => consecutiveTaps;
 
     public float GetCurrentSpeed()
     {
-        if (currentState == PlayerState.Walking) return 1.0f;
-        if (currentState == PlayerState.Running) return 2.0f;
-        if (currentState == PlayerState.Sprinting) return 3.0f;
+        if (currentState == PlayerState_Type.Walking) return 1.0f;
+        if (currentState == PlayerState_Type.Running) return 2.0f;
+        if (currentState == PlayerState_Type.Sprinting) return 3.0f;
         return 0.0f;
     }
 
@@ -254,9 +274,9 @@ public class PlayerStateMachine : ITargetable
 
     public int GetCurrentAttackTriggerHash()
     {
-        if (currentComboNode != null && !string.IsNullOrEmpty(currentComboNode.animationStateName))
+        if (currentComboNode != null && currentComboNode.actionData != null && !string.IsNullOrEmpty(currentComboNode.actionData.animationStateName))
         {
-            return GetAnimationHash(currentComboNode.animationStateName);        
+            return GetAnimationHash(currentComboNode.actionData.animationStateName);        
         }
         return 0;
     }
@@ -278,5 +298,51 @@ public class PlayerStateMachine : ITargetable
             animationHashCache.Add(stateName, hash);
         }
         return hash;
+    }
+
+    public PlayerConfigSO GetPlayerConfig() => config;
+
+    public ActionDataSO GetCurrentActionData()
+    {
+        if (currentState != PlayerState_Type.Attacking) return null;
+        if (currentCommand != null) return currentCommand.actionData;
+        if (currentComboNode != null) return currentComboNode.actionData;
+        
+        return null;
+    }
+
+    public Hurtbox_Type GetCurrentHurtboxType()
+    {
+        bool isAttacking = currentState == PlayerState_Type.Attacking;
+
+        if (isAttacking)
+        {
+            ActionDataSO currentAction = GetCurrentActionData();
+            
+            if (currentAction != null && currentAction.frameData.hurtboxEvents != null)
+            {
+                foreach (var evt in currentAction.frameData.hurtboxEvents)
+                {
+                    bool isFrameActive = stateFrameCounter >= evt.startFrame && stateFrameCounter <= evt.endFrame;
+                    
+                    if (isFrameActive)
+                    {
+                        return evt.hurtboxType;
+                    }
+                }
+            }
+        }
+        
+        return Hurtbox_Type.Standing;
+    }
+
+    public bool HasAlreadyHit(int hitGroupID)
+    {
+        return registeredHitGroupIds.Contains(hitGroupID);
+    }
+
+    public void RegisterHitGroup(int hitGroupID)
+    {
+        registeredHitGroupIds.Add(hitGroupID);
     }
 }

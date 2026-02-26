@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Punch_R_1
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 3094330708855449807, guid: c2f07439e693fa44aafbe0e6acebb19c, type: 3}
+  animationStateName: Punch_R_1
+  frameData:
+    logicData:
+      totalFrames: 58
+      startupFrames: 19
+      recoveryFrames: 20
+      cancelWindowStartFrame: 38
+    hitboxEvents:
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: -0.2276418, y: 0.9009015, z: 0.46217954}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 1
+    - activeStartFrame: 17
+      boxPath:
+      - localPosition: {x: -0.48695266, y: 1.2976725, z: 0.12753928}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.5287706, y: 1.2173572, z: 0.609952}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.23318027, y: 1.0645611, z: 0.90481967}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.1115936, y: 1.0172613, z: 0.8745024}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.41752172, y: 0.9199101, z: 0.6783224}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.59811246, y: 0.88654035, z: 0.3252468}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.5698537, y: 0.91259223, z: -0.07868779}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.4557076, y: 0.9223187, z: -0.3003118}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.3804936, y: 0.9487728, z: -0.42579627}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.32970893, y: 0.95557165, z: -0.48883915}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 58
+      hurtboxType: 0

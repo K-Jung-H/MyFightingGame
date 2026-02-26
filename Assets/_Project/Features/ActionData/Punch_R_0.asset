@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Punch_R_0
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 3094330708855449807, guid: ef751e951ed91ed4fbc94d82726c9eed, type: 3}
+  animationStateName: Punch_R_0
+  frameData:
+    logicData:
+      totalFrames: 70
+      startupFrames: 23
+      recoveryFrames: 24
+      cancelWindowStartFrame: 46
+    hitboxEvents:
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: -0.22764182, y: 0.9009015, z: 0.46217954}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 1
+    - activeStartFrame: 19
+      boxPath:
+      - localPosition: {x: 0.63406485, y: 1.4645202, z: 0.4068697}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.5394803, y: 1.4108348, z: 0.7310524}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.19968055, y: 1.1798636, z: 1.0084401}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.14745793, y: 0.9195435, z: 0.96228987}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.32951593, y: 0.72609276, z: 0.73295164}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.406125, y: 0.7091636, z: 0.5783257}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.39460874, y: 0.68473876, z: 0.49604017}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.37824833, y: 0.69038403, z: 0.4562285}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.3642516, y: 0.70011294, z: 0.4392718}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.35647953, y: 0.70516175, z: 0.43318123}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.35488802, y: 0.70900226, z: 0.42880458}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.35745537, y: 0.71196616, z: 0.4255473}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.3603322, y: 0.7139344, z: 0.42370266}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.36032492, y: 0.7145811, z: 0.4212166}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.35621166, y: 0.71318334, z: 0.41859418}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.3483006, y: 0.70896107, z: 0.41609466}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.33563703, y: 0.70192444, z: 0.41246432}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.32151383, y: 0.6915889, z: 0.41139114}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.3062183, y: 0.6802455, z: 0.4148625}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      hitboxType: 0
+      damage: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 70
+      hurtboxType: 0
