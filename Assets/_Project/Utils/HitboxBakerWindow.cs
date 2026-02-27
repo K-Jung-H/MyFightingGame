@@ -190,8 +190,14 @@ public class HitboxBakerWindow : EditorWindow
                 GUILayout.EndHorizontal();
 
                 int groupID = EditorGUILayout.IntField("Hit Group ID", marker.hitGroupID);
-                Hitbox_Type type = (Hitbox_Type)EditorGUILayout.EnumPopup("Hitbox Type", marker.hitboxType);
+                Attack_Type attackType = (Attack_Type)EditorGUILayout.EnumPopup("Attack Type", marker.attackType);
+                HurtState_Type targetState = (HurtState_Type)EditorGUILayout.EnumPopup("Target Hurt State", marker.targetHurtState);
+                
                 int damage = EditorGUILayout.IntField("Damage", marker.damage);
+                int hitstun = EditorGUILayout.IntField("Hitstun Frames", marker.hitstunFrames);
+                Vector3 pushback = EditorGUILayout.Vector3Field("Local Pushback Vector", marker.localPushbackVector);
+                bool isKnockdown = EditorGUILayout.Toggle("Is Hard Knockdown", marker.isHardKnockdown);
+                
                 Vector3 extents = EditorGUILayout.Vector3Field("Box Extents", marker.boxExtents);
 
                 if (EditorGUI.EndChangeCheck())
@@ -200,8 +206,12 @@ public class HitboxBakerWindow : EditorWindow
                     marker.recordStartFrame = start;
                     marker.recordEndFrame = end;
                     marker.hitGroupID = groupID;
-                    marker.hitboxType = type;
+                    marker.attackType = attackType;
+                    marker.targetHurtState = targetState;
                     marker.damage = damage;
+                    marker.hitstunFrames = hitstun;
+                    marker.localPushbackVector = pushback;
+                    marker.isHardKnockdown = isKnockdown;
                     marker.boxExtents = extents;
                     EditorUtility.SetDirty(marker);
                 }
@@ -240,8 +250,8 @@ public class HitboxBakerWindow : EditorWindow
             stateColor = Color.yellow;
         }
 
-        bool canCancel = currentPreviewFrame >= logic.cancelWindowStartFrame;
-        string cancelText = canCancel ? "[CANCELABLE]" : "[LOCKED]";
+        bool isCancelable = currentPreviewFrame >= logic.cancelWindowStartFrame;
+        string cancelText = isCancelable ? "[CANCELABLE]" : "[LOCKED]";
 
         Rect headerRect = GUILayoutUtility.GetRect(10, 25);
         GUI.Box(headerRect, "");
@@ -344,7 +354,7 @@ public class HitboxBakerWindow : EditorWindow
         if (targetCharacter == null || targetActionData == null || playerConfig == null) return;
         if (targetActionData.frameData.hurtboxEvents == null) return;
 
-        bool hasActiveEvent = false;
+        bool isEventActive = false;
         HurtboxEvent activeEvent = new HurtboxEvent();
 
         foreach (var evt in targetActionData.frameData.hurtboxEvents)
@@ -352,12 +362,12 @@ public class HitboxBakerWindow : EditorWindow
             if (currentPreviewFrame >= evt.startFrame && currentPreviewFrame <= evt.endFrame)
             {
                 activeEvent = evt;
-                hasActiveEvent = true;
+                isEventActive = true;
                 break;
             }
         }
 
-        if (hasActiveEvent)
+        if (isEventActive)
         {
             CollisionBox[] boxes = playerConfig.GetHurtboxBoxes(activeEvent.hurtboxType);
             if (boxes != null)
@@ -374,6 +384,9 @@ public class HitboxBakerWindow : EditorWindow
         }
     }
 
+    /// <summary>
+    /// 캐릭터 하위에 배치된 HitboxMarker 컴포넌트들을 탐색하여 ActionDataSO의 HitboxEvent 배열로 직렬화합니다.
+    /// </summary>
     private void BakeHitboxData()
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;
@@ -395,8 +408,12 @@ public class HitboxBakerWindow : EditorWindow
             {
                 activeStartFrame = marker.recordStartFrame,
                 hitGroupID = marker.hitGroupID,
-                hitboxType = marker.hitboxType,
-                damage = marker.damage
+                attackType = marker.attackType,
+                targetHurtState = marker.targetHurtState,
+                damage = marker.damage,
+                hitstunFrames = marker.hitstunFrames,
+                localPushbackVector = marker.localPushbackVector,
+                isHardKnockdown = marker.isHardKnockdown
             };
 
             int pathLength = marker.recordEndFrame - marker.recordStartFrame + 1;

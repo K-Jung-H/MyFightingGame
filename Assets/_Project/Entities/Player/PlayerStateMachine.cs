@@ -30,18 +30,16 @@ public class PlayerStateMachine : ITargetable
     protected List<InputFlags> comboSequence = new List<InputFlags>();
 
     private bool isCommandActionTriggered;
-    private int currentCommandActionHash;
     private CommandDefinition currentCommand;
+    private CommandDefinition bufferedCommand;
+    private int bufferedCommandFrame;
 
     private Dictionary<string, int> animationHashCache = new Dictionary<string, int>();
 
-    private HitInfo currentHitInfo;
+    private HurtInfo currentHurtInfo;
     private HashSet<int> registeredHitGroupIds = new HashSet<int>();
 
-    public HitInfo GetCurrentHitInfo()
-    {
-        return currentHitInfo;
-    }
+    public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;
 
     public virtual void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
     {
@@ -56,15 +54,12 @@ public class PlayerStateMachine : ITargetable
         }
         
         inputBuffer = new InputBuffer(60);
-        
         currentDirection = Vector3.forward;
         lookDirection = Vector3.forward;
         currentFrame = 0;
 
         InitializeStates();
-
         currentState = (PlayerState_Type)(-1); 
-        
         TransitionTo(PlayerState_Type.Idle);
     }
 
@@ -80,9 +75,9 @@ public class PlayerStateMachine : ITargetable
         states.Add(PlayerState_Type.Hit, new HitState(this, config));    
     }
 
-    public void ApplyHit(HitInfo hitData)
+    public void ApplyHit(HurtInfo hurtData)
     {
-        currentHitInfo = hitData;
+        currentHurtInfo = hurtData;
         TransitionTo(PlayerState_Type.Hit, true);
     }
 
@@ -105,10 +100,7 @@ public class PlayerStateMachine : ITargetable
         currentStateObject.Enter();
     }
 
-    public void AddToComboSequence(InputFlags attackInput)
-    {
-        comboSequence.Add(attackInput);
-    }
+    public void AddToComboSequence(InputFlags attackInput) => comboSequence.Add(attackInput);
 
     public void ClearComboSequence()
     {
@@ -126,30 +118,31 @@ public class PlayerStateMachine : ITargetable
         inputBuffer.AddInput(input);
         UpdateLookDirection();
         UpdateTapContext(input.flags);
-        bool isCancelable = true;
         
+        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
+        if (matchedCommand != null)
+        {
+            bufferedCommand = matchedCommand;
+            bufferedCommandFrame = currentFrame;
+            
+            inputBuffer.Clear(); 
+            ClearComboSequence();
+            
+            currentKeyDownFlags = InputFlags.None;
+        }
+
+        bool isCancelable = true;
         if (currentState == PlayerState_Type.Attacking)
         {
             int cancelFrame = currentStateObject is AttackingState atkState ? atkState.GetCancelWindow() : 999;
             isCancelable = stateFrameCounter >= cancelFrame;
         }
 
-        if (isCancelable && !isCommandActionTriggered)
+        if (isCancelable && bufferedCommand != null)
         {
-            CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
-            if (matchedCommand != null)
+            if (currentFrame - bufferedCommandFrame <= config.commandBufferWindow)
             {
-                inputBuffer.Clear(); 
-                currentCommand = matchedCommand;
-
-                if (matchedCommand.actionData != null && !string.IsNullOrEmpty(matchedCommand.actionData.animationStateName))
-                {
-                    isCommandActionTriggered = true;
-                    currentCommandActionHash = Animator.StringToHash(matchedCommand.actionData.animationStateName);
-                }
-
-                TransitionTo(matchedCommand.targetState);
-                previousInput = input;
+                ExecuteBufferedCommand();
                 return;
             }
         }
@@ -186,7 +179,6 @@ public class PlayerStateMachine : ITargetable
     public void ProcessMovementLogic(PlayerInput input)
     {
         Vector3 rawInput = GetRawInputVector(input.flags);
-
         if (rawInput != Vector3.zero)
         {
             UpdateCurrentDirection(rawInput);
@@ -259,23 +251,23 @@ public class PlayerStateMachine : ITargetable
 
     public List<InputFlags> GetComboSequence() => comboSequence;
     public void ResetStateFrameCounter() => stateFrameCounter = 0;
-    
     public void SetComboTree(ComboTreeSO tree) => comboTree = tree;
     public ComboTreeSO GetComboTree() => comboTree;
-    
     public void SetCurrentComboNode(ComboNode node) => currentComboNode = node;
     public ComboNode GetCurrentComboNode() => currentComboNode;
-
     public PlayerInput GetPreviousInput() => previousInput;
     public InputFlags GetKeyDownFlags() => currentKeyDownFlags;
-    
     public CommandDefinition GetCurrentCommand() => currentCommand;
     public void ClearCurrentCommand() => currentCommand = null;
-
+    public void ClearInputBuffer()
+    {
+        inputBuffer.Clear();
+    }
     public int GetCurrentAttackTriggerHash()
     {
         if (currentComboNode != null && currentComboNode.actionData != null && !string.IsNullOrEmpty(currentComboNode.actionData.animationStateName))
         {
+            Debug.Log($"[AnimLog] 최종 결정된 콤보 애니메이션: {currentComboNode.actionData.animationStateName}");
             return GetAnimationHash(currentComboNode.actionData.animationStateName);        
         }
         return 0;
@@ -283,7 +275,16 @@ public class PlayerStateMachine : ITargetable
 
     public bool CheckAndConsumeCommandAction(out int actionHash)
     {
-        actionHash = currentCommandActionHash;
+        actionHash = 0;
+        if (currentCommand != null && currentCommand.actionData != null)
+        {
+            actionHash = GetAnimationHash(currentCommand.actionData.animationStateName);
+
+            if (isCommandActionTriggered)
+            {
+                Debug.Log($"[AnimLog] 최종 결정된 커맨드 스킬 애니메이션: {currentCommand.actionData.animationStateName}");
+            }
+        }
         bool triggered = isCommandActionTriggered;
         isCommandActionTriggered = false;
         return triggered;
@@ -307,42 +308,59 @@ public class PlayerStateMachine : ITargetable
         if (currentState != PlayerState_Type.Attacking) return null;
         if (currentCommand != null) return currentCommand.actionData;
         if (currentComboNode != null) return currentComboNode.actionData;
-        
         return null;
     }
 
     public Hurtbox_Type GetCurrentHurtboxType()
     {
-        bool isAttacking = currentState == PlayerState_Type.Attacking;
-
-        if (isAttacking)
+        if (currentState == PlayerState_Type.Attacking)
         {
             ActionDataSO currentAction = GetCurrentActionData();
-            
             if (currentAction != null && currentAction.frameData.hurtboxEvents != null)
             {
                 foreach (var evt in currentAction.frameData.hurtboxEvents)
                 {
-                    bool isFrameActive = stateFrameCounter >= evt.startFrame && stateFrameCounter <= evt.endFrame;
-                    
-                    if (isFrameActive)
+                    if (stateFrameCounter >= evt.startFrame && stateFrameCounter <= evt.endFrame)
                     {
                         return evt.hurtboxType;
                     }
                 }
             }
         }
-        
         return Hurtbox_Type.Standing;
     }
 
-    public bool HasAlreadyHit(int hitGroupID)
+    public bool HasAlreadyHit(int hitGroupID) => registeredHitGroupIds.Contains(hitGroupID);
+    public void RegisterHitGroup(int hitGroupID) => registeredHitGroupIds.Add(hitGroupID);
+
+    public bool HasBufferedCommand() => bufferedCommand != null;
+    public void SetBufferedCommand(CommandDefinition cmd) 
     {
-        return registeredHitGroupIds.Contains(hitGroupID);
+        bufferedCommand = cmd;
+        bufferedCommandFrame = currentFrame;
     }
 
-    public void RegisterHitGroup(int hitGroupID)
+    public void ExecuteBufferedCommand()
     {
-        registeredHitGroupIds.Add(hitGroupID);
+        if (bufferedCommand == null) return;
+
+        currentCommand = bufferedCommand;
+        
+        if (currentCommand.actionData != null && !string.IsNullOrEmpty(currentCommand.actionData.animationStateName))
+        {
+            isCommandActionTriggered = true;
+        }
+
+        inputBuffer.Clear();
+        
+        currentComboNode = null;
+        ClearComboSequence();
+
+        TransitionTo(currentCommand.targetState, true);
+        
+        bufferedCommand = null;
     }
+
+    public CommandDefinition CheckBufferedCommand() => inputBuffer.CheckCommands(commandList, currentFrame, currentState);
+
 }

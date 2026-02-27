@@ -3,6 +3,9 @@ using UnityEngine.InputSystem;
 
 public class GameLoopManager : MonoBehaviour
 {
+    [Header("Global Settings")]
+    [SerializeField] private float playerCollisionMinDistance = 1.0f;
+
     [Header("Player 1 Settings")]
     [SerializeField] private CharacterVisual playerOneVisual;
     [SerializeField] private PlayerConfigSO playerOneConfig;
@@ -27,8 +30,9 @@ public class GameLoopManager : MonoBehaviour
     public Vector3 GetP1Pos() => playerOneStateMachine != null ? playerOneStateMachine.GetPosition() : Vector3.zero;
     public PlayerState_Type GetP2State() => playerTwoStateMachine != null ? playerTwoStateMachine.GetCurrentState() : PlayerState_Type.Idle;
     public Vector3 GetP2Pos() => playerTwoStateMachine != null ? playerTwoStateMachine.GetPosition() : Vector3.zero;
+    public PlayerStateMachine GetPlayerOneStateMachine() => playerOneStateMachine;
+    public PlayerStateMachine GetPlayerTwoStateMachine() => playerTwoStateMachine;
 
-    
     private void Awake()
     {
         InitializePlayers();
@@ -123,17 +127,17 @@ public class GameLoopManager : MonoBehaviour
     {
         if (playerOneStateMachine == null || playerTwoStateMachine == null) return;
 
-        HitInfo debugHit = new HitInfo 
+        HurtInfo debugHurt = new HurtInfo 
         { 
             damage = 1, 
-            hitstunFrames = 20,
+            hurtStunFrames = 20,
             pushbackVector = Vector3.zero,
-            hitType = HitState_Type.StandHit,
+            targetHurtState = HurtState_Type.StandHit,
             isHardKnockdown = false
         };
 
-        playerOneStateMachine.ApplyHit(debugHit);
-        playerTwoStateMachine.ApplyHit(debugHit);
+        playerOneStateMachine.ApplyHit(debugHurt);
+        playerTwoStateMachine.ApplyHit(debugHurt);
 
         Debug.Log("[Debug] 양 플레이어에게 1 데미지를 가했습니다.");
     }
@@ -149,31 +153,47 @@ public class GameLoopManager : MonoBehaviour
         CollisionBox[] defenderBoxes = defender.GetPlayerConfig().GetHurtboxBoxes(defenderHurtboxType);
 
         bool isHit = HitboxManager.EvaluateHit(
-            attacker.GetPosition(), attacker.GetDirection(), attackerAction.frameData.hitboxEvents, attacker.GetStateFrameCounter(),
-            defender.GetPosition(), defender.GetDirection(), defenderBoxes,
-            out HitboxEvent hitEvent
+            attacker.GetPosition(), attacker.GetLookDirection(), attackerAction.frameData.hitboxEvents, attacker.GetStateFrameCounter(),
+            defender.GetPosition(), defender.GetLookDirection(), defenderBoxes,
+            out HitboxEvent hitEvent, out string debugReason
         );
+
+        if (!isHit)
+        {
+            // if (!debugReason.Contains("현재 프레임"))
+            // {
+            //     string logAttackerName = attacker == playerOneStateMachine ? "Player 1" : "Player 2";
+            //     Debug.LogWarning($"[Hit 판정 실패] {logAttackerName}의 공격 실패 사유: {debugReason} | Defender State: {defender.GetCurrentState()}");
+            // }
+            return;
+        }
 
         if (isHit && !attacker.HasAlreadyHit(hitEvent.hitGroupID))
         {
             attacker.RegisterHitGroup(hitEvent.hitGroupID);
             
-            HitInfo hitInfo = new HitInfo 
+            Vector3 attackerLookDirection = attacker.GetLookDirection();
+            Vector3 rightDirection = Vector3.Cross(Vector3.up, attackerLookDirection);
+            
+            Vector3 worldPushback = (attackerLookDirection * hitEvent.localPushbackVector.z) + 
+                                    (Vector3.up * hitEvent.localPushbackVector.y) + 
+                                    (rightDirection * hitEvent.localPushbackVector.x);
+            
+            HurtInfo hurtInfo = new HurtInfo 
             { 
                 damage = hitEvent.damage, 
-                hitstunFrames = hitEvent.damage * 2,
-                pushbackVector = attacker.GetDirection() * 2f,
-                hitType = HitState_Type.StandHit,
-                isHardKnockdown = false
+                hurtStunFrames = hitEvent.hitstunFrames,
+                pushbackVector = worldPushback,
+                targetHurtState = hitEvent.targetHurtState,
+                isHardKnockdown = hitEvent.isHardKnockdown
             };
             
-            defender.ApplyHit(hitInfo);
+            defender.ApplyHit(hurtInfo);
 
             string attackerName = attacker == playerOneStateMachine ? "Player 1" : "Player 2";
             string defenderName = defender == playerOneStateMachine ? "Player 1" : "Player 2";
-            Debug.Log($"[Hit] {attackerName} -> {defenderName} | Damage: {hitEvent.damage}");
+            Debug.Log($"[Hit 성공] {attackerName} -> {defenderName} | Damage: {hitEvent.damage} | Pushback: {worldPushback}");
         }
-
     }
     
     private float GetPushbackWeight(PlayerState_Type state)
@@ -199,12 +219,11 @@ public class GameLoopManager : MonoBehaviour
         Vector3 diff = p1Pos - p2Pos;
         diff.y = 0;
         float distanceSqr = diff.sqrMagnitude;
-        float minDistance = 1.0f;
 
-        if (distanceSqr < minDistance * minDistance && distanceSqr > 0.0001f)
+        if (distanceSqr < playerCollisionMinDistance * playerCollisionMinDistance && distanceSqr > 0.0001f)
         {
             float distance = Mathf.Sqrt(distanceSqr);
-            float totalPushDist = minDistance - distance;
+            float totalPushDist = playerCollisionMinDistance - distance;
             Vector3 pushDir = diff / distance;
 
             PlayerState_Type p1State = playerOneStateMachine.GetCurrentState();
@@ -231,78 +250,43 @@ public class GameLoopManager : MonoBehaviour
 
     private void SyncVisuals()
     {
-        if (playerOneVisual != null && playerOneStateMachine != null)
+        UpdatePlayerVisual(playerOneStateMachine, playerOneVisual);
+        UpdatePlayerVisual(playerTwoStateMachine, playerTwoVisual);
+    }
+
+    private void UpdatePlayerVisual(PlayerStateMachine sm, CharacterVisual visual)
+    {
+        if (sm == null || visual == null) return;
+
+        int finalHash = 0;
+        bool isFinalTrigger = false;
+        int stateFrame = sm.GetStateFrameCounter();
+        PlayerState_Type currentState = sm.GetCurrentState();
+
+        if (currentState == PlayerState_Type.Hit && stateFrame == 1)
         {
-            bool triggerCombo = playerOneStateMachine.GetCurrentState() == PlayerState_Type.Attacking && playerOneStateMachine.GetStateFrameCounter() == 1;
-            
-            int comboHash = 0;
-            if (triggerCombo)
-            {
-                comboHash = playerOneStateMachine.GetCurrentAttackTriggerHash();
-                if (comboHash == 0)
-                {
-                    triggerCombo = false;
-                }
-            }
-
-            bool triggerCommand = playerOneStateMachine.CheckAndConsumeCommandAction(out int commandHash);
-
-            bool triggerHit = playerOneStateMachine.GetCurrentState() == PlayerState_Type.Hit && playerOneStateMachine.GetStateFrameCounter() == 1;
-            int hitHash = 0;
-            if (triggerHit)
-            {
-                hitHash = playerOneStateMachine.GetAnimationHash(playerOneStateMachine.GetCurrentHitInfo().hitType.ToString());
-            }
-
-            bool finalTrigger = triggerCombo || triggerCommand || triggerHit;
-            int finalHash = triggerCommand ? commandHash : comboHash;
-
-            playerOneVisual.SyncWithLogic(
-                playerOneStateMachine.GetPosition(), 
-                playerOneStateMachine.GetCurrentState(), 
-                playerOneStateMachine.GetCurrentSpeed(),
-                playerOneStateMachine.GetDirection(),
-                playerOneStateMachine.GetLookDirection(),
-                finalTrigger,
-                finalHash
-            );
+            finalHash = sm.GetAnimationHash(sm.GetCurrentHurtInfo().targetHurtState.ToString());
+            isFinalTrigger = true;
+        }
+        else if (sm.CheckAndConsumeCommandAction(out int commandHash))
+        {
+            finalHash = commandHash;
+            isFinalTrigger = true;
+        }
+        else if (currentState == PlayerState_Type.Attacking && stateFrame == 1)
+        {
+            finalHash = sm.GetCurrentAttackTriggerHash();
+            if (finalHash != 0) isFinalTrigger = true;
         }
 
-        if (playerTwoVisual != null && playerTwoStateMachine != null)
-        {
-            bool triggerCombo = playerTwoStateMachine.GetCurrentState() == PlayerState_Type.Attacking && playerTwoStateMachine.GetStateFrameCounter() == 1;
-            
-            int comboHash = 0;
-            if (triggerCombo)
-            {
-                comboHash = playerTwoStateMachine.GetCurrentAttackTriggerHash();
-                if (comboHash == 0)
-                {
-                    triggerCombo = false;
-                }
-            }
-
-            bool triggerCommand = playerTwoStateMachine.CheckAndConsumeCommandAction(out int commandHash);
-
-            bool triggerHit = playerTwoStateMachine.GetCurrentState() == PlayerState_Type.Hit && playerTwoStateMachine.GetStateFrameCounter() == 1;
-            int hitHash = 0;
-            if (triggerHit)
-            {
-                hitHash = playerTwoStateMachine.GetAnimationHash(playerTwoStateMachine.GetCurrentHitInfo().hitType.ToString());
-            }
-
-            bool finalTrigger = triggerCombo || triggerCommand || triggerHit;
-            int finalHash = triggerCommand ? commandHash : comboHash;
-
-            playerTwoVisual.SyncWithLogic(
-                playerTwoStateMachine.GetPosition(), 
-                playerTwoStateMachine.GetCurrentState(), 
-                playerTwoStateMachine.GetCurrentSpeed(),
-                playerTwoStateMachine.GetDirection(),
-                playerTwoStateMachine.GetLookDirection(),
-                finalTrigger,
-                finalHash
-            );
-        }
+        visual.SyncWithLogic(
+            sm.GetPosition(), 
+            currentState, 
+            sm.GetCurrentSpeed(),
+            sm.GetDirection(),
+            sm.GetLookDirection(),
+            isFinalTrigger,
+            finalHash
+        );
     }
 }

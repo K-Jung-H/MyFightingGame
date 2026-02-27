@@ -5,13 +5,19 @@ public class HitboxMarker : MonoBehaviour
     public int recordStartFrame;
     public int recordEndFrame;
     public int hitGroupID;
-    public Hitbox_Type hitboxType;
+    
+    public Attack_Type attackType;
+    public HurtState_Type targetHurtState;
+    
     public int damage;
+    public int hitstunFrames;
+    public Vector3 localPushbackVector;
+    public bool isHardKnockdown;
+    
     public Vector3 boxExtents = new Vector3(0.1f, 0.1f, 0.1f);
 
     [HideInInspector] 
     public int currentPreviewFrame;
-
 
     private void OnDrawGizmos()
     {

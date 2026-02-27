@@ -28,9 +28,10 @@ public class PlayerConfigSO : ScriptableObject
     }
 
     [Header("Input Settings")]
+    public int commandBufferWindow = 15;
     public int tapWindowFrames = 15;
     public int autoSprintFrames = 60;
-    
+
     [Header("State Settings")]
     public int attackFrameLimit = 30;
 }

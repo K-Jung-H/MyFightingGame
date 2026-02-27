@@ -45,4 +45,46 @@ public class ComboTreeSO : ScriptableObject
 
         return currentNode;
     }
+
+    public ComboNode FindBestMatchNode(List<ComboNode> nodes, InputFlags input)
+    {
+        if (nodes == null || nodes.Count == 0) return null;
+
+        InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
+        InputFlags inputAttack = input & attackMask;
+
+        ComboNode bestNode = null;
+        int bestDirCount = -1;
+
+        foreach (var node in nodes)
+        {
+            InputFlags nodeAttack = node.requiredInput & attackMask;
+            if (nodeAttack != inputAttack) continue;
+
+            if ((input & node.requiredInput) == node.requiredInput)
+            {
+                InputFlags nodeDir = node.requiredInput & ~attackMask;
+                int dirCount = CountSetBits((int)nodeDir);
+
+                if (dirCount > bestDirCount)
+                {
+                    bestNode = node;
+                    bestDirCount = dirCount;
+                }
+            }
+        }
+
+        return bestNode;
+    }
+
+    private int CountSetBits(int n)
+    {
+        int count = 0;
+        while (n > 0)
+        {
+            count += n & 1;
+            n >>= 1;
+        }
+        return count;
+    }
 }

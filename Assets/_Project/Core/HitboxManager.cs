@@ -1,39 +1,69 @@
 using UnityEngine;
-
 public static class HitboxManager
 {
     public static bool EvaluateHit(
         Vector3 attackerPos, Vector3 attackerDir, HitboxEvent[] hitboxEvents, int attackerFrame,
         Vector3 defenderPos, Vector3 defenderDir, CollisionBox[] defenderHurtboxes,
-        out HitboxEvent successfulHit)
+        out HitboxEvent successfulHit, out string debugReason)
     {
         successfulHit = default;
+        debugReason = string.Empty;
 
-        if (defenderHurtboxes == null || defenderHurtboxes.Length == 0 || hitboxEvents == null || hitboxEvents.Length == 0)
+        if (defenderHurtboxes == null || defenderHurtboxes.Length == 0)
         {
+            debugReason = "디펜더의 피격박스(Hurtbox) 데이터가 없거나 배열이 비어있습니다.";
+            return false;
+        }
+
+        if (hitboxEvents == null || hitboxEvents.Length == 0)
+        {
+            debugReason = "공격자의 타격박스(Hitbox) 데이터가 없습니다.";
             return false;
         }
 
         Quaternion rotA = attackerDir != Vector3.zero ? Quaternion.LookRotation(attackerDir) : Quaternion.identity;
         Quaternion rotB = defenderDir != Vector3.zero ? Quaternion.LookRotation(defenderDir) : Quaternion.identity;
 
+        bool hasActiveBoxThisFrame = false;
+        bool intersectionFailed = false;
+
         foreach (var evt in hitboxEvents)
         {
             if (TryGetActiveAttackBox(evt, attackerFrame, out CollisionBox attackBox))
             {
+                hasActiveBoxThisFrame = true;
                 Vector3 worldCenterA = attackerPos + (rotA * attackBox.localPosition);
 
                 for (int i = 0; i < defenderHurtboxes.Length; i++)
                 {
                     Vector3 worldCenterB = defenderPos + (rotB * defenderHurtboxes[i].localPosition);
 
+                    if (attackBox.extents == Vector3.zero || defenderHurtboxes[i].extents == Vector3.zero)
+                    {
+                        debugReason = "박스의 Extents(크기)가 Vector3.zero로 설정되어 판정할 수 없습니다.";
+                        continue;
+                    }
+
                     if (CheckOBBIntersection(worldCenterA, attackBox.extents, rotA, worldCenterB, defenderHurtboxes[i].extents, rotB))
                     {
                         successfulHit = evt;
                         return true;
                     }
+                    else
+                    {
+                        intersectionFailed = true;
+                    }
                 }
             }
+        }
+
+        if (!hasActiveBoxThisFrame)
+        {
+            debugReason = $"현재 프레임({attackerFrame})에 매칭되는 공격 박스(boxPath)를 찾지 못했습니다.";
+        }
+        else if (intersectionFailed && string.IsNullOrEmpty(debugReason))
+        {
+            debugReason = "OBB 물리적 교차 판정에서 거리/크기 문제로 빗나갔습니다.";
         }
 
         return false;
@@ -44,10 +74,13 @@ public static class HitboxManager
         activeBox = default;
         int pathIndex = currentActionFrame - hitboxEvent.activeStartFrame;
 
-        if (pathIndex >= 0 && pathIndex < hitboxEvent.boxPath.Length)
+        if (pathIndex >= 0 && hitboxEvent.boxPath != null)
         {
-            activeBox = hitboxEvent.boxPath[pathIndex];
-            return true;
+            if (pathIndex < hitboxEvent.boxPath.Length)
+            {
+                activeBox = hitboxEvent.boxPath[pathIndex];
+                return true;
+            }
         }
 
         return false;

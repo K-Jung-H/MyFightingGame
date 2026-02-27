@@ -15,6 +15,21 @@ public enum Hurtbox_Type
     Invincible,
 }
 
+public enum Attack_Type
+{
+    Normal,
+    Crash
+}
+
+public enum HurtState_Type
+{
+    StandHit,
+    AirHit,
+    KnockDown,
+    GroundHit,
+    GuardHit
+}
+
 [System.Serializable]
 public struct HurtboxPreset
 {
@@ -30,25 +45,19 @@ public struct HurtboxEvent
     public Hurtbox_Type hurtboxType;
 }
 
-public enum Hitbox_Type
-{
-    Normal,
-    Airborne,
-    KnockBack,
-    Crash
-}
-
-
 [System.Serializable]
 public struct HitboxEvent
 {
     public int activeStartFrame;
     public CollisionBox[] boxPath;
     public int hitGroupID;
-    public Hitbox_Type hitboxType;
+    public Attack_Type attackType;
+    public HurtState_Type targetHurtState;
     public int damage;
+    public int hitstunFrames;
+    public Vector3 localPushbackVector;
+    public bool isHardKnockdown;
 }
-
 
 [System.Serializable]
 public struct ActionLogicData
@@ -59,7 +68,6 @@ public struct ActionLogicData
     public int cancelWindowStartFrame;
 }
 
-
 [System.Serializable]
 public class AnimationFrameData
 {
@@ -68,3 +76,11 @@ public class AnimationFrameData
     public HurtboxEvent[] hurtboxEvents;
 }
 
+public struct HurtInfo
+{
+    public int damage;
+    public int hurtStunFrames;
+    public Vector3 pushbackVector;
+    public HurtState_Type targetHurtState;
+    public bool isHardKnockdown;
+}
