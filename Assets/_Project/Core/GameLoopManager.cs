@@ -1,82 +1,81 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[System.Serializable]
+public class PlayerSessionContext
+{
+    public CharacterVisual visual;
+    public PlayerConfigSO config;
+    public CommandListSO commandList;
+    public ComboTreeSO comboTree;
+    public HitAnimationMapSO hitAnimMap;
+    [HideInInspector] public PlayerStateMachine stateMachine;
+}
+
 public class GameLoopManager : MonoBehaviour
 {
     [Header("Global Settings")]
     [SerializeField] private float playerCollisionMinDistance = 1.0f;
+    [SerializeField] private float globalGravity = 0.02f;
 
-    [Header("Player 1 Settings")]
-    [SerializeField] private CharacterVisual playerOneVisual;
-    [SerializeField] private PlayerConfigSO playerOneConfig;
-    [SerializeField] private CommandListSO playerOneCommandList;
-    [SerializeField] private ComboTreeSO playerOneComboTree;
-
-    [Header("Player 2 Settings")]
-    [SerializeField] private CharacterVisual playerTwoVisual;
-    [SerializeField] private PlayerConfigSO playerTwoConfig;
-    [SerializeField] private CommandListSO playerTwoCommandList;
-    [SerializeField] private ComboTreeSO playerTwoComboTree;
+    [Header("Players")]
+    [SerializeField] private PlayerSessionContext playerOne;
+    [SerializeField] private PlayerSessionContext playerTwo;
 
     private LocalInputProvider inputProvider;
-    private PlayerStateMachine playerOneStateMachine;
-    private PlayerStateMachine playerTwoStateMachine;
-    
     private int currentTick;
     private bool isSimulationRunning;
 
     public int GetCurrentTick() => currentTick;
-    public PlayerState_Type GetP1State() => playerOneStateMachine != null ? playerOneStateMachine.GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP1Pos() => playerOneStateMachine != null ? playerOneStateMachine.GetPosition() : Vector3.zero;
-    public PlayerState_Type GetP2State() => playerTwoStateMachine != null ? playerTwoStateMachine.GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP2Pos() => playerTwoStateMachine != null ? playerTwoStateMachine.GetPosition() : Vector3.zero;
-    public PlayerStateMachine GetPlayerOneStateMachine() => playerOneStateMachine;
-    public PlayerStateMachine GetPlayerTwoStateMachine() => playerTwoStateMachine;
+    public PlayerState_Type GetP1State() => playerOne.stateMachine != null ? playerOne.stateMachine.GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP1Pos() => playerOne.stateMachine != null ? playerOne.stateMachine.GetPosition() : Vector3.zero;
+    public PlayerState_Type GetP2State() => playerTwo.stateMachine != null ? playerTwo.stateMachine.GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP2Pos() => playerTwo.stateMachine != null ? playerTwo.stateMachine.GetPosition() : Vector3.zero;
+    public PlayerStateMachine GetPlayerOneStateMachine() => playerOne.stateMachine;
+    public PlayerStateMachine GetPlayerTwoStateMachine() => playerTwo.stateMachine;
+
 
     private void Awake()
     {
         InitializePlayers();
     }
 
+
     private void InitializePlayers()
     {
         inputProvider = new LocalInputProvider();
 
-        if (playerOneVisual != null)
+        bool hasPlayerOneVisual = playerOne.visual != null;
+        if (hasPlayerOneVisual)
         {
-            playerOneStateMachine = new PlayerStateMachine();
-            playerOneStateMachine.Initialize(
-                new Vector3(-2, 0, 0), 
-                playerOneConfig, 
-                playerOneCommandList, 
-                playerOneComboTree
-                );
+            playerOne.stateMachine = new PlayerStateMachine();
+            playerOne.stateMachine.Initialize(new Vector3(-2, 0, 0), playerOne.config, playerOne.commandList, playerOne.comboTree);
+            playerOne.stateMachine.SetGlobalGravity(globalGravity);
+            
+            playerOne.visual.InitializeVisual(playerOne.stateMachine, playerOne.hitAnimMap);
         }
 
-        if (playerTwoVisual != null)
+        bool hasPlayerTwoVisual = playerTwo.visual != null;
+        if (hasPlayerTwoVisual)
         {
-            playerTwoStateMachine = new PlayerStateMachine();
-            playerTwoStateMachine.Initialize(
-                new Vector3(2, 0, 0), 
-                playerTwoConfig, 
-                playerTwoCommandList, 
-                playerTwoComboTree
-                );
+            playerTwo.stateMachine = new PlayerStateMachine();
+            playerTwo.stateMachine.Initialize(new Vector3(2, 0, 0), playerTwo.config, playerTwo.commandList, playerTwo.comboTree);
+            playerTwo.stateMachine.SetGlobalGravity(globalGravity);
+            
+            playerTwo.visual.InitializeVisual(playerTwo.stateMachine, playerTwo.hitAnimMap);
         }
 
-        if (playerOneStateMachine != null)
+        bool hasBothStateMachines = playerOne.stateMachine != null && playerTwo.stateMachine != null;
+        if (hasBothStateMachines)
         {
-            playerOneStateMachine.SetTarget(playerTwoStateMachine);
-        }
-
-        if (playerTwoStateMachine != null)
-        {
-            playerTwoStateMachine.SetTarget(playerOneStateMachine);
+            playerOne.stateMachine.SetTarget(playerTwo.stateMachine);
+            playerTwo.stateMachine.SetTarget(playerOne.stateMachine);
         }
 
         currentTick = 0;
         isSimulationRunning = true;
     }
+
 
     private void Update()
     {
@@ -85,11 +84,13 @@ public class GameLoopManager : MonoBehaviour
             inputProvider.AccumulateInputFlags();
         }
 
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        bool isDebugAttackPressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+        if (isDebugAttackPressed)
         {
             DebugDealDamageToBoth();
         }
     }
+
 
     private void FixedUpdate()
     {
@@ -98,23 +99,26 @@ public class GameLoopManager : MonoBehaviour
             RunTick();
         }
     }
+    
 
     private void RunTick()
     {
-        if (playerOneStateMachine != null)
+        bool isPlayerOneValid = playerOne.stateMachine != null;
+        if (isPlayerOneValid)
         {
             PlayerInput p1Input = inputProvider.GetCurrentInput(currentTick, 0);
-            playerOneStateMachine.UpdateTick(p1Input);
+            playerOne.stateMachine.UpdateTick(p1Input);
         }
 
-        if (playerTwoStateMachine != null)
+        bool isPlayerTwoValid = playerTwo.stateMachine != null;
+        if (isPlayerTwoValid)
         {
             PlayerInput p2Input = inputProvider.GetCurrentInput(currentTick, 1);
-            playerTwoStateMachine.UpdateTick(p2Input);
+            playerTwo.stateMachine.UpdateTick(p2Input);
         }
 
-        ResolveAttacks(playerOneStateMachine, playerTwoStateMachine);
-        ResolveAttacks(playerTwoStateMachine, playerOneStateMachine);
+        ResolveAttacks(playerOne.stateMachine, playerTwo.stateMachine);
+        ResolveAttacks(playerTwo.stateMachine, playerOne.stateMachine);
 
         ResolvePlayerCollision();
 
@@ -123,9 +127,11 @@ public class GameLoopManager : MonoBehaviour
         currentTick++;
     }
 
+
     public void DebugDealDamageToBoth()
     {
-        if (playerOneStateMachine == null || playerTwoStateMachine == null) return;
+        bool isInvalidMachines = playerOne.stateMachine == null || playerTwo.stateMachine == null;
+        if (isInvalidMachines) return;
 
         HurtInfo debugHurt = new HurtInfo 
         { 
@@ -136,18 +142,21 @@ public class GameLoopManager : MonoBehaviour
             isHardKnockdown = false
         };
 
-        playerOneStateMachine.ApplyHit(debugHurt);
-        playerTwoStateMachine.ApplyHit(debugHurt);
+        playerOne.stateMachine.ApplyHit(debugHurt);
+        playerTwo.stateMachine.ApplyHit(debugHurt);
 
         Debug.Log("[Debug] 양 플레이어에게 1 데미지를 가했습니다.");
     }
 
+
     private void ResolveAttacks(PlayerStateMachine attacker, PlayerStateMachine defender)
     {
-        if (attacker.GetCurrentState() != PlayerState_Type.Attacking) return;
+        bool isNotAttacking = attacker.GetCurrentState() != PlayerState_Type.Attacking;
+        if (isNotAttacking) return;
         
         ActionDataSO attackerAction = attacker.GetCurrentActionData();
-        if (attackerAction == null || attackerAction.frameData.hitboxEvents == null) return;
+        bool isInvalidAction = attackerAction == null || attackerAction.frameData.hitboxEvents == null;
+        if (isInvalidAction) return;
 
         Hurtbox_Type defenderHurtboxType = defender.GetCurrentHurtboxType();
         CollisionBox[] defenderBoxes = defender.GetPlayerConfig().GetHurtboxBoxes(defenderHurtboxType);
@@ -158,17 +167,10 @@ public class GameLoopManager : MonoBehaviour
             out HitboxEvent hitEvent, out string debugReason
         );
 
-        if (!isHit)
-        {
-            // if (!debugReason.Contains("현재 프레임"))
-            // {
-            //     string logAttackerName = attacker == playerOneStateMachine ? "Player 1" : "Player 2";
-            //     Debug.LogWarning($"[Hit 판정 실패] {logAttackerName}의 공격 실패 사유: {debugReason} | Defender State: {defender.GetCurrentState()}");
-            // }
-            return;
-        }
+        if (!isHit) return;
 
-        if (isHit && !attacker.HasAlreadyHit(hitEvent.hitGroupID))
+        bool isNewHit = !attacker.HasAlreadyHit(hitEvent.hitGroupID);
+        if (isNewHit)
         {
             attacker.RegisterHitGroup(hitEvent.hitGroupID);
             
@@ -190,12 +192,13 @@ public class GameLoopManager : MonoBehaviour
             
             defender.ApplyHit(hurtInfo);
 
-            string attackerName = attacker == playerOneStateMachine ? "Player 1" : "Player 2";
-            string defenderName = defender == playerOneStateMachine ? "Player 1" : "Player 2";
+            string attackerName = attacker == playerOne.stateMachine ? "Player 1" : "Player 2";
+            string defenderName = defender == playerOne.stateMachine ? "Player 1" : "Player 2";
             Debug.Log($"[Hit 성공] {attackerName} -> {defenderName} | Damage: {hitEvent.damage} | Pushback: {worldPushback}");
         }
     }
     
+
     private float GetPushbackWeight(PlayerState_Type state)
     {
         switch (state)
@@ -209,31 +212,35 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+
     private void ResolvePlayerCollision()
     {
-        if (playerOneStateMachine == null || playerTwoStateMachine == null) return;
+        bool isInvalidMachines = playerOne.stateMachine == null || playerTwo.stateMachine == null;
+        if (isInvalidMachines) return;
 
-        Vector3 p1Pos = playerOneStateMachine.GetPosition();
-        Vector3 p2Pos = playerTwoStateMachine.GetPosition();
+        Vector3 p1Pos = playerOne.stateMachine.GetPosition();
+        Vector3 p2Pos = playerTwo.stateMachine.GetPosition();
         
         Vector3 diff = p1Pos - p2Pos;
         diff.y = 0;
         float distanceSqr = diff.sqrMagnitude;
 
-        if (distanceSqr < playerCollisionMinDistance * playerCollisionMinDistance && distanceSqr > 0.0001f)
+        bool isOverlapping = distanceSqr < playerCollisionMinDistance * playerCollisionMinDistance && distanceSqr > 0.0001f;
+        if (isOverlapping)
         {
             float distance = Mathf.Sqrt(distanceSqr);
             float totalPushDist = playerCollisionMinDistance - distance;
             Vector3 pushDir = diff / distance;
 
-            PlayerState_Type p1State = playerOneStateMachine.GetCurrentState();
-            PlayerState_Type p2State = playerTwoStateMachine.GetCurrentState();
+            PlayerState_Type p1State = playerOne.stateMachine.GetCurrentState();
+            PlayerState_Type p2State = playerTwo.stateMachine.GetCurrentState();
 
             float w1 = GetPushbackWeight(p1State);
             float w2 = GetPushbackWeight(p2State);
             float totalWeight = w1 + w2;
 
-            if (totalWeight <= 0.0001f)
+            bool isWeightTooSmall = totalWeight <= 0.0001f;
+            if (isWeightTooSmall)
             {
                 w1 = 0.5f;
                 w2 = 0.5f;
@@ -243,50 +250,25 @@ public class GameLoopManager : MonoBehaviour
             float p1Ratio = w1 / totalWeight;
             float p2Ratio = w2 / totalWeight;
 
-            playerOneStateMachine.ApplyPushback(pushDir * (totalPushDist * p1Ratio));
-            playerTwoStateMachine.ApplyPushback(-pushDir * (totalPushDist * p2Ratio));
+            playerOne.stateMachine.ApplyPushback(pushDir * (totalPushDist * p1Ratio));
+            playerTwo.stateMachine.ApplyPushback(-pushDir * (totalPushDist * p2Ratio));
         }
     }
+
 
     private void SyncVisuals()
     {
-        UpdatePlayerVisual(playerOneStateMachine, playerOneVisual);
-        UpdatePlayerVisual(playerTwoStateMachine, playerTwoVisual);
+        UpdatePlayerVisual(playerOne);
+        UpdatePlayerVisual(playerTwo);
     }
 
-    private void UpdatePlayerVisual(PlayerStateMachine sm, CharacterVisual visual)
+
+    private void UpdatePlayerVisual(PlayerSessionContext context)
     {
-        if (sm == null || visual == null) return;
+        bool isInvalidContext = context == null || context.stateMachine == null || context.visual == null;
+        if (isInvalidContext) return;
 
-        int finalHash = 0;
-        bool isFinalTrigger = false;
-        int stateFrame = sm.GetStateFrameCounter();
-        PlayerState_Type currentState = sm.GetCurrentState();
-
-        if (currentState == PlayerState_Type.Hit && stateFrame == 1)
-        {
-            finalHash = sm.GetAnimationHash(sm.GetCurrentHurtInfo().targetHurtState.ToString());
-            isFinalTrigger = true;
-        }
-        else if (sm.CheckAndConsumeCommandAction(out int commandHash))
-        {
-            finalHash = commandHash;
-            isFinalTrigger = true;
-        }
-        else if (currentState == PlayerState_Type.Attacking && stateFrame == 1)
-        {
-            finalHash = sm.GetCurrentAttackTriggerHash();
-            if (finalHash != 0) isFinalTrigger = true;
-        }
-
-        visual.SyncWithLogic(
-            sm.GetPosition(), 
-            currentState, 
-            sm.GetCurrentSpeed(),
-            sm.GetDirection(),
-            sm.GetLookDirection(),
-            isFinalTrigger,
-            finalHash
-        );
+        context.visual.SyncTransformWithLogic();
+        context.visual.EvaluateAndPlayAnimation();
     }
 }

@@ -1,0 +1,85 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public struct ActionRequest
+{
+    public ActionDataSO actionData;
+    public PlayerState_Type targetState;
+    public ComboNode comboNode;
+    public bool isCommandAction;
+}
+
+public class ActionResolver
+{
+    private CommandListSO commandList;
+    private ComboTreeSO comboTree;
+
+    public void Initialize(CommandListSO cmds, ComboTreeSO combos)
+    {
+        commandList = cmds;
+        comboTree = combos;
+    }
+
+    public ActionRequest? EvaluateInput(InputBuffer inputBuffer, InputFlags currentInput, InputFlags newlyPressedFlags, int currentFrame, PlayerState_Type currentState, List<InputFlags> currentComboSequence)
+    {
+        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
+        
+        if (matchedCommand != null)
+        {
+            inputBuffer.Clear();
+            return new ActionRequest 
+            { 
+                actionData = matchedCommand.actionData, 
+                targetState = matchedCommand.targetState,
+                comboNode = null,
+                isCommandAction = true 
+            };
+        }
+
+        InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
+        InputFlags newlyPressedAttack = newlyPressedFlags & attackMask;
+
+        if (newlyPressedAttack != InputFlags.None)
+        {
+            InputFlags directionMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
+            InputFlags combinedInput = newlyPressedAttack | (currentInput & directionMask);
+
+            bool isAttacking = currentState == PlayerState_Type.Attacking;
+            bool isComboActive = currentComboSequence != null && currentComboSequence.Count > 0;
+
+            if (isAttacking && isComboActive)
+            {
+                List<InputFlags> testSequence = new List<InputFlags>(currentComboSequence);
+                testSequence.Add(combinedInput);
+                
+                ComboNode nextCombo = comboTree != null ? comboTree.GetNodeFromSequence(testSequence) : null;
+                if (nextCombo != null)
+                {
+                    return new ActionRequest 
+                    { 
+                        actionData = nextCombo.actionData, 
+                        targetState = PlayerState_Type.Attacking,
+                        comboNode = nextCombo,
+                        isCommandAction = false 
+                    };
+                }
+                
+                return null;
+            }
+            
+            ComboNode firstCombo = comboTree != null ? comboTree.FindBestMatchNode(comboTree.startingAttacks, combinedInput) : null;
+            if (firstCombo != null)
+            {
+                return new ActionRequest 
+                { 
+                    actionData = firstCombo.actionData, 
+                    targetState = PlayerState_Type.Attacking,
+                    comboNode = firstCombo,
+                    isCommandAction = false 
+                };
+            }
+        }
+
+        return null;
+    }
+}

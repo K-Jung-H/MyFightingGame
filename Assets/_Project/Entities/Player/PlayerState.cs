@@ -8,5 +8,8 @@ public enum PlayerState_Type
     Running,
     Sprinting,
     Attacking,
-    Hit,
+    StandHit,
+    AirHit,
+    Knockdown,
+    WakeUp
 }

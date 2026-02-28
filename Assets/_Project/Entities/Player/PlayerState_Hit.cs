@@ -1,56 +1,128 @@
 using UnityEngine;
 
-
-
-public class HitState : PlayerStateBase
+public abstract class HitStateBase : PlayerStateBase
 {
-    private HurtInfo currentHurtInfo;
+    protected HurtInfo currentHurtInfo;
 
-    public HitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
-
-    public override PlayerState_Type GetStateType() => PlayerState_Type.Hit;
+    public HitStateBase(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override void Enter()
     {
         currentHurtInfo = stateMachine.GetCurrentHurtInfo();
         
         stateMachine.ClearComboSequence();
-        stateMachine.ClearCurrentCommand();
+        stateMachine.ClearCurrentAction();
+        stateMachine.ClearInputBuffer();
+    }
+}
 
-        switch (currentHurtInfo.targetHurtState)
+public class StandHitState : HitStateBase
+{
+    public StandHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.StandHit;
+
+    public override void Enter()
+    {
+        base.Enter();
+        
+        bool isGuardHit = currentHurtInfo.targetHurtState == HurtState_Type.GuardHit;
+        float pushbackMultiplier = isGuardHit ? 0.5f : 1.0f;
+        
+        Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
+        horizontalPushback.y = 0f;
+        stateMachine.ApplyPushback(horizontalPushback * pushbackMultiplier);
+    }
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        int currentFrame = stateMachine.GetStateFrameCounter();
+        bool isStunCompleted = currentFrame >= currentHurtInfo.hurtStunFrames;
+        
+        if (isStunCompleted)
         {
-            case HurtState_Type.StandHit:
-            case HurtState_Type.KnockDown:
-            case HurtState_Type.GroundHit:
-                stateMachine.ApplyPushback(currentHurtInfo.pushbackVector);
-                break;
-            case HurtState_Type.AirHit:
-                
-                break;
-            case HurtState_Type.GuardHit:
-                stateMachine.ApplyPushback(currentHurtInfo.pushbackVector * 0.5f);
-                break;
+            stateMachine.TransitionTo(PlayerState_Type.Idle);
+        }
+    }
+}
+
+public class AirHitState : HitStateBase
+{
+    public AirHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.AirHit;
+
+    public override void Enter()
+    {
+        base.Enter();
+        
+        Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
+        horizontalPushback.y = 0f;
+        stateMachine.ApplyPushback(horizontalPushback);
+    }
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        Vector3 currentPos = stateMachine.GetPosition();
+        float currentYVelocity = stateMachine.GetYVelocity();
+        
+        bool isGrounded = currentPos.y <= 0f && currentYVelocity <= 0f;
+        if (isGrounded)
+        {
+            stateMachine.TransitionTo(PlayerState_Type.Knockdown);
+        }
+    }
+}
+
+public class KnockdownState : HitStateBase
+{
+    private int knockdownFrames = 30;
+
+    public KnockdownState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Knockdown;
+
+    public override void Enter()
+    {
+        base.Enter();
+        
+        bool isFromStand = stateMachine.GetPosition().y <= 0f;
+        if (isFromStand)
+        {
+            Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
+            horizontalPushback.y = 0f;
+            stateMachine.ApplyPushback(horizontalPushback);
         }
     }
 
     public override void UpdateTick(PlayerInput input)
     {
-        if (currentHurtInfo.targetHurtState == HurtState_Type.AirHit)
+        int currentFrame = stateMachine.GetStateFrameCounter();
+        bool isKnockdownCompleted = currentFrame >= knockdownFrames;
+        
+        if (isKnockdownCompleted)
         {
-            
+            stateMachine.TransitionTo(PlayerState_Type.WakeUp);
         }
+    }
+}
 
-        if (stateMachine.GetStateFrameCounter() >= currentHurtInfo.hurtStunFrames)
+public class WakeUpState : HitStateBase
+{
+    private int wakeupFrames = 20;
+
+    public WakeUpState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.WakeUp;
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        int currentFrame = stateMachine.GetStateFrameCounter();
+        bool isWakeUpCompleted = currentFrame >= wakeupFrames;
+        
+        if (isWakeUpCompleted)
         {
-            if (currentHurtInfo.isHardKnockdown || currentHurtInfo.targetHurtState == HurtState_Type.KnockDown)
-            {
-                
-                stateMachine.TransitionTo(PlayerState_Type.Idle);
-            }
-            else
-            {
-                stateMachine.TransitionTo(PlayerState_Type.Idle);
-            }
+            stateMachine.TransitionTo(PlayerState_Type.Idle);
         }
     }
 }

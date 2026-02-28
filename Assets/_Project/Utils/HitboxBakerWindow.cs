@@ -384,9 +384,6 @@ public class HitboxBakerWindow : EditorWindow
         }
     }
 
-    /// <summary>
-    /// 캐릭터 하위에 배치된 HitboxMarker 컴포넌트들을 탐색하여 ActionDataSO의 HitboxEvent 배열로 직렬화합니다.
-    /// </summary>
     private void BakeHitboxData()
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;

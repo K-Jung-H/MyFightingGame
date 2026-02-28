@@ -11,9 +11,9 @@ public class DebugHUD : MonoBehaviour
     private Queue<string> p2InputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
 
-    private bool showServer = true;
-    private bool showP1 = true;
-    private bool showP2 = true;
+    private bool isShowServer = true;
+    private bool isShowP1 = true;
+    private bool isShowP2 = true;
 
     private void Start()
     {
@@ -22,8 +22,11 @@ public class DebugHUD : MonoBehaviour
 
     private void TryConnectStateMachines()
     {
-        if (p1StateMachine != null && p2StateMachine != null) return;
-        if (gameLoopManager == null) return;
+        bool isAlreadyConnected = p1StateMachine != null && p2StateMachine != null;
+        if (isAlreadyConnected) return;
+        
+        bool isManagerMissing = gameLoopManager == null;
+        if (isManagerMissing) return;
         
         if (p1StateMachine == null)
         {
@@ -36,25 +39,28 @@ public class DebugHUD : MonoBehaviour
         }
     }
 
+
     private void OnGUI()
     {
-        if (gameLoopManager == null) return;
+        bool isManagerMissing = gameLoopManager == null;
+        if (isManagerMissing) return;
 
-        if (p1StateMachine == null || p2StateMachine == null)
+        bool isAnyStateMachineMissing = p1StateMachine == null || p2StateMachine == null;
+        if (isAnyStateMachineMissing)
         {
             TryConnectStateMachines();
         }
 
         float currentY = 10f;
 
-        string serverTitle = showServer ? "▼ Server Status" : "▶ Server Status";
+        string serverTitle = isShowServer ? "▼ Server Status" : "▶ Server Status";
         if (GUI.Button(new Rect(10, currentY, 280, 20), serverTitle))
         {
-            showServer = !showServer;
+            isShowServer = !isShowServer;
         }
         currentY += 20f;
 
-        if (showServer)
+        if (isShowServer)
         {
             GUI.Box(new Rect(10, currentY, 280, 110), "");
             GUI.Label(new Rect(20, currentY + 10, 260, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
@@ -71,14 +77,14 @@ public class DebugHUD : MonoBehaviour
 
         if (p1StateMachine != null)
         {
-            string p1Title = showP1 ? "▼ P1 Input & Combo Debug" : "▶ P1 Input & Combo Debug";
+            string p1Title = isShowP1 ? "▼ P1 Input & Action Debug" : "▶ P1 Input & Action Debug";
             if (GUI.Button(new Rect(10, currentY, 280, 20), p1Title))
             {
-                showP1 = !showP1;
+                isShowP1 = !isShowP1;
             }
             currentY += 20f;
 
-            if (showP1)
+            if (isShowP1)
             {
                 currentY = DrawInputDebugContent(p1StateMachine, p1InputLogQueue, currentY);
             }
@@ -90,14 +96,14 @@ public class DebugHUD : MonoBehaviour
 
         if (p2StateMachine != null)
         {
-            string p2Title = showP2 ? "▼ P2 Input & Combo Debug" : "▶ P2 Input & Combo Debug";
+            string p2Title = isShowP2 ? "▼ P2 Input & Action Debug" : "▶ P2 Input & Action Debug";
             if (GUI.Button(new Rect(10, currentY, 280, 20), p2Title))
             {
-                showP2 = !showP2;
+                isShowP2 = !isShowP2;
             }
             currentY += 20f;
 
-            if (showP2)
+            if (isShowP2)
             {
                 currentY = DrawInputDebugContent(p2StateMachine, p2InputLogQueue, currentY);
             }
@@ -106,45 +112,56 @@ public class DebugHUD : MonoBehaviour
 
     private float DrawInputDebugContent(PlayerStateMachine sm, Queue<string> logQueue, float startY)
     {
-        float panelHeight = 310f;
+        float panelHeight = 350f;
         GUI.Box(new Rect(10, startY, 280, panelHeight), "");
 
         InputFlags currentHold = sm.currentInput.flags;
         GUI.Label(new Rect(20, startY + 10, 260, 20), $"[Current Hold]: {InputFlagsToString(currentHold)}");
 
+        ActionDataSO currentAction = sm.GetCurrentActionData();
+        string actionName = currentAction != null ? currentAction.animationStateName : "None";
+        GUI.Label(new Rect(20, startY + 35, 260, 20), $"[Current Action]: {actionName}");
+
         InputFlags keyDown = sm.GetKeyDownFlags();
-        if (keyDown != InputFlags.None)
+        bool hasNewInput = keyDown != InputFlags.None;
+        if (hasNewInput)
         {
             string logEntry = $"Tick {gameLoopManager.GetCurrentTick(),-5} | {InputFlagsToString(keyDown)}";
             logQueue.Enqueue(logEntry);
 
-            if (logQueue.Count > maxLogCount)
+            bool isQueueFull = logQueue.Count > maxLogCount;
+            if (isQueueFull)
             {
                 logQueue.Dequeue();
             }
         }
 
-        GUI.Label(new Rect(20, startY + 40, 260, 20), "--- Input Key Log ---");
+        GUI.Label(new Rect(20, startY + 65, 260, 20), "--- Input Key Log ---");
 
-        float yOffset = startY + 60;
+        float yOffset = startY + 85;
         foreach (string log in logQueue)
         {
             GUI.Label(new Rect(20, yOffset, 260, 20), log);
             yOffset += 15;
         }
 
-        yOffset = startY + 220;
+        yOffset = startY + 245;
         GUI.Label(new Rect(20, yOffset, 260, 20), "--- Active Combo Sequence ---");
         yOffset += 20;
 
         List<InputFlags> comboSeq = sm.GetComboSequence();
         List<string> formattedCombo = new List<string>();
-        foreach (var flag in comboSeq)
+        
+        bool hasComboSequence = comboSeq != null && comboSeq.Count > 0;
+        if (hasComboSequence)
         {
-            formattedCombo.Add(InputFlagsToString(flag));
+            foreach (var flag in comboSeq)
+            {
+                formattedCombo.Add(InputFlagsToString(flag));
+            }
         }
         
-        string comboString = formattedCombo.Count > 0 ? string.Join(" -> ", formattedCombo) : "Empty (Idle/Broken)";
+        string comboString = hasComboSequence ? string.Join(" -> ", formattedCombo) : "Empty (Idle/Broken)";
 
         GUIStyle multilineStyle = new GUIStyle(GUI.skin.label);
         multilineStyle.wordWrap = true;
@@ -155,38 +172,45 @@ public class DebugHUD : MonoBehaviour
 
     private string InputFlagsToString(InputFlags flags)
     {
-        if (flags == InputFlags.None) return "None";
+        bool isEmpty = flags == InputFlags.None;
+        if (isEmpty) return "None";
 
         string dirStr = "";
-        bool up = (flags & InputFlags.Up) != 0;
-        bool down = (flags & InputFlags.Down) != 0;
-        bool left = (flags & InputFlags.Left) != 0;
-        bool right = (flags & InputFlags.Right) != 0;
+        bool isUp = (flags & InputFlags.Up) != 0;
+        bool isDown = (flags & InputFlags.Down) != 0;
+        bool isLeft = (flags & InputFlags.Left) != 0;
+        bool isRight = (flags & InputFlags.Right) != 0;
 
-        if (up && down) dirStr = "↕";
-        else if (left && right) dirStr = "↔";
-        else if (up && right) dirStr = "↗";
-        else if (up && left) dirStr = "↖";
-        else if (down && right) dirStr = "↘";
-        else if (down && left) dirStr = "↙";
-        else if (up) dirStr = "↑";
-        else if (down) dirStr = "↓";
-        else if (left) dirStr = "←";
-        else if (right) dirStr = "→";
+        if (isUp && isDown) dirStr = "↕";
+        else if (isLeft && isRight) dirStr = "↔";
+        else if (isUp && isRight) dirStr = "↗";
+        else if (isUp && isLeft) dirStr = "↖";
+        else if (isDown && isRight) dirStr = "↘";
+        else if (isDown && isLeft) dirStr = "↙";
+        else if (isUp) dirStr = "↑";
+        else if (isDown) dirStr = "↓";
+        else if (isLeft) dirStr = "←";
+        else if (isRight) dirStr = "→";
 
         string atkStr = "";
-        if ((flags & InputFlags.LightAttack) != 0) atkStr += "L";
-        if ((flags & InputFlags.HeavyAttack) != 0) atkStr += (atkStr.Length > 0 ? " + R" : "R");
+        bool isLight = (flags & InputFlags.LightAttack) != 0;
+        bool isHeavy = (flags & InputFlags.HeavyAttack) != 0;
 
-        if (!string.IsNullOrEmpty(dirStr) && !string.IsNullOrEmpty(atkStr))
+        if (isLight) atkStr += "L";
+        if (isHeavy) atkStr += (atkStr.Length > 0 ? " + R" : "R");
+
+        bool hasDirection = !string.IsNullOrEmpty(dirStr);
+        bool hasAttack = !string.IsNullOrEmpty(atkStr);
+
+        if (hasDirection && hasAttack)
         {
             return $"{dirStr} + {atkStr}";
         }
-        else if (!string.IsNullOrEmpty(dirStr))
+        else if (hasDirection)
         {
             return dirStr;
         }
-        else if (!string.IsNullOrEmpty(atkStr))
+        else if (hasAttack)
         {
             return atkStr;
         }

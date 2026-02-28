@@ -13,7 +13,7 @@ public enum Hurtbox_Type
     Crouching,
     Airborne,
     Invincible,
-}
+} 
 
 public enum Attack_Type
 {
