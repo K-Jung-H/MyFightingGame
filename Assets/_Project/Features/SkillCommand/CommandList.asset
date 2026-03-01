@@ -56,5 +56,5 @@ MonoBehaviour:
       isExactMatchRequired: 0
     timeWindowFrames: 60
     targetState: 5
-    validStates: 0000000002000000
+    validStates: 000000000200000005000000
     actionData: {fileID: 11400000, guid: 5a5fe94b6f07c19468c02b1c3a0530f5, type: 2}

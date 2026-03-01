@@ -9,6 +9,7 @@ public class PlayerSessionContext
     public CommandListSO commandList;
     public ComboTreeSO comboTree;
     public HitAnimationMapSO hitAnimMap;
+    public EffectTableSO effectTable;
     [HideInInspector] public PlayerStateMachine stateMachine;
 }
 
@@ -34,12 +35,10 @@ public class GameLoopManager : MonoBehaviour
     public PlayerStateMachine GetPlayerOneStateMachine() => playerOne.stateMachine;
     public PlayerStateMachine GetPlayerTwoStateMachine() => playerTwo.stateMachine;
 
-
     private void Awake()
     {
         InitializePlayers();
     }
-
 
     private void InitializePlayers()
     {
@@ -51,8 +50,7 @@ public class GameLoopManager : MonoBehaviour
             playerOne.stateMachine = new PlayerStateMachine();
             playerOne.stateMachine.Initialize(new Vector3(-2, 0, 0), playerOne.config, playerOne.commandList, playerOne.comboTree);
             playerOne.stateMachine.SetGlobalGravity(globalGravity);
-            
-            playerOne.visual.InitializeVisual(playerOne.stateMachine, playerOne.hitAnimMap);
+            playerOne.visual.InitializeVisual(playerOne.stateMachine, playerOne.hitAnimMap, playerOne.effectTable);            
         }
 
         bool hasPlayerTwoVisual = playerTwo.visual != null;
@@ -61,8 +59,7 @@ public class GameLoopManager : MonoBehaviour
             playerTwo.stateMachine = new PlayerStateMachine();
             playerTwo.stateMachine.Initialize(new Vector3(2, 0, 0), playerTwo.config, playerTwo.commandList, playerTwo.comboTree);
             playerTwo.stateMachine.SetGlobalGravity(globalGravity);
-            
-            playerTwo.visual.InitializeVisual(playerTwo.stateMachine, playerTwo.hitAnimMap);
+            playerTwo.visual.InitializeVisual(playerTwo.stateMachine, playerTwo.hitAnimMap, playerTwo.effectTable);            
         }
 
         bool hasBothStateMachines = playerOne.stateMachine != null && playerTwo.stateMachine != null;
@@ -75,7 +72,6 @@ public class GameLoopManager : MonoBehaviour
         currentTick = 0;
         isSimulationRunning = true;
     }
-
 
     private void Update()
     {
@@ -91,7 +87,6 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-
     private void FixedUpdate()
     {
         if (isSimulationRunning)
@@ -100,7 +95,6 @@ public class GameLoopManager : MonoBehaviour
         }
     }
     
-
     private void RunTick()
     {
         bool isPlayerOneValid = playerOne.stateMachine != null;
@@ -117,8 +111,8 @@ public class GameLoopManager : MonoBehaviour
             playerTwo.stateMachine.UpdateTick(p2Input);
         }
 
-        ResolveAttacks(playerOne.stateMachine, playerTwo.stateMachine);
-        ResolveAttacks(playerTwo.stateMachine, playerOne.stateMachine);
+        ResolveAttacks(playerOne, playerTwo);
+        ResolveAttacks(playerTwo, playerOne);
 
         ResolvePlayerCollision();
 
@@ -126,7 +120,6 @@ public class GameLoopManager : MonoBehaviour
 
         currentTick++;
     }
-
 
     public void DebugDealDamageToBoth()
     {
@@ -148,9 +141,11 @@ public class GameLoopManager : MonoBehaviour
         Debug.Log("[Debug] 양 플레이어에게 1 데미지를 가했습니다.");
     }
 
-
-    private void ResolveAttacks(PlayerStateMachine attacker, PlayerStateMachine defender)
+    private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
     {
+        PlayerStateMachine attacker = attackerContext.stateMachine;
+        PlayerStateMachine defender = defenderContext.stateMachine;
+
         bool isNotAttacking = attacker.GetCurrentState() != PlayerState_Type.Attacking;
         if (isNotAttacking) return;
         
@@ -164,7 +159,7 @@ public class GameLoopManager : MonoBehaviour
         bool isHit = HitboxManager.EvaluateHit(
             attacker.GetPosition(), attacker.GetLookDirection(), attackerAction.frameData.hitboxEvents, attacker.GetStateFrameCounter(),
             defender.GetPosition(), defender.GetLookDirection(), defenderBoxes,
-            out HitboxEvent hitEvent, out string debugReason
+            out HitboxEvent hitEvent, out Vector3 hitPoint, out string debugReason
         );
 
         if (!isHit) return;
@@ -192,13 +187,18 @@ public class GameLoopManager : MonoBehaviour
             
             defender.ApplyHit(hurtInfo);
 
+            bool hasDefenderVisual = defenderContext.visual != null;
+            if (hasDefenderVisual)
+            {
+                defenderContext.visual.PlayHitSpark(hitPoint, EffectType.Hit);
+            }
+
             string attackerName = attacker == playerOne.stateMachine ? "Player 1" : "Player 2";
             string defenderName = defender == playerOne.stateMachine ? "Player 1" : "Player 2";
             Debug.Log($"[Hit 성공] {attackerName} -> {defenderName} | Damage: {hitEvent.damage} | Pushback: {worldPushback}");
         }
     }
     
-
     private float GetPushbackWeight(PlayerState_Type state)
     {
         switch (state)
@@ -211,7 +211,6 @@ public class GameLoopManager : MonoBehaviour
             default: return 1.0f;
         }
     }
-
 
     private void ResolvePlayerCollision()
     {
@@ -255,13 +254,11 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-
     private void SyncVisuals()
     {
         UpdatePlayerVisual(playerOne);
         UpdatePlayerVisual(playerTwo);
     }
-
 
     private void UpdatePlayerVisual(PlayerSessionContext context)
     {

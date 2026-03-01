@@ -4,14 +4,13 @@ public class CharacterVisual : MonoBehaviour
 {
     [SerializeField] private Animator characterAnimator;
     
+    private EffectTableSO effectTable;
     private PlayerStateMachine logicMachine;
     private HitAnimationMapSO hitAnimMap;
-    
     private Vector3 targetPosition;
     private float targetSpeed;
     private Vector3 targetDirection;
     private Vector3 targetLookDirection;
-    
     private float currentSpeed;
     private Vector3 currentDirection;
     private PlayerState_Type previousState;
@@ -21,11 +20,68 @@ public class CharacterVisual : MonoBehaviour
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
     private static readonly int LocomotionHash = Animator.StringToHash("Move Blend Tree");
 
-    public void InitializeVisual(PlayerStateMachine stateMachine, HitAnimationMapSO hitMap)
+    public void InitializeVisual(PlayerStateMachine stateMachine, HitAnimationMapSO hitMap, EffectTableSO fxTable)
     {
         logicMachine = stateMachine;
         hitAnimMap = hitMap;
+        effectTable = fxTable;
         previousState = (PlayerState_Type)(-1);
+    }
+
+    public void PlayHitSpark(Vector3 hitPosition, EffectType effectType)
+    {
+        VfxClipSO resolvedClip = effectTable != null ? effectTable.GetClip(effectType) : null;
+        
+        bool isClipValid = resolvedClip != null;
+        if (isClipValid)
+        {
+            VfxManager.Instance.SpawnVfxAtPosition(resolvedClip, hitPosition, Quaternion.identity);
+        }
+    }
+
+    private void EvaluateVfxEvents()
+    {
+        ActionDataSO currentAction = logicMachine.GetCurrentActionData();
+        bool isActionInvalid = currentAction == null || currentAction.frameData.vfxEvents == null;
+        if (isActionInvalid) return;
+
+        int currentFrame = logicMachine.GetStateFrameCounter();
+
+        foreach (var vfxEvent in currentAction.frameData.vfxEvents)
+        {
+            bool isWithinRange = currentFrame >= vfxEvent.startFrame && currentFrame <= vfxEvent.endFrame;
+            if (!isWithinRange) continue;
+
+            bool isSpawnFrame = false;
+            bool isSingleSpawn = vfxEvent.intervalFrames <= 0;
+            
+            if (isSingleSpawn)
+            {
+                isSpawnFrame = currentFrame == vfxEvent.startFrame;
+            }
+            else
+            {
+                isSpawnFrame = (currentFrame - vfxEvent.startFrame) % vfxEvent.intervalFrames == 0;
+            }
+
+            if (isSpawnFrame)
+            {
+                Transform targetBoneTransform = characterAnimator.GetBoneTransform(vfxEvent.targetBone);
+                VfxClipSO resolvedClip = effectTable != null ? effectTable.GetClip(vfxEvent.effectType) : null;
+                
+                bool isSpawnValid = targetBoneTransform != null && resolvedClip != null;
+                if (isSpawnValid)
+                {
+                    VfxManager.Instance.SpawnVfx(
+                        resolvedClip, 
+                        targetBoneTransform, 
+                        vfxEvent.localPositionOffset, 
+                        vfxEvent.localRotationOffset, 
+                        vfxEvent.isAttached
+                    );
+                }
+            }
+        }
     }
 
     public void SyncTransformWithLogic()
@@ -71,6 +127,7 @@ public class CharacterVisual : MonoBehaviour
             EvaluateLocomotionTransition(currentState);
         }
 
+        EvaluateVfxEvents();
         previousState = currentState;
     }
 
@@ -123,7 +180,6 @@ public class CharacterVisual : MonoBehaviour
         UpdateTransformInterpolation();
         UpdateAnimatorParameters();
     }
-
 
     private void UpdateTransformInterpolation()
     {

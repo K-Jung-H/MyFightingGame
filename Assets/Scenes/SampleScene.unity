@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 22342366}
   - component: {fileID: 22342365}
+  - component: {fileID: 22342369}
   - component: {fileID: 22342367}
   - component: {fileID: 22342368}
   m_Layer: 0
@@ -151,14 +152,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLoopManager
   playerCollisionMinDistance: 0.5
-  playerOneVisual: {fileID: 1539925870}
-  playerOneConfig: {fileID: 11400000, guid: 3324a99563dec5842a0cfba64ee8b9f6, type: 2}
-  playerOneCommandList: {fileID: 11400000, guid: deca9db8dc2a52f478ef0000d9ea5be3, type: 2}
-  playerOneComboTree: {fileID: 11400000, guid: 5d8a68aeb155ca2479d75df127820332, type: 2}
-  playerTwoVisual: {fileID: 159340130}
-  playerTwoConfig: {fileID: 11400000, guid: 3324a99563dec5842a0cfba64ee8b9f6, type: 2}
-  playerTwoCommandList: {fileID: 11400000, guid: deca9db8dc2a52f478ef0000d9ea5be3, type: 2}
-  playerTwoComboTree: {fileID: 11400000, guid: 5d8a68aeb155ca2479d75df127820332, type: 2}
+  globalGravity: 0.02
+  playerOne:
+    visual: {fileID: 1539925870}
+    config: {fileID: 11400000, guid: 3324a99563dec5842a0cfba64ee8b9f6, type: 2}
+    commandList: {fileID: 11400000, guid: deca9db8dc2a52f478ef0000d9ea5be3, type: 2}
+    comboTree: {fileID: 11400000, guid: 5d8a68aeb155ca2479d75df127820332, type: 2}
+    hitAnimMap: {fileID: 11400000, guid: 505fecc67e461774987ced02e962f291, type: 2}
+    effectTable: {fileID: 11400000, guid: 464905bbbcf2d5b45b6727cac135a594, type: 2}
+  playerTwo:
+    visual: {fileID: 159340130}
+    config: {fileID: 11400000, guid: 3324a99563dec5842a0cfba64ee8b9f6, type: 2}
+    commandList: {fileID: 11400000, guid: deca9db8dc2a52f478ef0000d9ea5be3, type: 2}
+    comboTree: {fileID: 11400000, guid: 5d8a68aeb155ca2479d75df127820332, type: 2}
+    hitAnimMap: {fileID: 11400000, guid: 505fecc67e461774987ced02e962f291, type: 2}
+    effectTable: {fileID: 11400000, guid: 464905bbbcf2d5b45b6727cac135a594, type: 2}
 --- !u!4 &22342366
 Transform:
   m_ObjectHideFlags: 0
@@ -205,6 +213,18 @@ MonoBehaviour:
   isShowingHurtboxes: 1
   isShowingHitboxes: 1
   isShowingLookDirection: 1
+--- !u!114 &22342369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 22342364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e319ee59388f5d4b9b5a04346b73847, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VfxManager
 --- !u!1001 &55966774
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2241,7 +2261,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 565565345305412937, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -2.1262228
+      value: -2.1262548
       objectReference: {fileID: 0}
     - target: {fileID: 565565345305412937, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -2249,7 +2269,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 565565345305412937, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -85.09473
+      value: -85.09478
       objectReference: {fileID: 0}
     - target: {fileID: 3696589395679296280, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_Controller
@@ -2269,15 +2289,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5109099773099825639, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -2.1262088
+      value: -2.126207
       objectReference: {fileID: 0}
     - target: {fileID: 5109099773099825639, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -0.000012708631
+      value: 0.00006664023
       objectReference: {fileID: 0}
     - target: {fileID: 5109099773099825639, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 85.09473
+      value: 85.09474
       objectReference: {fileID: 0}
     - target: {fileID: 7326442542357897570, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2330,9 +2350,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4114902878597120824, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2092927731}
+    - targetCorrespondingSourceObject: {fileID: 4114902878597120824, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2092927733}
     - targetCorrespondingSourceObject: {fileID: 2937025032674906830, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1763382103}
+    - targetCorrespondingSourceObject: {fileID: 2937025032674906830, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1763382105}
   m_SourcePrefab: {fileID: 100100000, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
 --- !u!4 &1706213103 stripped
 Transform:
@@ -2372,6 +2398,25 @@ MonoBehaviour:
   isHardKnockdown: 0
   boxExtents: {x: 0.1, y: 0.1, z: 0.1}
   currentPreviewFrame: 0
+--- !u!114 &1763382105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1763382101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1812eb6f2667f045a0156b9f6ed5305, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VfxMarker
+  recordStartFrame: 0
+  recordEndFrame: 28
+  intervalFrames: 5
+  effectType: 1
+  targetBone: 18
+  isAttached: 0
+  currentPreviewFrame: 0
 --- !u!1 &2092927729 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4114902878597120824, guid: c73a0a72483e00b4f8e6a2728f9ebcf0, type: 3}
@@ -2399,6 +2444,25 @@ MonoBehaviour:
   localPushbackVector: {x: 0, y: 0, z: 0}
   isHardKnockdown: 0
   boxExtents: {x: 0.1, y: 0.1, z: 0.1}
+  currentPreviewFrame: 0
+--- !u!114 &2092927733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2092927729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1812eb6f2667f045a0156b9f6ed5305, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VfxMarker
+  recordStartFrame: 0
+  recordEndFrame: 28
+  intervalFrames: 5
+  effectType: 2
+  targetBone: 17
+  isAttached: 0
   currentPreviewFrame: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

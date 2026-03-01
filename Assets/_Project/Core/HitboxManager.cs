@@ -1,12 +1,14 @@
 using UnityEngine;
+
 public static class HitboxManager
 {
     public static bool EvaluateHit(
         Vector3 attackerPos, Vector3 attackerDir, HitboxEvent[] hitboxEvents, int attackerFrame,
         Vector3 defenderPos, Vector3 defenderDir, CollisionBox[] defenderHurtboxes,
-        out HitboxEvent successfulHit, out string debugReason)
+        out HitboxEvent successfulHit, out Vector3 hitPoint, out string debugReason)
     {
         successfulHit = default;
+        hitPoint = Vector3.zero;
         debugReason = string.Empty;
 
         if (defenderHurtboxes == null || defenderHurtboxes.Length == 0)
@@ -47,6 +49,9 @@ public static class HitboxManager
                     if (CheckOBBIntersection(worldCenterA, attackBox.extents, rotA, worldCenterB, defenderHurtboxes[i].extents, rotB))
                     {
                         successfulHit = evt;
+                        Bounds boundsA = new Bounds(worldCenterA, attackBox.extents * 2f);
+                        Bounds boundsB = new Bounds(worldCenterB, defenderHurtboxes[i].extents * 2f);
+                        hitPoint = CalculateIntersectionCenter(boundsA, boundsB);
                         return true;
                     }
                     else
@@ -67,6 +72,13 @@ public static class HitboxManager
         }
 
         return false;
+    }
+
+    private static Vector3 CalculateIntersectionCenter(Bounds boxA, Bounds boxB)
+    {
+        Vector3 minIntersection = Vector3.Max(boxA.min, boxB.min);
+        Vector3 maxIntersection = Vector3.Min(boxA.max, boxB.max);
+        return (minIntersection + maxIntersection) * 0.5f;
     }
 
     private static bool TryGetActiveAttackBox(HitboxEvent hitboxEvent, int currentActionFrame, out CollisionBox activeBox)

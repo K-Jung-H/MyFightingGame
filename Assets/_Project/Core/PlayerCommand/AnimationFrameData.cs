@@ -30,6 +30,14 @@ public enum HurtState_Type
     GuardHit
 }
 
+public enum EffectType
+{
+    None = 0,
+    Hit,
+    ChargeSparkLight,
+    ChargeSparkHeavy,
+}
+
 [System.Serializable]
 public struct HurtboxPreset
 {
@@ -60,6 +68,19 @@ public struct HitboxEvent
 }
 
 [System.Serializable]
+public struct VfxEvent
+{
+    public int startFrame;
+    public int endFrame;
+    public int intervalFrames;
+    public EffectType effectType;
+    public HumanBodyBones targetBone;
+    public Vector3 localPositionOffset;
+    public Quaternion localRotationOffset;
+    public bool isAttached;
+}
+
+[System.Serializable]
 public struct ActionLogicData
 {
     public int totalFrames;
@@ -74,6 +95,7 @@ public class AnimationFrameData
     public ActionLogicData logicData;
     public HitboxEvent[] hitboxEvents;
     public HurtboxEvent[] hurtboxEvents;
+    public VfxEvent[] vfxEvents;
 }
 
 public struct HurtInfo

@@ -39,10 +39,10 @@ MonoBehaviour:
         extents: {x: 0.1, y: 0.1, z: 0.1}
       hitGroupID: 0
       attackType: 0
-      targetHurtState: 0
+      targetHurtState: 1
       damage: 50
-      hitstunFrames: 0
-      localPushbackVector: {x: 0, y: 0, z: 0}
+      hitstunFrames: 5
+      localPushbackVector: {x: 0, y: 0.5, z: 0.1}
       isHardKnockdown: 0
     - activeStartFrame: 0
       boxPath:

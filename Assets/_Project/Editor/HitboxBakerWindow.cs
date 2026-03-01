@@ -9,6 +9,8 @@ public class HitboxBakerWindow : EditorWindow
     private PlayerConfigSO playerConfig;
     private int currentPreviewFrame;
     
+    private Vector2 mainScrollPos;
+    private Vector2 vfxScrollPos;
     private Vector2 markerScrollPos;
     private Dictionary<int, bool> markerFoldoutStates = new Dictionary<int, bool>();
 
@@ -44,17 +46,33 @@ public class HitboxBakerWindow : EditorWindow
 
         if (targetCharacter != null && targetActionData != null && targetActionData.animationClip != null)
         {
+            mainScrollPos = EditorGUILayout.BeginScrollView(mainScrollPos);
+
             DrawLogicDataEditor();
             DrawHurtboxDataEditor();
             DrawHitboxMarkerEditor();
+            DrawVfxMarkerEditor();
             DrawTimelineAndPreview();
 
             EditorGUILayout.Space();
-            if (GUILayout.Button("Bake Hitbox Data", GUILayout.Height(40)))
+            if (GUILayout.Button("Bake Hitbox & VFX Data", GUILayout.Height(40)))
             {
-                BakeHitboxData();
+                ExecuteBakeProcess();
             }
+
+            EditorGUILayout.EndScrollView();
         }
+    }
+
+    private void ExecuteBakeProcess()
+    {
+        BakeHitboxData();
+        BakeVfxData();
+
+        EditorUtility.SetDirty(targetActionData);
+        AssetDatabase.SaveAssets();
+
+        Debug.Log("Successfully baked both Hitbox and VFX events.");
     }
 
     private void InitializeLogicData()
@@ -223,6 +241,51 @@ public class HitboxBakerWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
+    private void DrawVfxMarkerEditor()
+    {
+        if (targetCharacter == null) return;
+
+        VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
+        if (markers.Length == 0) return;
+
+        EditorGUILayout.Space();
+        GUILayout.Label("VFX Markers (In Character)", EditorStyles.boldLabel);
+
+        foreach (var marker in markers)
+        {
+            GUILayout.BeginVertical("box");
+            
+            EditorGUI.BeginChangeCheck();
+            
+            GUILayout.Label(marker.gameObject.name, EditorStyles.boldLabel);
+            
+            GUILayout.BeginHorizontal();
+            int start = EditorGUILayout.IntField("Start Frame", marker.recordStartFrame);
+            int end = EditorGUILayout.IntField("End Frame", marker.recordEndFrame);
+            GUILayout.EndHorizontal();
+            
+            int interval = EditorGUILayout.IntField("Interval Frames", marker.intervalFrames);
+            EffectType effect = (EffectType)EditorGUILayout.EnumPopup("Effect Type", marker.effectType);
+            HumanBodyBones bone = (HumanBodyBones)EditorGUILayout.EnumPopup("Target Bone", marker.targetBone);
+            bool attached = EditorGUILayout.Toggle("Is Attached", marker.isAttached);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(marker, "Modify VFX Marker");
+                marker.recordStartFrame = start;
+                marker.recordEndFrame = end;
+                marker.intervalFrames = interval;
+                marker.effectType = effect;
+                marker.targetBone = bone;
+                marker.isAttached = attached;
+                EditorUtility.SetDirty(marker);
+            }
+            
+            GUILayout.EndVertical();
+        }
+    }
+    
+
     private void DrawTimelineAndPreview()
     {
         EditorGUILayout.Space();
@@ -340,8 +403,14 @@ public class HitboxBakerWindow : EditorWindow
         float currentTime = currentPreviewFrame * Time.fixedDeltaTime;
         AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, currentTime);
 
-        HitboxMarker[] markers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
-        foreach (var marker in markers)
+        HitboxMarker[] hitboxMarkers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
+        foreach (var marker in hitboxMarkers)
+        {
+            marker.currentPreviewFrame = currentPreviewFrame;
+        }
+
+        VfxMarker[] vfxMarkers = targetCharacter.GetComponentsInChildren<VfxMarker>();
+        foreach (var marker in vfxMarkers)
         {
             marker.currentPreviewFrame = currentPreviewFrame;
         }
@@ -438,9 +507,35 @@ public class HitboxBakerWindow : EditorWindow
         AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, 0f);
         AnimationMode.StopAnimationMode();
 
-        EditorUtility.SetDirty(targetActionData);
-        AssetDatabase.SaveAssets();
-
         Debug.Log($"Baked {bakedEvents.Count} hitbox events successfully.");
+    }
+
+    private void BakeVfxData()
+    {
+        if (targetActionData.animationClip == null || targetCharacter == null) return;
+
+        VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
+        System.Collections.Generic.List<VfxEvent> bakedEvents = new System.Collections.Generic.List<VfxEvent>();
+
+        foreach (var marker in markers)
+        {
+            VfxEvent newEvent = new VfxEvent
+            {
+                startFrame = marker.recordStartFrame,
+                endFrame = marker.recordEndFrame,
+                intervalFrames = marker.intervalFrames,
+                effectType = marker.effectType,
+                targetBone = marker.targetBone,
+                isAttached = marker.isAttached,
+                localPositionOffset = marker.transform.localPosition,
+                localRotationOffset = marker.transform.localRotation
+            };
+
+            bakedEvents.Add(newEvent);
+        }
+
+        targetActionData.frameData.vfxEvents = bakedEvents.ToArray();
+        
+        Debug.Log($"Baked {bakedEvents.Count} VFX events successfully.");
     }
 }
