@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Punch_L_2
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 3094330708855449807, guid: 786865feb8624b243b38f3ab37c847a3, type: 3}
+  animationStateName: Punch_L_2
+  frameData:
+    logicData:
+      totalFrames: 57
+      startupFrames: 19
+      recoveryFrames: 19
+      cancelWindowStartFrame: 0
+    hitboxEvents:
+    - activeStartFrame: 12
+      boxPath:
+      - localPosition: {x: -0.43834716, y: 0.84075856, z: 1.032298}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.0026347712, y: 0.8636637, z: 1.2516131}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.39284977, y: 0.8642528, z: 1.1710707}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.5947305, y: 0.8580577, z: 0.9066289}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.606748, y: 0.8244245, z: 0.66921115}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.54061574, y: 0.77029103, z: 0.508137}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.4432189, y: 0.72266644, z: 0.39132178}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      attackType: 0
+      targetHurtState: 0
+      damage: 50
+      hitstunFrames: 0
+      localPushbackVector: {x: 0, y: 0, z: 0}
+      isHardKnockdown: 0
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: 0.38464427, y: 0.94157296, z: -0.1692326}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      attackType: 0
+      targetHurtState: 0
+      damage: 0
+      hitstunFrames: 0
+      localPushbackVector: {x: 0, y: 0, z: 0}
+      isHardKnockdown: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 57
+      hurtboxType: 0

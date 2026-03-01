@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0cd11dc4bb61ec409d6c8c4ac32e02b, type: 3}
+  m_Name: AnyaDataSO
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
+  characterPrefab: {fileID: 754209963067061744, guid: 7e84ddabb6e6c774db26e70750481933, type: 3}
+  config: {fileID: 11400000, guid: a9908e57cc83b614a876ce6e4e72fedf, type: 2}
+  commandList: {fileID: 11400000, guid: 2269ff0c1ba3857418d9baedfcfac30c, type: 2}
+  comboTree: {fileID: 11400000, guid: 9cdda9986c226c648b5230cf64a3adc8, type: 2}
+  hitAnimMap: {fileID: 11400000, guid: 256aaf2ad6fdf0f4fa2c4d9d496b60c8, type: 2}
+  effectTable: {fileID: 11400000, guid: f204c5c1282ce2941b4786430b861fb4, type: 2}

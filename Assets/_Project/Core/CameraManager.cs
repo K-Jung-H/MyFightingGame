@@ -28,6 +28,12 @@ public class CameraManager : MonoBehaviour
     private Vector3 currentVelocity;
     private Vector3 shakeOffset;
 
+    public void SetTargetPlayers(GameObject playerOne, GameObject playerTwo)
+    {
+        this.playerOne = playerOne.transform;
+        this.playerTwo = playerTwo.transform;
+    }
+
     public void TriggerEventZoom(float multiplier, float duration)
     {
         StopAllCoroutines();
@@ -64,7 +70,8 @@ public class CameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (playerOne == null || playerTwo == null) return;
+        bool isTargetMissing = playerOne == null || playerTwo == null;
+        if (isTargetMissing) return;
         
         UpdateZoomMultiplier();
         UpdateCameraTransform();
@@ -79,23 +86,22 @@ public class CameraManager : MonoBehaviour
     {
         Vector3 p1Pos = playerOne.position;
         Vector3 p2Pos = playerTwo.position;
-        Vector3 groundCenter = Vector3.Lerp(p1Pos, p2Pos, 0.5f);
-        groundCenter.y = 0; 
+        Vector3 centerPosition = Vector3.Lerp(p1Pos, p2Pos, 0.5f);
 
-        float horizontalDistance = Vector2.Distance(new Vector2(p1Pos.x, p1Pos.z), new Vector2(p2Pos.x, p2Pos.z));
+        float distance3D = Vector3.Distance(p1Pos, p2Pos);
         Vector3 viewDirection = Vector3.back;
 
-        float desiredDistance = ((horizontalDistance * zoomSensitivity) + distanceOffset) * currentZoomMultiplier;
+        float desiredDistance = ((distance3D * zoomSensitivity) + distanceOffset) * currentZoomMultiplier;
         desiredDistance = Mathf.Clamp(desiredDistance, minDistance, maxDistance);
 
-        Vector3 targetPos = groundCenter + (viewDirection * desiredDistance);
-        targetPos.y = heightOffset;
+        Vector3 targetPos = centerPosition + (viewDirection * desiredDistance);
+        targetPos.y = centerPosition.y + heightOffset;
 
         transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref currentVelocity, movementSmoothTime);
         transform.position += transform.TransformDirection(shakeOffset);
 
-        Vector3 lookAtPoint = groundCenter;
-        lookAtPoint.y = heightOffset * 0.8f; 
+        Vector3 lookAtPoint = centerPosition;
+        lookAtPoint.y = centerPosition.y + (heightOffset * 0.8f);
         
         Quaternion targetRot = Quaternion.LookRotation(lookAtPoint - transform.position);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime / rotationSmoothTime);

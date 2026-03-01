@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0cd11dc4bb61ec409d6c8c4ac32e02b, type: 3}
+  m_Name: DemoModelDataSO
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
+  characterPrefab: {fileID: 4896877537974956685, guid: 44dc44eadfb1a6f4a8c429feb00b2cab, type: 3}
+  config: {fileID: 11400000, guid: 1d264f4d6b85c024e8adc14750b06f9b, type: 2}
+  commandList: {fileID: 11400000, guid: 63f36b45f74a16543986500a13442aab, type: 2}
+  comboTree: {fileID: 11400000, guid: 5e93f2abb4735df47bd28fd07c537ec8, type: 2}
+  hitAnimMap: {fileID: 11400000, guid: 61a94a948e9723b409cc77bb27e9f6f8, type: 2}
+  effectTable: {fileID: 11400000, guid: bfa20edb8b422964c8388d6e2fad0896, type: 2}

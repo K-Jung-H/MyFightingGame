@@ -1,27 +1,33 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+
 [System.Serializable]
 public class PlayerSessionContext
 {
-    public CharacterVisual visual;
-    public PlayerConfigSO config;
-    public CommandListSO commandList;
-    public ComboTreeSO comboTree;
-    public HitAnimationMapSO hitAnimMap;
-    public EffectTableSO effectTable;
+    public CharacterDataSO characterData;
+    
+    [HideInInspector] public GameObject instance;
+    [HideInInspector] public CharacterVisual visual;
     [HideInInspector] public PlayerStateMachine stateMachine;
 }
 
 public class GameLoopManager : MonoBehaviour
 {
+    [Header("Camera Manager")]
+    [SerializeField] private CameraManager cameraManager;
+
     [Header("Global Settings")]
     [SerializeField] private float playerCollisionMinDistance = 1.0f;
     [SerializeField] private float globalGravity = 0.02f;
 
+
     [Header("Players")]
     [SerializeField] private PlayerSessionContext playerOne;
     [SerializeField] private PlayerSessionContext playerTwo;
+
+    [SerializeField] private Vector3 p1SpawnPos = new Vector3(-2, 0, 0);
+    [SerializeField] private Vector3 p2SpawnPos = new Vector3(2, 0, 0);
 
     private LocalInputProvider inputProvider;
     private int currentTick;
@@ -38,29 +44,19 @@ public class GameLoopManager : MonoBehaviour
     private void Awake()
     {
         InitializePlayers();
+        
+        if(cameraManager != null)
+        {
+            cameraManager.SetTargetPlayers(playerOne.instance, playerTwo.instance);
+        }
     }
 
     private void InitializePlayers()
     {
         inputProvider = new LocalInputProvider();
 
-        bool hasPlayerOneVisual = playerOne.visual != null;
-        if (hasPlayerOneVisual)
-        {
-            playerOne.stateMachine = new PlayerStateMachine();
-            playerOne.stateMachine.Initialize(new Vector3(-2, 0, 0), playerOne.config, playerOne.commandList, playerOne.comboTree);
-            playerOne.stateMachine.SetGlobalGravity(globalGravity);
-            playerOne.visual.InitializeVisual(playerOne.stateMachine, playerOne.hitAnimMap, playerOne.effectTable);            
-        }
-
-        bool hasPlayerTwoVisual = playerTwo.visual != null;
-        if (hasPlayerTwoVisual)
-        {
-            playerTwo.stateMachine = new PlayerStateMachine();
-            playerTwo.stateMachine.Initialize(new Vector3(2, 0, 0), playerTwo.config, playerTwo.commandList, playerTwo.comboTree);
-            playerTwo.stateMachine.SetGlobalGravity(globalGravity);
-            playerTwo.visual.InitializeVisual(playerTwo.stateMachine, playerTwo.hitAnimMap, playerTwo.effectTable);            
-        }
+        SetupPlayer(playerOne, p1SpawnPos);
+        SetupPlayer(playerTwo, p2SpawnPos);
 
         bool hasBothStateMachines = playerOne.stateMachine != null && playerTwo.stateMachine != null;
         if (hasBothStateMachines)
@@ -71,6 +67,34 @@ public class GameLoopManager : MonoBehaviour
 
         currentTick = 0;
         isSimulationRunning = true;
+    }
+
+    private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
+    {
+        bool isDataInvalid = context.characterData == null || context.characterData.characterPrefab == null;
+        if (isDataInvalid) return;
+
+        context.instance = Instantiate(context.characterData.characterPrefab, spawnPos, Quaternion.identity);
+        context.visual = context.instance.GetComponent<CharacterVisual>();
+
+        context.stateMachine = new PlayerStateMachine();
+        context.stateMachine.Initialize(
+            spawnPos, 
+            context.characterData.config, 
+            context.characterData.commandList, 
+            context.characterData.comboTree
+        );
+        context.stateMachine.SetGlobalGravity(globalGravity);
+
+        bool hasVisual = context.visual != null;
+        if (hasVisual)
+        {
+            context.visual.InitializeVisual(
+                context.stateMachine, 
+                context.characterData.hitAnimMap, 
+                context.characterData.effectTable
+            );
+        }
     }
 
     private void Update()
