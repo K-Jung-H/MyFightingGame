@@ -13,18 +13,25 @@ MonoBehaviour:
   m_Name: CommandList
   m_EditorClassIdentifier: Assembly-CSharp::CommandListSO
   commands:
+  - commandName: New Command
+    priority: 100
+    sequence:
+    - requiredFlags: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 0
+      isExactMatchRequired: 0
+    timeWindowFrames: 15
+    targetState: 0
+    validStates: 0
+    actionData: {fileID: 0}
   - commandName: Run
     priority: 50
     sequence:
     - requiredFlags: 1
       isExactMatchRequired: 0
-    - requiredFlags: 0
-      isExactMatchRequired: 0
-    - requiredFlags: 1
-      isExactMatchRequired: 0
     timeWindowFrames: 30
     targetState: 3
-    validStates: 0000000002000000
+    validStates: 2000000
     actionData: {fileID: 0}
   - commandName: Sprint
     priority: 20
@@ -41,5 +48,5 @@ MonoBehaviour:
       isExactMatchRequired: 0
     timeWindowFrames: 60
     targetState: 4
-    validStates: 000000000200000003000000
+    validStates: 555894464
     actionData: {fileID: 0}

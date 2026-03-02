@@ -13,7 +13,9 @@ public class InputBuffer
     public void AddInput(PlayerInput input)
     {
         buffer.AddFirst(input);
-        if (buffer.Count > bufferSize)
+        
+        bool isBufferOverflow = buffer.Count > bufferSize;
+        if (isBufferOverflow)
         {
             buffer.RemoveLast();
         }
@@ -26,16 +28,21 @@ public class InputBuffer
 
     public CommandDefinition CheckCommands(CommandListSO commandList, int currentFrame, PlayerState_Type currentState)
     {
-        if (commandList == null || commandList.commands == null) return null;
+        bool isListInvalid = commandList == null || commandList.commands == null;
+        if (isListInvalid) return null;
 
         foreach (var command in commandList.commands)
         {
-            if (command.validStates != null && command.validStates.Count > 0 && !command.validStates.Contains(currentState))
+            bool hasStateRestriction = command.validStates != 0;
+            bool isStateValid = (command.validStates & currentState) != 0;
+
+            if (hasStateRestriction && !isStateValid)
             {
                 continue;
             }
 
-            if (CheckSequence(command, currentFrame))
+            bool isSequenceMatched = CheckSequence(command, currentFrame);
+            if (isSequenceMatched)
             {
                 return command;
             }
@@ -43,51 +50,60 @@ public class InputBuffer
         return null;
     }
 
-private bool CheckSequence(CommandDefinition command, int currentFrame)
-{
-    if (command.sequence == null || command.sequence.Count == 0) return false;
-
-    int stepIndex = command.sequence.Count - 1;
-    int frameLimit = currentFrame - command.timeWindowFrames;
-
-    var latestInput = buffer.First.Value;
-    if (!CheckStepMatch(command.sequence[stepIndex], latestInput.flags)) return false;
-    
-    if (buffer.Count > 1)
+    private bool CheckSequence(CommandDefinition command, int currentFrame)
     {
-        var prevInput = buffer.First.Next.Value;
-        if (CheckStepMatch(command.sequence[stepIndex], prevInput.flags)) return false;
-    }
+        bool isSequenceInvalid = command.sequence == null || command.sequence.Count == 0;
+        if (isSequenceInvalid) return false;
 
-    stepIndex--; 
+        int stepIndex = command.sequence.Count - 1;
+        int frameLimit = currentFrame - command.timeWindowFrames;
 
-    foreach (var buffered in buffer)
-    {
-        if (buffered.frame < frameLimit) break;
-        if (stepIndex < 0) return true;
-
-        CommandStep currentStep = command.sequence[stepIndex];
+        var latestInput = buffer.First.Value;
+        bool isLatestMatched = CheckStepMatch(command.sequence[stepIndex], latestInput.flags);
+        if (!isLatestMatched) return false;
         
-        if (CheckStepMatch(currentStep, buffered.flags))
+        bool hasMultipleInputs = buffer.Count > 1;
+        if (hasMultipleInputs)
         {
-            stepIndex--;
+            var prevInput = buffer.First.Next.Value;
+            bool isPrevMatched = CheckStepMatch(command.sequence[stepIndex], prevInput.flags);
+            if (isPrevMatched) return false;
         }
-        else
+
+        stepIndex--; 
+
+        foreach (var buffered in buffer)
         {
-           
-            if (buffered.flags != InputFlags.None)
+            bool isTooOld = buffered.frame < frameLimit;
+            if (isTooOld) break;
+
+            bool isAllStepsMatched = stepIndex < 0;
+            if (isAllStepsMatched) return true;
+
+            CommandStep currentStep = command.sequence[stepIndex];
+            bool isCurrentStepMatched = CheckStepMatch(currentStep, buffered.flags);
+            
+            if (isCurrentStepMatched)
             {
-                CommandStep nextStep = command.sequence[stepIndex + 1];
-                if (!CheckStepMatch(nextStep, buffered.flags))
+                stepIndex--;
+            }
+            else
+            {
+                bool hasInputFlags = buffered.flags != InputFlags.None;
+                if (hasInputFlags)
                 {
-                    return false; 
+                    CommandStep nextStep = command.sequence[stepIndex + 1];
+                    bool isNextStepMatched = CheckStepMatch(nextStep, buffered.flags);
+                    if (!isNextStepMatched)
+                    {
+                        return false; 
+                    }
                 }
             }
         }
-    }
 
-    return stepIndex < 0;
-}
+        return stepIndex < 0;
+    }
 
     private bool CheckStepMatch(CommandStep step, InputFlags flags)
     {
@@ -97,7 +113,8 @@ private bool CheckSequence(CommandDefinition command, int currentFrame)
         }
         else
         {
-            if (step.requiredFlags == InputFlags.None)
+            bool isNoneRequired = step.requiredFlags == InputFlags.None;
+            if (isNoneRequired)
             {
                 return flags == InputFlags.None;
             }

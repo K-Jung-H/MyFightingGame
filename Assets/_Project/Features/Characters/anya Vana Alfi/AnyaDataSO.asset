@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0cd11dc4bb61ec409d6c8c4ac32e02b, type: 3}
   m_Name: AnyaDataSO
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
-  characterPrefab: {fileID: 754209963067061744, guid: 7e84ddabb6e6c774db26e70750481933, type: 3}
+  characterPrefab: {fileID: 8783843684990105037, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
   config: {fileID: 11400000, guid: a9908e57cc83b614a876ce6e4e72fedf, type: 2}
   commandList: {fileID: 11400000, guid: 2269ff0c1ba3857418d9baedfcfac30c, type: 2}
   comboTree: {fileID: 11400000, guid: 9cdda9986c226c648b5230cf64a3adc8, type: 2}

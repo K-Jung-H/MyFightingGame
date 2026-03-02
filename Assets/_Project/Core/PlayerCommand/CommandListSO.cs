@@ -17,8 +17,7 @@ public class CommandDefinition
     public List<CommandStep> sequence;
     public int timeWindowFrames = 15;
     public PlayerState_Type targetState;
-    public List<PlayerState_Type> validStates;
-
+    public PlayerState_Type validStates;
     public ActionDataSO actionData;
 }
 
