@@ -12,23 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d288054d920c153498d6b38cf5db3c39, type: 3}
   m_Name: Anya_ComboTree
   m_EditorClassIdentifier: Assembly-CSharp::ComboTreeSO
-  rootNodeGuids:
-  - 2a5d10e3-cce9-41d5-b6c4-b3a5061479dc
-  allNodes:
-  - nodeGuid: 2a5d10e3-cce9-41d5-b6c4-b3a5061479dc
-    requiredInput: 0
-    actionData: {fileID: 11400000, guid: f318b4dd60465874aa64dd284669b9fd, type: 2}
-    childGuids:
-    - d780cd50-75b5-44ed-95ee-cdd6c3c90e01
-    position: {x: 169.59999, y: 212.8}
-  - nodeGuid: d780cd50-75b5-44ed-95ee-cdd6c3c90e01
-    requiredInput: 1
-    actionData: {fileID: 11400000, guid: 351ab4ff9494a784bbb6fa5c3bc22ac5, type: 2}
-    childGuids:
-    - 43c36669-e28a-4fdd-a526-f04d31581d4c
-    position: {x: 501.6, y: 200}
-  - nodeGuid: 43c36669-e28a-4fdd-a526-f04d31581d4c
-    requiredInput: 8
-    actionData: {fileID: 11400000, guid: 259d46914b11fee4fa376df7c557f203, type: 2}
-    childGuids: []
-    position: {x: 415.2, y: 416.8}
+  startingAttacks:
+  - rid: 3586007766090121280
+  - rid: 3586007766090121281
+  - rid: 3586007766090121282
+  references:
+    version: 2
+    RefIds:
+    - rid: 3586007766090121280
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 0
+        actionData: {fileID: 0}
+        nextAttacks: []
+    - rid: 3586007766090121281
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 0
+        actionData: {fileID: 0}
+        nextAttacks: []
+    - rid: 3586007766090121282
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 0
+        actionData: {fileID: 0}
+        nextAttacks:
+        - rid: 3586007766090121283
+    - rid: 3586007766090121283
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 0
+        actionData: {fileID: 0}
+        nextAttacks: []

@@ -21,41 +21,45 @@ MonoBehaviour:
       recoveryFrames: 19
       cancelWindowStartFrame: 0
     hitboxEvents:
-    - activeStartFrame: 12
+    - activeStartFrame: 10
       boxPath:
-      - localPosition: {x: -0.24728176, y: 0.6490142, z: 0.07062709}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.24675836, y: 0.66785353, z: 0.3005942}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.23705633, y: 0.6365995, z: 0.59653074}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.012075849, y: 0.8141778, z: 1.037378}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.024863489, y: 0.80614746, z: 1.1194333}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.012382701, y: 0.7884902, z: 1.1447531}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.005465284, y: 0.78941214, z: 1.1566253}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      hitGroupID: 0
-      attackType: 0
-      targetHurtState: 1
-      damage: 50
-      hitstunFrames: 5
-      localPushbackVector: {x: 0, y: 0.5, z: 0.1}
-      isHardKnockdown: 0
-    - activeStartFrame: 0
-      boxPath:
-      - localPosition: {x: 0.38464442, y: 0.941573, z: -0.16923249}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.2544142, y: 0.6219932, z: -0.189383}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.29021814, y: 0.58520925, z: -0.08230187}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.29503664, y: 0.5555506, z: 0.075989544}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.27453455, y: 0.5701378, z: 0.30261844}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.22048932, y: 0.5473903, z: 0.5692383}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.0037949048, y: 0.72726244, z: 0.9080955}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.022237852, y: 0.7114099, z: 0.9740597}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.012651086, y: 0.68424374, z: 0.9954467}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.0028322227, y: 0.68812835, z: 1.0076888}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.0070886128, y: 0.6919406, z: 1.0126001}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.015681982, y: 0.694605, z: 1.010654}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.017976798, y: 0.69375724, z: 1.0038784}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.024036393, y: 0.6867785, z: 0.9895965}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.02880117, y: 0.6874819, z: 0.9759736}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
       hitGroupID: 0
       attackType: 0
       targetHurtState: 0
-      damage: 0
-      hitstunFrames: 0
-      localPushbackVector: {x: 0, y: 0, z: 0}
+      damage: 50
+      hitstunFrames: 100
+      localPushbackVector: {x: 0, y: 0, z: 0.5}
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0
       endFrame: 55
       hurtboxType: 0
+    vfxEvents: []

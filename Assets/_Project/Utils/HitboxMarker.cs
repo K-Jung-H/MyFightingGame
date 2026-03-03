@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class HitboxMarker : MonoBehaviour
 {
+    public bool isIncludeInBake = true;
+
     public int recordStartFrame;
     public int recordEndFrame;
     public int hitGroupID;
@@ -21,6 +23,8 @@ public class HitboxMarker : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        if (!isIncludeInBake) return;
+
         bool isActive = currentPreviewFrame >= recordStartFrame && currentPreviewFrame <= recordEndFrame;
 
         if (isActive)

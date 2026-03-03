@@ -6,13 +6,41 @@ public class ComboNode
 {
     public InputFlags requiredInput;
     public ActionDataSO actionData;
+    
+    [SerializeReference]
     public List<ComboNode> nextAttacks = new List<ComboNode>();
 }
 
 [CreateAssetMenu(fileName = "ComboTree", menuName = "ScriptableObjects/ComboTree")]
 public class ComboTreeSO : ScriptableObject
 {
+    [SerializeReference]
     public List<ComboNode> startingAttacks = new List<ComboNode>();
+
+    private void OnValidate()
+    {
+        HashSet<ComboNode> visitedNodes = new HashSet<ComboNode>();
+        InitializeNullNodes(startingAttacks, visitedNodes);
+    }
+
+    private void InitializeNullNodes(List<ComboNode> nodes, HashSet<ComboNode> visitedNodes)
+    {
+        if (nodes == null) return;
+
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            if (nodes[i] == null)
+            {
+                nodes[i] = new ComboNode();
+            }
+
+            if (!visitedNodes.Contains(nodes[i]))
+            {
+                visitedNodes.Add(nodes[i]);
+                InitializeNullNodes(nodes[i].nextAttacks, visitedNodes);
+            }
+        }
+    }
 
     public ComboNode GetNodeFromSequence(List<InputFlags> sequence)
     {

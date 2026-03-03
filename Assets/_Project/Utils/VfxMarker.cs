@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class VfxMarker : MonoBehaviour
 {
+    public bool isIncludeInBake = true;
+
     public int recordStartFrame;
     public int recordEndFrame;
     public int intervalFrames;
@@ -14,6 +16,8 @@ public class VfxMarker : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        if (!isIncludeInBake) return;
+
         bool isWithinRange = currentPreviewFrame >= recordStartFrame && currentPreviewFrame <= recordEndFrame;
         bool isSpawnFrame = false;
 
