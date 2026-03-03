@@ -8,6 +8,7 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private Transform playerTwo;
 
     [Header("Camera Control Settings")]
+    [SerializeField] private bool isReverseView;
     [SerializeField] private float heightOffset = 1.5f;
     [SerializeField] private float distanceOffset = 5.0f;
     [SerializeField] private float zoomSensitivity = 0.6f;
@@ -89,7 +90,7 @@ public class CameraManager : MonoBehaviour
         Vector3 centerPosition = Vector3.Lerp(p1Pos, p2Pos, 0.5f);
 
         float distance3D = Vector3.Distance(p1Pos, p2Pos);
-        Vector3 viewDirection = Vector3.back;
+        Vector3 viewDirection = isReverseView ? Vector3.forward : Vector3.back;
 
         float desiredDistance = ((distance3D * zoomSensitivity) + distanceOffset) * currentZoomMultiplier;
         desiredDistance = Mathf.Clamp(desiredDistance, minDistance, maxDistance);

@@ -117,6 +117,19 @@ public class AttackingState : PlayerStateBase
         int currentFrame = stateMachine.GetStateFrameCounter();
         int totalFrames = currentActionData.frameData.logicData.totalFrames;
 
+        bool useRootMotion = currentActionData.frameData.useRootMotion;
+        bool hasRootMotionData = currentActionData.frameData.rootMotionPath != null;
+        
+        if (useRootMotion && hasRootMotionData)
+        {
+            bool isFrameWithinBounds = currentFrame < currentActionData.frameData.rootMotionPath.Length;
+            if (isFrameWithinBounds)
+            {
+                RootMotionData rootData = currentActionData.frameData.rootMotionPath[currentFrame];
+                stateMachine.ApplyRootMotion(rootData.deltaPosition, rootData.deltaRotation);
+            }
+        }
+        
         bool isActionCompleted = currentFrame >= totalFrames;
         if (isActionCompleted)
         {

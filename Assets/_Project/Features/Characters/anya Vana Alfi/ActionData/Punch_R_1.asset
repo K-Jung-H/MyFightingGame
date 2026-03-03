@@ -19,7 +19,7 @@ MonoBehaviour:
       totalFrames: 58
       startupFrames: 19
       recoveryFrames: 20
-      cancelWindowStartFrame: 0
+      cancelWindowStartFrame: 20
     hitboxEvents:
     - activeStartFrame: 17
       boxPath:
@@ -50,7 +50,7 @@ MonoBehaviour:
       targetHurtState: 0
       damage: 50
       hitstunFrames: 100
-      localPushbackVector: {x: 0, y: 0, z: 0.5}
+      localPushbackVector: {x: 0, y: 0, z: 0.2}
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0

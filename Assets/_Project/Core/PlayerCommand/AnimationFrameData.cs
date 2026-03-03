@@ -18,7 +18,17 @@ public enum Hurtbox_Type
 public enum Attack_Type
 {
     Normal,
+    LightHit,
+    HeavyHit,
     Crash
+}
+
+[System.Serializable]
+public struct HitFeedbackData
+{
+    public Attack_Type attackType;
+    public int hitstopFrames;
+    public float cameraShakeIntensity;
 }
 
 public enum HurtState_Type
@@ -36,6 +46,13 @@ public enum EffectType
     Hit,
     ChargeSparkLight,
     ChargeSparkHeavy,
+}
+
+[System.Serializable]
+public struct RootMotionData
+{
+    public Vector3 deltaPosition;
+    public Quaternion deltaRotation;
 }
 
 [System.Serializable]
@@ -93,6 +110,9 @@ public struct ActionLogicData
 public class AnimationFrameData
 {
     public ActionLogicData logicData;
+    public bool useRootMotion;
+    public bool useRootRotation;
+    public RootMotionData[] rootMotionPath;
     public HitboxEvent[] hitboxEvents;
     public HurtboxEvent[] hurtboxEvents;
     public VfxEvent[] vfxEvents;

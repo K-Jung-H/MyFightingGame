@@ -405,7 +405,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 172659805008412858, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 172659805008412858, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordStartFrame
@@ -414,6 +414,30 @@ PrefabInstance:
     - target: {fileID: 172659805008412858, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
       value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: effectType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: intervalFrames
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 183
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: isIncludeInBake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: currentPreviewFrame
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: damage
@@ -425,27 +449,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordEndFrame
-      value: 23
+      value: 31
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: targetHurtState
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordStartFrame
-      value: 10
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 10
+      value: 31
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.z
-      value: 0.5
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 4539057961717895139, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -455,13 +479,133 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0.023443894
       objectReference: {fileID: 0}
+    - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: effectType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: intervalFrames
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 183
+      objectReference: {fileID: 0}
+    - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: isIncludeInBake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: currentPreviewFrame
+      value: 51
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: damage
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: hitstunFrames
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 183
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: isIncludeInBake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: targetHurtState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: currentPreviewFrame
+      value: 75
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.y
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: damage
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: hitstunFrames
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 183
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: isIncludeInBake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: targetHurtState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: currentPreviewFrame
+      value: 75
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.y
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: isAttached
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: intervalFrames
+      value: 31
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 31
+      objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 87
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 8263449897585667959, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -517,7 +661,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: targetHurtState
@@ -525,11 +669,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordStartFrame
-      value: 16
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 35
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.z

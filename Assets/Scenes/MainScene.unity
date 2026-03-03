@@ -152,8 +152,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLoopManager
   cameraManager: {fileID: 330585548}
-  playerCollisionMinDistance: 0.5
+  playerCollisionMinDistance: 0.25
   globalGravity: 0.02
+  hitFeedbackTable:
+  - attackType: 2
+    hitstopFrames: 10
+    cameraShakeIntensity: 0
+  - attackType: 3
+    hitstopFrames: 20
+    cameraShakeIntensity: 0
   playerOne:
     characterData: {fileID: 11400000, guid: 2a18729c9b8390a4e9f8eb076df13273, type: 2}
     instance: {fileID: 0}
@@ -198,7 +205,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 22342364}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1142a17a56e94644ba2f213cd944949, type: 3}
   m_Name: 
@@ -217,11 +224,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatDebugVisualizer
   gameLoopManager: {fileID: 22342365}
-  isShowingInSceneView: 1
-  isShowingInGameView: 1
-  isShowingHurtboxes: 1
-  isShowingHitboxes: 1
-  isShowingLookDirection: 1
+  isShowingInSceneView: 0
+  isShowingInGameView: 0
+  isShowingHurtboxes: 0
+  isShowingHitboxes: 0
+  isShowingLookDirection: 0
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

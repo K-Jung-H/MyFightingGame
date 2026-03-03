@@ -3,7 +3,6 @@ using UnityEngine;
 public class VfxMarker : MonoBehaviour
 {
     public bool isIncludeInBake = true;
-
     public int recordStartFrame;
     public int recordEndFrame;
     public int intervalFrames;

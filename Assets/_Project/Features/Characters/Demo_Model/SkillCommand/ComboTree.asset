@@ -12,4 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d288054d920c153498d6b38cf5db3c39, type: 3}
   m_Name: ComboTree
   m_EditorClassIdentifier: Assembly-CSharp::ComboTreeSO
-  startingAttacks: []
+  startingAttacks:
+  - rid: 3586007776218579009
+  references:
+    version: 2
+    RefIds:
+    - rid: 3586007776218579009
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 0
+        actionData: {fileID: 0}
+        nextAttacks: []

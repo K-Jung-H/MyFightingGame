@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class HitboxBakerWindow : EditorWindow
 {
     private GameObject targetCharacter;
+    private Transform targetRootBone;
     private ActionDataSO targetActionData;
     private PlayerConfigSO playerConfig;
     private int currentPreviewFrame;
@@ -13,15 +14,10 @@ public class HitboxBakerWindow : EditorWindow
     private Vector2 vfxScrollPos;
     private Vector2 markerScrollPos;
     private Dictionary<int, bool> markerFoldoutStates = new Dictionary<int, bool>();
+    private Dictionary<int, bool> vfxMarkerFoldoutStates = new Dictionary<int, bool>();
 
-    private bool showSettings = true;
-    private bool showLogic = true;
-    private bool showHurtbox = true;
-    private bool showHitbox = true;
-    private bool showVfx = true;
-
-    private float hitboxSectionHeight = 250f;
-    private float vfxSectionHeight = 250f;
+    private bool showHitboxMarkers = true;
+    private bool showVfxMarkers = true;
 
     [MenuItem("Tools/Hitbox Baker")]
     public static void ShowWindow()
@@ -41,70 +37,11 @@ public class HitboxBakerWindow : EditorWindow
 
     private void OnGUI()
     {
-        mainScrollPos = EditorGUILayout.BeginScrollView(mainScrollPos);
+        GUILayout.Label("Hitbox Baker Settings", EditorStyles.boldLabel);
 
-        showSettings = EditorGUILayout.Foldout(showSettings, "Hitbox Baker Settings", true, EditorStyles.foldoutHeader);
-        if (showSettings)
-        {
-            DrawSettingsEditor();
-        }
-
-        if (targetCharacter != null && targetActionData != null && targetActionData.animationClip != null)
-        {
-            EditorGUILayout.Space();
-            showLogic = EditorGUILayout.Foldout(showLogic, "Logic Data (Editable)", true, EditorStyles.foldoutHeader);
-            if (showLogic)
-            {
-                DrawLogicDataEditor();
-            }
-
-            EditorGUILayout.Space();
-            showHurtbox = EditorGUILayout.Foldout(showHurtbox, "Hurtbox Events (State-based)", true, EditorStyles.foldoutHeader);
-            if (showHurtbox)
-            {
-                DrawHurtboxDataEditor();
-            }
-
-            EditorGUILayout.Space();
-            showHitbox = EditorGUILayout.Foldout(showHitbox, "Hitbox Markers (In Character)", true, EditorStyles.foldoutHeader);
-            if (showHitbox)
-            {
-                DrawHitboxMarkerEditor();
-                hitboxSectionHeight = DrawVerticalSplitter(hitboxSectionHeight, 100f);
-            }
-
-            EditorGUILayout.Space();
-            showVfx = EditorGUILayout.Foldout(showVfx, "VFX Markers (In Character)", true, EditorStyles.foldoutHeader);
-            if (showVfx)
-            {
-                DrawVfxMarkerEditor();
-                vfxSectionHeight = DrawVerticalSplitter(vfxSectionHeight, 100f);
-            }
-        }
-
-        EditorGUILayout.EndScrollView();
-
-        if (targetCharacter != null && targetActionData != null && targetActionData.animationClip != null)
-        {
-            GUILayout.Space(5);
-            Rect separatorRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(2), GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(separatorRect, new Color(0.15f, 0.15f, 0.15f));
-            GUILayout.Space(5);
-
-            DrawTimelineAndPreview();
-
-            EditorGUILayout.Space();
-            if (GUILayout.Button("Bake Hitbox & VFX Data", GUILayout.Height(40)))
-            {
-                ExecuteBakeProcess();
-            }
-            GUILayout.Space(5);
-        }
-    }
-    private void DrawSettingsEditor()
-    {
         EditorGUI.BeginChangeCheck();
         targetCharacter = (GameObject)EditorGUILayout.ObjectField("Target Character", targetCharacter, typeof(GameObject), true);
+        targetRootBone = (Transform)EditorGUILayout.ObjectField("Target Root Bone", targetRootBone, typeof(Transform), true);
         targetActionData = (ActionDataSO)EditorGUILayout.ObjectField("Target Action Data", targetActionData, typeof(ActionDataSO), false);
         playerConfig = (PlayerConfigSO)EditorGUILayout.ObjectField("Player Config", playerConfig, typeof(PlayerConfigSO), false);
         
@@ -112,174 +49,37 @@ public class HitboxBakerWindow : EditorWindow
         {
             InitializeLogicData();
         }
-    }
 
-    private float DrawVerticalSplitter(float currentHeight, float minHeight)
-    {
-        Rect rect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(4), GUILayout.ExpandWidth(true));
-        EditorGUIUtility.AddCursorRect(rect, MouseCursor.ResizeVertical);
-        EditorGUI.DrawRect(rect, new Color(0.2f, 0.2f, 0.2f));
-
-        int controlID = GUIUtility.GetControlID(FocusType.Passive);
-
-        switch (Event.current.GetTypeForControl(controlID))
+        if (targetCharacter != null && targetActionData != null && targetActionData.animationClip != null)
         {
-            case EventType.MouseDown:
-                if (rect.Contains(Event.current.mousePosition) && Event.current.button == 0)
-                {
-                    GUIUtility.hotControl = controlID;
-                    Event.current.Use();
-                }
-                break;
-            case EventType.MouseDrag:
-                if (GUIUtility.hotControl == controlID)
-                {
-                    currentHeight += Event.current.delta.y;
-                    currentHeight = Mathf.Max(currentHeight, minHeight);
-                    Event.current.Use();
-                }
-                break;
-            case EventType.MouseUp:
-                if (GUIUtility.hotControl == controlID)
-                {
-                    GUIUtility.hotControl = 0;
-                    Event.current.Use();
-                }
-                break;
-        }
+            mainScrollPos = EditorGUILayout.BeginScrollView(mainScrollPos);
 
-        return currentHeight;
-    }
+            DrawLogicDataEditor();
+            DrawHurtboxDataEditor();
+            DrawHitboxMarkerEditor();
+            DrawVfxMarkerEditor();
+            DrawTimelineAndPreview();
 
-    private void DrawHitboxMarkerEditor()
-    {
-        if (targetCharacter == null) return;
-
-        HitboxMarker[] markers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
-        if (markers.Length == 0) return;
-
-        markerScrollPos = EditorGUILayout.BeginScrollView(markerScrollPos, GUILayout.Height(hitboxSectionHeight));
-
-        foreach (var marker in markers)
-        {
-            int markerId = marker.GetInstanceID();
-            
-            if (!markerFoldoutStates.ContainsKey(markerId))
+            EditorGUILayout.Space();
+            if (GUILayout.Button("Bake All Data (Hitbox, VFX, RootMotion)", GUILayout.Height(40)))
             {
-                markerFoldoutStates[markerId] = false;
+                ExecuteBakeProcess();
             }
 
-            GUILayout.BeginVertical("box");
-
-            markerFoldoutStates[markerId] = EditorGUILayout.Foldout(markerFoldoutStates[markerId], marker.gameObject.name, true, EditorStyles.foldoutHeader);
-
-            if (markerFoldoutStates[markerId])
-            {
-                EditorGUI.BeginChangeCheck();
-                
-                GUILayout.Space(5);
-
-                GUILayout.BeginHorizontal();
-                bool isIncluded = EditorGUILayout.Toggle("Include In Bake", marker.isIncludeInBake);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                int start = EditorGUILayout.IntField("Start Frame", marker.recordStartFrame);
-                int end = EditorGUILayout.IntField("End Frame", marker.recordEndFrame);
-                GUILayout.EndHorizontal();
-
-                int groupID = EditorGUILayout.IntField("Hit Group ID", marker.hitGroupID);
-                Attack_Type attackType = (Attack_Type)EditorGUILayout.EnumPopup("Attack Type", marker.attackType);
-                HurtState_Type targetState = (HurtState_Type)EditorGUILayout.EnumPopup("Target Hurt State", marker.targetHurtState);
-                
-                int damage = EditorGUILayout.IntField("Damage", marker.damage);
-                int hitstun = EditorGUILayout.IntField("Hitstun Frames", marker.hitstunFrames);
-                Vector3 pushback = EditorGUILayout.Vector3Field("Local Pushback Vector", marker.localPushbackVector);
-                bool isKnockdown = EditorGUILayout.Toggle("Is Hard Knockdown", marker.isHardKnockdown);
-                
-                Vector3 extents = EditorGUILayout.Vector3Field("Box Extents", marker.boxExtents);
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(marker, "Modify Hitbox Marker");
-                    marker.isIncludeInBake = isIncluded;
-                    marker.recordStartFrame = start;
-                    marker.recordEndFrame = end;
-                    marker.hitGroupID = groupID;
-                    marker.attackType = attackType;
-                    marker.targetHurtState = targetState;
-                    marker.damage = damage;
-                    marker.hitstunFrames = hitstun;
-                    marker.localPushbackVector = pushback;
-                    marker.isHardKnockdown = isKnockdown;
-                    marker.boxExtents = extents;
-                    EditorUtility.SetDirty(marker);
-                }
-            }
-            
-            GUILayout.EndVertical();
+            EditorGUILayout.EndScrollView();
         }
-
-        EditorGUILayout.EndScrollView();
-    }
-
-    private void DrawVfxMarkerEditor()
-    {
-        if (targetCharacter == null) return;
-
-        VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
-        if (markers.Length == 0) return;
-
-        vfxScrollPos = EditorGUILayout.BeginScrollView(vfxScrollPos, GUILayout.Height(vfxSectionHeight));
-
-        foreach (var marker in markers)
-        {
-            GUILayout.BeginVertical("box");
-            
-            EditorGUI.BeginChangeCheck();
-            
-            GUILayout.Label(marker.gameObject.name, EditorStyles.boldLabel);
-            
-            GUILayout.BeginHorizontal();
-            bool isIncluded = EditorGUILayout.Toggle("Include In Bake", marker.isIncludeInBake);
-            GUILayout.EndHorizontal();
-            
-            GUILayout.BeginHorizontal();
-            int start = EditorGUILayout.IntField("Start Frame", marker.recordStartFrame);
-            int end = EditorGUILayout.IntField("End Frame", marker.recordEndFrame);
-            GUILayout.EndHorizontal();
-            
-            int interval = EditorGUILayout.IntField("Interval Frames", marker.intervalFrames);
-            EffectType effect = (EffectType)EditorGUILayout.EnumPopup("Effect Type", marker.effectType);
-            HumanBodyBones bone = (HumanBodyBones)EditorGUILayout.EnumPopup("Target Bone", marker.targetBone);
-            bool attached = EditorGUILayout.Toggle("Is Attached", marker.isAttached);
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObject(marker, "Modify VFX Marker");
-                marker.isIncludeInBake = isIncluded;
-                marker.recordStartFrame = start;
-                marker.recordEndFrame = end;
-                marker.intervalFrames = interval;
-                marker.effectType = effect;
-                marker.targetBone = bone;
-                marker.isAttached = attached;
-                EditorUtility.SetDirty(marker);
-            }
-            
-            GUILayout.EndVertical();
-        }
-
-        EditorGUILayout.EndScrollView();
     }
 
     private void ExecuteBakeProcess()
     {
+        BakeRootMotionData();
         BakeHitboxData();
         BakeVfxData();
+
         EditorUtility.SetDirty(targetActionData);
         AssetDatabase.SaveAssets();
-        Debug.Log("Successfully baked both Hitbox and VFX events.");
+
+        Debug.Log("Successfully baked Root Motion, Hitbox, and VFX events.");
     }
 
     private void InitializeLogicData()
@@ -290,7 +90,7 @@ public class HitboxBakerWindow : EditorWindow
         {
             int baseSplit = calculatedTotal / 3;
             int remainder = calculatedTotal % 3;
-            
+
             targetActionData.frameData.logicData.totalFrames = calculatedTotal;
             targetActionData.frameData.logicData.startupFrames = baseSplit;
             targetActionData.frameData.logicData.recoveryFrames = baseSplit + remainder;
@@ -302,31 +102,55 @@ public class HitboxBakerWindow : EditorWindow
 
     private void DrawLogicDataEditor()
     {
+        EditorGUILayout.Space();
+        GUILayout.Label("Logic Data (Editable)", EditorStyles.boldLabel);
+        
         EditorGUI.BeginChangeCheck();
         var logic = targetActionData.frameData.logicData;
+        bool useRoot = targetActionData.frameData.useRootMotion;
+        bool useRootRot = targetActionData.frameData.useRootRotation;
         
         logic.totalFrames = EditorGUILayout.IntField("Total Frames", logic.totalFrames);
         logic.startupFrames = EditorGUILayout.IntField("Startup Frames", logic.startupFrames);
         logic.recoveryFrames = EditorGUILayout.IntField("Recovery Frames", logic.recoveryFrames);
         logic.cancelWindowStartFrame = EditorGUILayout.IntField("Cancel Window Start", logic.cancelWindowStartFrame);
         
+        useRoot = EditorGUILayout.Toggle("Use Root Position", useRoot);
+        
+        if (useRoot)
+        {
+            EditorGUI.indentLevel++;
+            useRootRot = EditorGUILayout.Toggle("Use Root Rotation", useRootRot);
+            EditorGUI.indentLevel--;
+        }
+        else
+        {
+            useRootRot = false;
+        }
+
         if (EditorGUI.EndChangeCheck())
         {
             targetActionData.frameData.logicData = logic;
+            targetActionData.frameData.useRootMotion = useRoot;
+            targetActionData.frameData.useRootRotation = useRootRot;
             EditorUtility.SetDirty(targetActionData);
         }
     }
 
     private void DrawHurtboxDataEditor()
     {
+        EditorGUILayout.Space();
+        GUILayout.Label("Hurtbox Events (State-based)", EditorStyles.boldLabel);
+
         if (targetActionData.frameData.hurtboxEvents == null)
         {
             targetActionData.frameData.hurtboxEvents = new HurtboxEvent[0];
         }
-        
+
         EditorGUI.BeginChangeCheck();
+
         List<HurtboxEvent> hurtboxList = new List<HurtboxEvent>(targetActionData.frameData.hurtboxEvents);
-        
+
         for (int i = 0; i < hurtboxList.Count; i++)
         {
             GUILayout.BeginHorizontal();
@@ -341,7 +165,7 @@ public class HitboxBakerWindow : EditorWindow
             
             GUILayout.Label("Type", GUILayout.Width(35));
             evt.hurtboxType = (Hurtbox_Type)EditorGUILayout.EnumPopup(evt.hurtboxType);
-            
+
             if (GUILayout.Button("X", GUILayout.Width(25)))
             {
                 hurtboxList.RemoveAt(i);
@@ -351,20 +175,20 @@ public class HitboxBakerWindow : EditorWindow
             {
                 hurtboxList[i] = evt;
             }
-            
+
             GUILayout.EndHorizontal();
         }
-        
+
         if (GUILayout.Button("+ Add Hurtbox Event"))
         {
-            hurtboxList.Add(new HurtboxEvent
-            {
-                startFrame = 0,
-                endFrame = targetActionData.frameData.logicData.totalFrames,
-                hurtboxType = Hurtbox_Type.Standing
+            hurtboxList.Add(new HurtboxEvent 
+            { 
+                startFrame = 0, 
+                endFrame = targetActionData.frameData.logicData.totalFrames, 
+                hurtboxType = Hurtbox_Type.Standing 
             });
         }
-        
+
         if (EditorGUI.EndChangeCheck())
         {
             targetActionData.frameData.hurtboxEvents = hurtboxList.ToArray();
@@ -372,18 +196,166 @@ public class HitboxBakerWindow : EditorWindow
         }
     }
 
+    private void DrawHitboxMarkerEditor()
+    {
+        if (targetCharacter == null) return;
+
+        HitboxMarker[] markers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
+        if (markers.Length == 0) return;
+
+        EditorGUILayout.Space();
+        showHitboxMarkers = EditorGUILayout.Foldout(showHitboxMarkers, "Hitbox Markers (In Character)", true, EditorStyles.foldoutHeader);
+
+        if (showHitboxMarkers)
+        {
+            markerScrollPos = EditorGUILayout.BeginScrollView(markerScrollPos, GUILayout.MinHeight(200), GUILayout.ExpandHeight(true));
+
+            foreach (var marker in markers)
+            {
+                int markerId = marker.GetInstanceID();
+                
+                if (!markerFoldoutStates.ContainsKey(markerId))
+                {
+                    markerFoldoutStates[markerId] = false;
+                }
+
+                GUILayout.BeginVertical("box");
+
+                markerFoldoutStates[markerId] = EditorGUILayout.Foldout(markerFoldoutStates[markerId], marker.gameObject.name, true, EditorStyles.foldoutHeader);
+
+                if (markerFoldoutStates[markerId])
+                {
+                    EditorGUI.BeginChangeCheck();
+                    
+                    GUILayout.Space(5);
+                    GUILayout.BeginHorizontal();
+                    bool isIncluded = EditorGUILayout.Toggle("Include In Bake", marker.isIncludeInBake);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    int start = EditorGUILayout.IntField("Start Frame", marker.recordStartFrame);
+                    int end = EditorGUILayout.IntField("End Frame", marker.recordEndFrame);
+                    GUILayout.EndHorizontal();
+
+                    int groupID = EditorGUILayout.IntField("Hit Group ID", marker.hitGroupID);
+                    Attack_Type attackType = (Attack_Type)EditorGUILayout.EnumPopup("Attack Type", marker.attackType);
+                    HurtState_Type targetState = (HurtState_Type)EditorGUILayout.EnumPopup("Target Hurt State", marker.targetHurtState);
+                    
+                    int damage = EditorGUILayout.IntField("Damage", marker.damage);
+                    int hitstun = EditorGUILayout.IntField("Hitstun Frames", marker.hitstunFrames);
+                    Vector3 pushback = EditorGUILayout.Vector3Field("Local Pushback Vector", marker.localPushbackVector);
+                    bool isKnockdown = EditorGUILayout.Toggle("Is Hard Knockdown", marker.isHardKnockdown);
+                    
+                    Vector3 extents = EditorGUILayout.Vector3Field("Box Extents", marker.boxExtents);
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(marker, "Modify Hitbox Marker");
+                        marker.isIncludeInBake = isIncluded;
+                        marker.recordStartFrame = start;
+                        marker.recordEndFrame = end;
+                        marker.hitGroupID = groupID;
+                        marker.attackType = attackType;
+                        marker.targetHurtState = targetState;
+                        marker.damage = damage;
+                        marker.hitstunFrames = hitstun;
+                        marker.localPushbackVector = pushback;
+                        marker.isHardKnockdown = isKnockdown;
+                        marker.boxExtents = extents;
+                        EditorUtility.SetDirty(marker);
+                    }
+                }
+                
+                GUILayout.EndVertical();
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+    }
+
+    private void DrawVfxMarkerEditor()
+    {
+        if (targetCharacter == null) return;
+
+        VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
+        if (markers.Length == 0) return;
+
+        EditorGUILayout.Space();
+        showVfxMarkers = EditorGUILayout.Foldout(showVfxMarkers, "VFX Markers (In Character)", true, EditorStyles.foldoutHeader);
+
+        if (showVfxMarkers)
+        {
+            vfxScrollPos = EditorGUILayout.BeginScrollView(vfxScrollPos, GUILayout.MinHeight(150), GUILayout.ExpandHeight(true));
+
+            foreach (var marker in markers)
+            {
+                int markerId = marker.GetInstanceID();
+
+                if (!vfxMarkerFoldoutStates.ContainsKey(markerId))
+                {
+                    vfxMarkerFoldoutStates[markerId] = false;
+                }
+
+                GUILayout.BeginVertical("box");
+                
+                vfxMarkerFoldoutStates[markerId] = EditorGUILayout.Foldout(vfxMarkerFoldoutStates[markerId], marker.gameObject.name, true, EditorStyles.foldoutHeader);
+
+                if (vfxMarkerFoldoutStates[markerId])
+                {
+                    EditorGUI.BeginChangeCheck();
+                    
+                    GUILayout.Space(5);
+                    GUILayout.BeginHorizontal();
+                    bool isIncluded = EditorGUILayout.Toggle("Include In Bake", marker.isIncludeInBake);
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    int start = EditorGUILayout.IntField("Start Frame", marker.recordStartFrame);
+                    int end = EditorGUILayout.IntField("End Frame", marker.recordEndFrame);
+                    GUILayout.EndHorizontal();
+                    
+                    int interval = EditorGUILayout.IntField("Interval Frames", marker.intervalFrames);
+                    EffectType effect = (EffectType)EditorGUILayout.EnumPopup("Effect Type", marker.effectType);
+                    HumanBodyBones bone = (HumanBodyBones)EditorGUILayout.EnumPopup("Target Bone", marker.targetBone);
+                    bool attached = EditorGUILayout.Toggle("Is Attached", marker.isAttached);
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(marker, "Modify VFX Marker");
+                        marker.isIncludeInBake = isIncluded;
+                        marker.recordStartFrame = start;
+                        marker.recordEndFrame = end;
+                        marker.intervalFrames = interval;
+                        marker.effectType = effect;
+                        marker.targetBone = bone;
+                        marker.isAttached = attached;
+                        EditorUtility.SetDirty(marker);
+                    }
+                }
+                
+                GUILayout.EndVertical();
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+    }
+    
+
     private void DrawTimelineAndPreview()
     {
+        EditorGUILayout.Space();
         var logic = targetActionData.frameData.logicData;
+        
         string stateLabel = "Unknown";
         Color stateColor = Color.white;
+
         int activeStart = logic.startupFrames;
         int activeEnd = logic.totalFrames - logic.recoveryFrames;
-        
+
         if (currentPreviewFrame < activeStart)
         {
             stateLabel = "STARTUP";
-            stateColor = new Color(0.3f, 0.8f, 1f);
+            stateColor = new Color(0.3f, 0.8f, 1f); 
         }
         else if (currentPreviewFrame < activeEnd)
         {
@@ -395,25 +367,24 @@ public class HitboxBakerWindow : EditorWindow
             stateLabel = "RECOVERY";
             stateColor = Color.yellow;
         }
-        
+
         bool isCancelable = currentPreviewFrame >= logic.cancelWindowStartFrame;
         string cancelText = isCancelable ? "[CANCELABLE]" : "[LOCKED]";
-        
+
         Rect headerRect = GUILayoutUtility.GetRect(10, 25);
         GUI.Box(headerRect, "");
         
         GUIStyle labelStyle = new GUIStyle(EditorStyles.boldLabel);
         labelStyle.normal.textColor = stateColor;
         labelStyle.alignment = TextAnchor.MiddleCenter;
-        
         GUI.Label(headerRect, $"{stateLabel} | Frame: {currentPreviewFrame} / {logic.totalFrames} {cancelText}", labelStyle);
-        
+
         Rect logicSliderRect = GUILayoutUtility.GetRect(10, 20);
         DrawGradientTimeline(logicSliderRect, logic);
         
         Rect hurtboxTimelineRect = GUILayoutUtility.GetRect(10, 15);
         DrawHurtboxTimeline(hurtboxTimelineRect, logic);
-        
+
         EditorGUI.BeginChangeCheck();
         currentPreviewFrame = Mathf.RoundToInt(GUI.HorizontalSlider(logicSliderRect, currentPreviewFrame, 0, logic.totalFrames, GUIStyle.none, GUI.skin.horizontalSliderThumb));
         
@@ -426,21 +397,21 @@ public class HitboxBakerWindow : EditorWindow
     private void DrawGradientTimeline(Rect rect, ActionLogicData logic)
     {
         if (logic.totalFrames <= 0) return;
-        
+
         float width = rect.width;
         float startupEndPos = (float)logic.startupFrames / logic.totalFrames * width;
         float recoveryStartPos = (float)(logic.totalFrames - logic.recoveryFrames) / logic.totalFrames * width;
         float cancelStartPos = (float)logic.cancelWindowStartFrame / logic.totalFrames * width;
-        
+
         Rect startupRect = new Rect(rect.x, rect.y + 5, startupEndPos, 10);
         EditorGUI.DrawRect(startupRect, new Color(0.1f, 0.5f, 0.7f, 0.8f));
-        
+
         Rect activeRect = new Rect(rect.x + startupEndPos, rect.y + 5, recoveryStartPos - startupEndPos, 10);
         EditorGUI.DrawRect(activeRect, new Color(0.1f, 0.7f, 0.1f, 0.8f));
-        
+
         Rect recoveryRect = new Rect(rect.x + recoveryStartPos, rect.y + 5, width - recoveryStartPos, 10);
         EditorGUI.DrawRect(recoveryRect, new Color(0.7f, 0.7f, 0.1f, 0.8f));
-        
+
         Rect cancelMark = new Rect(rect.x + cancelStartPos - 1, rect.y + 2, 2, 16);
         EditorGUI.DrawRect(cancelMark, Color.white);
     }
@@ -448,10 +419,10 @@ public class HitboxBakerWindow : EditorWindow
     private void DrawHurtboxTimeline(Rect rect, ActionLogicData logic)
     {
         if (logic.totalFrames <= 0 || targetActionData.frameData.hurtboxEvents == null) return;
-        
+
         float width = rect.width;
         EditorGUI.DrawRect(new Rect(rect.x, rect.y + 2, width, 8), new Color(0.2f, 0.2f, 0.2f, 1f));
-        
+
         foreach (var evt in targetActionData.frameData.hurtboxEvents)
         {
             float startPos = (float)evt.startFrame / logic.totalFrames * width;
@@ -478,27 +449,27 @@ public class HitboxBakerWindow : EditorWindow
     private void UpdateScenePreview()
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;
-        
+
         if (!AnimationMode.InAnimationMode())
         {
             AnimationMode.StartAnimationMode();
         }
-        
+
         float currentTime = currentPreviewFrame * Time.fixedDeltaTime;
         AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, currentTime);
-        
+
         HitboxMarker[] hitboxMarkers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
         foreach (var marker in hitboxMarkers)
         {
             marker.currentPreviewFrame = currentPreviewFrame;
         }
-        
+
         VfxMarker[] vfxMarkers = targetCharacter.GetComponentsInChildren<VfxMarker>();
         foreach (var marker in vfxMarkers)
         {
             marker.currentPreviewFrame = currentPreviewFrame;
         }
-        
+
         SceneView.RepaintAll();
     }
 
@@ -506,10 +477,10 @@ public class HitboxBakerWindow : EditorWindow
     {
         if (targetCharacter == null || targetActionData == null || playerConfig == null) return;
         if (targetActionData.frameData.hurtboxEvents == null) return;
-        
+
         bool isEventActive = false;
         HurtboxEvent activeEvent = new HurtboxEvent();
-        
+
         foreach (var evt in targetActionData.frameData.hurtboxEvents)
         {
             if (currentPreviewFrame >= evt.startFrame && currentPreviewFrame <= evt.endFrame)
@@ -519,17 +490,16 @@ public class HitboxBakerWindow : EditorWindow
                 break;
             }
         }
-        
+
         if (isEventActive)
         {
             CollisionBox[] boxes = playerConfig.GetHurtboxBoxes(activeEvent.hurtboxType);
-            
             if (boxes != null)
             {
                 Handles.matrix = targetCharacter.transform.localToWorldMatrix;
                 Color boxColor = GetHurtboxColor(activeEvent.hurtboxType);
                 Handles.color = new Color(boxColor.r, boxColor.g, boxColor.b, 1f);
-                
+
                 foreach (var box in boxes)
                 {
                     Handles.DrawWireCube(box.localPosition, box.extents * 2f);
@@ -538,24 +508,88 @@ public class HitboxBakerWindow : EditorWindow
         }
     }
 
-    private void BakeHitboxData()
+    private void BakeRootMotionData()
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;
         
+        if (!targetActionData.frameData.useRootMotion || targetRootBone == null)
+        {
+            targetActionData.frameData.rootMotionPath = new RootMotionData[0];
+            return;
+        }
+
         int totalFrames = targetActionData.frameData.logicData.totalFrames;
-        HitboxMarker[] markers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
-        List<HitboxEvent> bakedEvents = new List<HitboxEvent>();
-        
+        targetActionData.frameData.rootMotionPath = new RootMotionData[totalFrames + 1];
+
         if (!AnimationMode.InAnimationMode())
         {
             AnimationMode.StartAnimationMode();
         }
-        
+
+        AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, 0f);
+        Vector3 prevPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
+        Quaternion prevRot = Quaternion.Inverse(targetCharacter.transform.rotation) * targetRootBone.rotation;
+
+        bool applyRotation = targetActionData.frameData.useRootRotation;
+
+        for (int frame = 0; frame <= totalFrames; frame++)
+        {
+            float currentTime = frame * Time.fixedDeltaTime;
+            AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, currentTime);
+
+            Vector3 currPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
+            Quaternion currRot = Quaternion.Inverse(targetCharacter.transform.rotation) * targetRootBone.rotation;
+
+            targetActionData.frameData.rootMotionPath[frame] = new RootMotionData
+            {
+                deltaPosition = currPos - prevPos,
+                deltaRotation = applyRotation ? (Quaternion.Inverse(prevRot) * currRot) : Quaternion.identity
+            };
+
+            prevPos = currPos;
+            prevRot = currRot;
+        }
+    }
+
+    private void BakeHitboxData()
+    {
+        if (targetActionData.animationClip == null || targetCharacter == null) return;
+
+        int totalFrames = targetActionData.frameData.logicData.totalFrames;
+        HitboxMarker[] markers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
+        List<HitboxEvent> bakedEvents = new List<HitboxEvent>();
+
+        if (!AnimationMode.InAnimationMode())
+        {
+            AnimationMode.StartAnimationMode();
+        }
+
+        Vector3[] accumulatedRootPos = new Vector3[totalFrames + 1];
+        if (targetActionData.frameData.useRootMotion && targetRootBone != null)
+        {
+            AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, 0f);
+            Vector3 startRootPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
+
+            for (int frame = 0; frame <= totalFrames; frame++)
+            {
+                AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, frame * Time.fixedDeltaTime);
+                Vector3 currentRootPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
+                accumulatedRootPos[frame] = currentRootPos - startRootPos;
+            }
+        }
+        else
+        {
+            for (int frame = 0; frame <= totalFrames; frame++)
+            {
+                accumulatedRootPos[frame] = Vector3.zero;
+            }
+        }
+
         foreach (var marker in markers)
         {
             if (!marker.isIncludeInBake) continue;
             if (marker.recordStartFrame < 0 || marker.recordEndFrame > totalFrames || marker.recordStartFrame > marker.recordEndFrame) continue;
-            
+
             HitboxEvent newEvent = new HitboxEvent
             {
                 activeStartFrame = marker.recordStartFrame,
@@ -567,41 +601,36 @@ public class HitboxBakerWindow : EditorWindow
                 localPushbackVector = marker.localPushbackVector,
                 isHardKnockdown = marker.isHardKnockdown
             };
-            
+
             int pathLength = marker.recordEndFrame - marker.recordStartFrame + 1;
             newEvent.boxPath = new CollisionBox[pathLength];
-            
+
             for (int frame = marker.recordStartFrame; frame <= marker.recordEndFrame; frame++)
             {
                 float currentTime = frame * Time.fixedDeltaTime;
                 AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, currentTime);
-                
+
                 CollisionBox box = new CollisionBox
                 {
-                    localPosition = targetCharacter.transform.InverseTransformPoint(marker.transform.position),
+                    localPosition = targetCharacter.transform.InverseTransformPoint(marker.transform.position) - accumulatedRootPos[frame],
                     extents = marker.boxExtents
                 };
-                
+
                 newEvent.boxPath[frame - marker.recordStartFrame] = box;
             }
-            
+
             bakedEvents.Add(newEvent);
         }
-        
+
         targetActionData.frameData.hitboxEvents = bakedEvents.ToArray();
-        
-        AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, 0f);
-        AnimationMode.StopAnimationMode();
-        
-        Debug.Log($"Baked {bakedEvents.Count} hitbox events successfully.");
     }
-    
+
     private void BakeVfxData()
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;
 
         VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
-        List<VfxEvent> bakedEvents = new List<VfxEvent>();
+        System.Collections.Generic.List<VfxEvent> bakedEvents = new System.Collections.Generic.List<VfxEvent>();
 
         foreach (var marker in markers)
         {
@@ -623,7 +652,5 @@ public class HitboxBakerWindow : EditorWindow
         }
 
         targetActionData.frameData.vfxEvents = bakedEvents.ToArray();
-        
-        Debug.Log($"Baked {bakedEvents.Count} VFX events successfully.");
     }
 }

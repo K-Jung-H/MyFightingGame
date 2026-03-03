@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 
@@ -21,6 +22,8 @@ public class GameLoopManager : MonoBehaviour
     [SerializeField] private float playerCollisionMinDistance = 1.0f;
     [SerializeField] private float globalGravity = 0.02f;
 
+    [Header("Hit Feedback Settings")]
+    [SerializeField] private List<HitFeedbackData> hitFeedbackTable = new();
 
     [Header("Players")]
     [SerializeField] private PlayerSessionContext playerOne;
@@ -165,6 +168,18 @@ public class GameLoopManager : MonoBehaviour
         Debug.Log("[Debug] 양 플레이어에게 1 데미지를 가했습니다.");
     }
 
+    private HitFeedbackData GetHitFeedback(Attack_Type type)
+    {
+        foreach (var feedback in hitFeedbackTable)
+        {
+            if (feedback.attackType == type)
+            {
+                return feedback;
+            }
+        }
+        return new HitFeedbackData { attackType = type, hitstopFrames = 0, cameraShakeIntensity = 0f };
+    }
+
     private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
     {
         PlayerStateMachine attacker = attackerContext.stateMachine;
@@ -211,15 +226,19 @@ public class GameLoopManager : MonoBehaviour
             
             defender.ApplyHit(hurtInfo);
 
+            HitFeedbackData feedback = GetHitFeedback(hitEvent.attackType);
+            
+            if (feedback.hitstopFrames > 0)
+            {
+                attacker.ApplyHitstop(feedback.hitstopFrames);
+                defender.ApplyHitstop(feedback.hitstopFrames);
+            }
+
             bool hasDefenderVisual = defenderContext.visual != null;
             if (hasDefenderVisual)
             {
                 defenderContext.visual.PlayHitSpark(hitPoint, EffectType.Hit);
             }
-
-            string attackerName = attacker == playerOne.stateMachine ? "Player 1" : "Player 2";
-            string defenderName = defender == playerOne.stateMachine ? "Player 1" : "Player 2";
-            Debug.Log($"[Hit 성공] {attackerName} -> {defenderName} | Damage: {hitEvent.damage} | Pushback: {worldPushback}");
         }
     }
     
@@ -286,10 +305,9 @@ public class GameLoopManager : MonoBehaviour
 
     private void UpdatePlayerVisual(PlayerSessionContext context)
     {
-        bool isInvalidContext = context == null || context.stateMachine == null || context.visual == null;
+        bool isInvalidContext = context == null || context.visual == null;
         if (isInvalidContext) return;
 
-        context.visual.SyncTransformWithLogic();
-        context.visual.EvaluateAndPlayAnimation();
+        context.visual.UpdateVisual();
     }
 }

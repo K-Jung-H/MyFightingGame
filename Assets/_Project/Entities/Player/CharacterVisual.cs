@@ -39,6 +39,24 @@ public class CharacterVisual : MonoBehaviour
         }
     }
 
+    public void UpdateVisual()
+    {
+        if (logicMachine == null) return;
+
+        bool isHitstopActive = logicMachine.GetHitstopCounter() > 0;
+
+        if (characterAnimator != null)
+        {
+            characterAnimator.speed = isHitstopActive ? 0f : 1f;
+        }
+
+        if (!isHitstopActive)
+        {
+            SyncTransformWithLogic();
+            EvaluateAndPlayAnimation();
+        }
+    }
+
     private void EvaluateVfxEvents()
     {
         ActionDataSO currentAction = logicMachine.GetCurrentActionData();
@@ -84,22 +102,16 @@ public class CharacterVisual : MonoBehaviour
         }
     }
 
-    public void SyncTransformWithLogic()
+    private void SyncTransformWithLogic()
     {
-        bool isMachineInvalid = logicMachine == null;
-        if (isMachineInvalid) return;
-
         targetPosition = logicMachine.GetPosition();
         targetSpeed = logicMachine.GetCurrentSpeed();
         targetDirection = logicMachine.GetDirection();
         targetLookDirection = logicMachine.GetLookDirection();
     }
 
-    public void EvaluateAndPlayAnimation()
+    private void EvaluateAndPlayAnimation()
     {
-        bool isMachineInvalid = logicMachine == null;
-        if (isMachineInvalid) return;
-
         PlayerState_Type currentState = logicMachine.GetCurrentState();
         int stateFrame = logicMachine.GetStateFrameCounter();
         
@@ -177,6 +189,8 @@ public class CharacterVisual : MonoBehaviour
 
     private void Update()
     {
+        if (logicMachine != null && logicMachine.GetHitstopCounter() > 0) return;
+
         UpdateTransformInterpolation();
         UpdateAnimatorParameters();
     }

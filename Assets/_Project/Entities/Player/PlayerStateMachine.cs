@@ -13,6 +13,7 @@ public class PlayerStateMachine : ITargetable
     protected Vector3 lookDirection;
     protected float yVelocity;
     protected ITargetable targetEntity;
+    protected int hitstopCounter;
     
     protected PlayerInput previousInput;
     protected InputFlags currentKeyDownFlags;
@@ -33,6 +34,7 @@ public class PlayerStateMachine : ITargetable
     private int bufferedActionFrame;
     private ActionDataSO currentActionData;
     private bool isCommandActionTriggered;
+    protected bool isRootMotionActiveThisFrame;
 
     private Dictionary<string, int> animationHashCache = new Dictionary<string, int>();
 
@@ -106,7 +108,15 @@ public class PlayerStateMachine : ITargetable
 
         TransitionTo(nextState, true);
     }
+    public void ApplyHitstop(int frames)
+    {
+        hitstopCounter = frames;
+    }
 
+    public int GetHitstopCounter()
+    {
+        return hitstopCounter;
+    }
     public void TransitionTo(PlayerState_Type newState, bool forceTransition = false)
     {
         if (states == null || !states.ContainsKey(newState)) return;
@@ -128,6 +138,12 @@ public class PlayerStateMachine : ITargetable
 
     public virtual void UpdateTick(PlayerInput input)
     {
+        if (hitstopCounter > 0)
+        {
+            hitstopCounter--;
+            return;
+        }
+        
         currentInput = input;
         currentKeyDownFlags = input.flags & ~previousInput.flags;
         currentFrame++;
@@ -164,6 +180,8 @@ public class PlayerStateMachine : ITargetable
                 bufferedActionRequest = null;
             }
         }
+        
+        isRootMotionActiveThisFrame = false;
 
         if (currentStateObject != null)
         {
@@ -185,7 +203,11 @@ public class PlayerStateMachine : ITargetable
             return;
         }
 
-        yVelocity -= globalGravity * config.gravityScale;
+        if (!isRootMotionActiveThisFrame)
+        {
+            yVelocity -= globalGravity * config.gravityScale;
+        }
+        
         position.y += yVelocity;
 
         bool isGrounded = position.y <= 0f;
@@ -200,6 +222,8 @@ public class PlayerStateMachine : ITargetable
     {
         currentActionData = request.actionData;
         isCommandActionTriggered = request.isCommandAction;
+
+        registeredHitGroupIds.Clear();
 
         if (request.isCommandAction)
         {
@@ -254,6 +278,18 @@ public class PlayerStateMachine : ITargetable
             runningForwardFrames = 0;
             consecutiveTaps = 0;
         }
+    }
+
+    public void ApplyRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
+    {
+        Vector3 worldDeltaPos = Quaternion.LookRotation(currentDirection) * deltaPosition;
+        position += worldDeltaPos;
+
+        currentDirection = deltaRotation * currentDirection;
+        lookDirection = deltaRotation * lookDirection;
+
+        isRootMotionActiveThisFrame = true;
+        yVelocity = 0f;
     }
 
     public Vector3 GetRawInputVector(InputFlags flags)
