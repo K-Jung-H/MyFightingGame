@@ -11,7 +11,9 @@ public class PlayerStateMachine : ITargetable
     protected Vector3 position;
     protected Vector3 currentDirection;
     protected Vector3 lookDirection;
-    protected float yVelocity;
+    protected Vector3 velocity;
+    protected WakeUp_Type currentWakeUpType;
+    
     protected ITargetable targetEntity;
     protected int hitstopCounter;
     
@@ -44,7 +46,7 @@ public class PlayerStateMachine : ITargetable
     public virtual void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
     {
         position = startPosition;
-        yVelocity = 0f;
+        velocity = Vector3.zero;
         config = playerConfig;
         
         if (cmdList != null)
@@ -73,67 +75,12 @@ public class PlayerStateMachine : ITargetable
         states.Add(PlayerState_Type.Running, new RunningState(this, config));
         states.Add(PlayerState_Type.Sprinting, new SprintingState(this, config));
         states.Add(PlayerState_Type.Attacking, new AttackingState(this, config));
-        states.Add(PlayerState_Type.Stun, new StunState(this, config));
         states.Add(PlayerState_Type.StandHit, new StandHitState(this, config));
         states.Add(PlayerState_Type.AirHit, new AirHitState(this, config));
-        states.Add(PlayerState_Type.Knockdown, new KnockdownState(this, config));
+        states.Add(PlayerState_Type.Stunning, new StunningState(this, config));
         states.Add(PlayerState_Type.WakeUp, new WakeUpState(this, config));
-    }
-
-    public void ApplyHit(HurtInfo hurtData)
-    {
-        currentHurtInfo = hurtData;
-        
-        bool isAirborneAttack = hurtData.targetHurtState == HurtState_Type.AirHit;
-        if (isAirborneAttack)
-        {
-            SetYVelocity(hurtData.pushbackVector.y);
-        }
-
-        PlayerState_Type nextState = PlayerState_Type.StandHit;
-        switch (hurtData.targetHurtState)
-        {
-            case HurtState_Type.StandHit:
-            case HurtState_Type.GuardHit:
-                nextState = PlayerState_Type.StandHit;
-                break;
-            case HurtState_Type.AirHit:
-                nextState = PlayerState_Type.AirHit;
-                break;
-            case HurtState_Type.KnockDown:
-            case HurtState_Type.GroundHit:
-                nextState = PlayerState_Type.Knockdown;
-                break;
-        }
-
-        TransitionTo(nextState, true);
-    }
-    public void ApplyHitstop(int frames)
-    {
-        hitstopCounter = frames;
-    }
-
-    public int GetHitstopCounter()
-    {
-        return hitstopCounter;
-    }
-    public void TransitionTo(PlayerState_Type newState, bool forceTransition = false)
-    {
-        if (states == null || !states.ContainsKey(newState)) return;
-        if (!forceTransition && currentState == newState) return;
-
-        if (currentStateObject != null) currentStateObject.Exit();
-
-        currentState = newState;
-        currentStateObject = states[newState];
-        stateFrameCounter = 0;
-
-        if (newState != PlayerState_Type.Attacking)
-        {
-            registeredHitGroupIds.Clear();
-        }
-        
-        currentStateObject.Enter();
+        states.Add(PlayerState_Type.GroundSmash, new GroundSmashState(this, config));
+        states.Add(PlayerState_Type.LayingDown, new LayingDownState(this, config));
     }
 
     public virtual void UpdateTick(PlayerInput input)
@@ -195,48 +142,93 @@ public class PlayerStateMachine : ITargetable
 
     private void ProcessPhysics()
     {
-        bool isAlreadyGrounded = position.y <= 0f && yVelocity <= 0f;
+        float deceleration = globalGravity * config.gravityScale;
+        
+        velocity.x = Mathf.MoveTowards(velocity.x, 0f, deceleration);
+        velocity.z = Mathf.MoveTowards(velocity.z, 0f, deceleration);
+
+        bool isAlreadyGrounded = position.y <= 0f && velocity.y <= 0f;
         if (isAlreadyGrounded)
         {
             position.y = 0f;
-            yVelocity = 0f;
+            velocity.y = 0f;
+            position.x += velocity.x;
+            position.z += velocity.z;
             return;
         }
 
         if (!isRootMotionActiveThisFrame)
         {
-            yVelocity -= globalGravity * config.gravityScale;
+            velocity.y -= deceleration;
         }
         
-        position.y += yVelocity;
+        position += velocity;
 
         bool isGrounded = position.y <= 0f;
         if (isGrounded)
         {
             position.y = 0f;
-            yVelocity = 0f;
+            if (velocity.y < 0f)
+            {
+                velocity.y = 0f;
+            }
         }
     }
-    
-    private void ExecuteActionRequest(ActionRequest request)
+
+    public void ProcessMovementLogic(PlayerInput input)
     {
-        currentActionData = request.actionData;
-        isCommandActionTriggered = request.isCommandAction;
+        Vector3 rawInput = GetRawInputVector(input.flags);
+        bool hasMovementInput = rawInput != Vector3.zero;
 
-        registeredHitGroupIds.Clear();
-
-        if (request.isCommandAction)
+        if (hasMovementInput)
         {
-            ClearComboSequence();
+            UpdateCurrentDirection(rawInput);
+            ApplyMovement();
         }
-        else if (request.comboNode != null)
+        else
         {
-            comboSequence.Add(request.comboNode.requiredInput);
+            TransitionTo(PlayerState_Type.Idle);
+            runningForwardFrames = 0;
+            consecutiveTaps = 0;
         }
+    }
 
-        inputBuffer.Clear();
-        bufferedActionRequest = null;
-        TransitionTo(request.targetState, true);
+    private void ApplyMovement()
+    {
+        float speed = config.walkSpeed;
+        if (currentState == PlayerState_Type.Running) speed = config.runSpeed;
+        else if (currentState == PlayerState_Type.Sprinting) speed = config.sprintSpeed;
+
+        Vector3 worldMoveDir = Quaternion.LookRotation(lookDirection) * currentDirection;
+        position += worldMoveDir * speed;
+    }
+
+    protected virtual void UpdateLookDirection()
+    {
+        bool isLookUpdateDisabled = targetEntity == null || currentState == PlayerState_Type.Attacking;
+        if (isLookUpdateDisabled) return;
+
+        Vector3 diff = targetEntity.GetPosition() - position;
+        diff.y = 0;
+        
+        bool isTargetValid = diff.sqrMagnitude > 0.0001f;
+        if (isTargetValid)
+        {
+            lookDirection = diff.normalized;
+        }
+    }
+
+    private void UpdateCurrentDirection(Vector3 rawInput)
+    {
+        bool isOppositeDirection = Vector3.Dot(currentDirection, rawInput) < -0.9f;
+        if (isOppositeDirection)
+        {
+            currentDirection = rawInput;
+        }
+        else
+        {
+            currentDirection = Vector3.Lerp(currentDirection, rawInput, config.turnLerpSpeed).normalized;
+        }
     }
 
     private void UpdateTapContext(InputFlags currentFlags)
@@ -262,22 +254,81 @@ public class PlayerStateMachine : ITargetable
         }
     }
 
-    public void ProcessMovementLogic(PlayerInput input)
+    public void TransitionTo(PlayerState_Type newState, bool forceTransition = false)
     {
-        Vector3 rawInput = GetRawInputVector(input.flags);
-        bool hasMovementInput = rawInput != Vector3.zero;
+        if (states == null || !states.ContainsKey(newState)) return;
+        if (!forceTransition && currentState == newState) return;
 
-        if (hasMovementInput)
+        if (currentStateObject != null) currentStateObject.Exit();
+
+        currentState = newState;
+        currentStateObject = states[newState];
+        stateFrameCounter = 0;
+
+        if (newState != PlayerState_Type.Attacking)
         {
-            UpdateCurrentDirection(rawInput);
-            ApplyMovement();
+            registeredHitGroupIds.Clear();
+        }
+        
+        currentStateObject.Enter();
+    }
+
+    private void ExecuteActionRequest(ActionRequest request)
+    {
+        currentActionData = request.actionData;
+        isCommandActionTriggered = request.isCommandAction;
+
+        registeredHitGroupIds.Clear();
+
+        if (request.isCommandAction)
+        {
+            ClearComboSequence();
+        }
+        else if (request.comboNode != null)
+        {
+            comboSequence.Add(request.comboNode.requiredInput);
+        }
+
+        inputBuffer.Clear();
+        bufferedActionRequest = null;
+        TransitionTo(request.targetState, true);
+    }
+
+    public void ApplyHit(HurtInfo hurtData)
+    {
+        if (currentState == PlayerState_Type.LayingDown)
+        {
+            return;
+        }
+        
+        currentHurtInfo = hurtData;
+        SetVelocity(hurtData.pushbackVector);
+
+        PlayerState_Type nextState = PlayerState_Type.StandHit;
+
+        if (currentState == PlayerState_Type.AirHit)
+        {
+            nextState = PlayerState_Type.AirHit;
         }
         else
         {
-            TransitionTo(PlayerState_Type.Idle);
-            runningForwardFrames = 0;
-            consecutiveTaps = 0;
+            switch (hurtData.targetHurtState)
+            {
+                case HurtState_Type.StandHit:
+                case HurtState_Type.GuardHit:
+                    nextState = PlayerState_Type.StandHit;
+                    break;
+                case HurtState_Type.AirHit:
+                    nextState = PlayerState_Type.AirHit;
+                    break;
+                case HurtState_Type.KnockDown:
+                case HurtState_Type.GroundHit:
+                    nextState = PlayerState_Type.Stunning;
+                    break;
+            }
         }
+
+        TransitionTo(nextState, true);
     }
 
     public void ApplyRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
@@ -289,68 +340,42 @@ public class PlayerStateMachine : ITargetable
         lookDirection = deltaRotation * lookDirection;
 
         isRootMotionActiveThisFrame = true;
-        yVelocity = 0f;
+        velocity.y = 0f;
     }
 
-    public Vector3 GetRawInputVector(InputFlags flags)
-    {
-        float x = ((flags & InputFlags.Right) != 0 ? 1 : 0) - ((flags & InputFlags.Left) != 0 ? 1 : 0);
-        float z = ((flags & InputFlags.Up) != 0 ? 1 : 0) - ((flags & InputFlags.Down) != 0 ? 1 : 0);
-        return new Vector3(x, 0, z).normalized;
-    }
+    // =========================================================================
+    // Getters, Setters & Utility Functions
+    // =========================================================================
 
-    private void UpdateCurrentDirection(Vector3 rawInput)
-    {
-        bool isOppositeDirection = Vector3.Dot(currentDirection, rawInput) < -0.9f;
-        if (isOppositeDirection)
-        {
-            currentDirection = rawInput;
-        }
-        else
-        {
-            currentDirection = Vector3.Lerp(currentDirection, rawInput, config.turnLerpSpeed).normalized;
-        }
-    }
+    public Vector3 GetVelocity() => velocity;
+    public void SetVelocity(Vector3 targetVelocity) => velocity = targetVelocity;
+    
+    public WakeUp_Type GetWakeUpType() => currentWakeUpType;
+    public void SetWakeUpType(WakeUp_Type type) => currentWakeUpType = type;
 
-    private void ApplyMovement()
-    {
-        float speed = config.walkSpeed;
-        if (currentState == PlayerState_Type.Running) speed = config.runSpeed;
-        else if (currentState == PlayerState_Type.Sprinting) speed = config.sprintSpeed;
-
-        Vector3 worldMoveDir = Quaternion.LookRotation(lookDirection) * currentDirection;
-        position += worldMoveDir * speed;
-    }
-
-    protected virtual void UpdateLookDirection()
-    {
-        bool isLookUpdateDisabled = targetEntity == null || currentState == PlayerState_Type.Attacking || currentState == PlayerState_Type.Stun;
-        if (isLookUpdateDisabled) return;
-
-        Vector3 diff = targetEntity.GetPosition() - position;
-        diff.y = 0;
-        
-        bool isTargetValid = diff.sqrMagnitude > 0.0001f;
-        if (isTargetValid)
-        {
-            lookDirection = diff.normalized;
-        }
-    }
+    public void ApplyHitstop(int frames) => hitstopCounter = frames;
+    public int GetHitstopCounter() => hitstopCounter;
 
     public void ApplyPushback(Vector3 pushVector) => position += pushVector;
-    public void SetYVelocity(float newYVelocity) => yVelocity = newYVelocity;
-    public float GetYVelocity() => yVelocity;
-    public void IncrementRunningForwardFrames() => runningForwardFrames++;
-    public int GetRunningForwardFrames() => runningForwardFrames;
-    public int GetStateFrameCounter() => stateFrameCounter;
-    public void SetTarget(ITargetable target) => targetEntity = target;
+    
     public void SetPosition(Vector3 newPos) => position = newPos;
     public Vector3 GetPosition() => position;
+
+    public void SetGlobalGravity(float gravity) => globalGravity = gravity;
+    public void SetTarget(ITargetable target) => targetEntity = target;
+
     public Vector3 GetDirection() => currentDirection;
     public Vector3 GetLookDirection() => lookDirection;
     public PlayerState_Type GetCurrentState() => currentState;
+    public int GetStateFrameCounter() => stateFrameCounter;
+
+    public void IncrementRunningForwardFrames() => runningForwardFrames++;
+    public int GetRunningForwardFrames() => runningForwardFrames;
     public int GetConsecutiveTaps() => consecutiveTaps;
-    public void SetGlobalGravity(float gravity) => globalGravity = gravity;
+
+    public PlayerInput GetPreviousInput() => previousInput;
+    public InputFlags GetKeyDownFlags() => currentKeyDownFlags;
+    public void ClearInputBuffer() => inputBuffer.Clear();
 
     public float GetCurrentSpeed()
     {
@@ -360,10 +385,24 @@ public class PlayerStateMachine : ITargetable
         return 0.0f;
     }
 
+    public Vector3 GetRawInputVector(InputFlags flags)
+    {
+        float x = ((flags & InputFlags.Right) != 0 ? 1 : 0) - ((flags & InputFlags.Left) != 0 ? 1 : 0);
+        float z = ((flags & InputFlags.Up) != 0 ? 1 : 0) - ((flags & InputFlags.Down) != 0 ? 1 : 0);
+        return new Vector3(x, 0, z).normalized;
+    }
+
     public void ClearComboSequence() => comboSequence.Clear();
-    public PlayerInput GetPreviousInput() => previousInput;
-    public InputFlags GetKeyDownFlags() => currentKeyDownFlags;
-    public void ClearInputBuffer() => inputBuffer.Clear();
+    public List<InputFlags> GetComboSequence() => comboSequence;
+
+    public ActionDataSO GetCurrentActionData() => currentActionData;
+    public void ClearCurrentAction() => currentActionData = null;
+
+    public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;
+    public bool HasAlreadyHit(int hitGroupID) => registeredHitGroupIds.Contains(hitGroupID);
+    public void RegisterHitGroup(int hitGroupID) => registeredHitGroupIds.Add(hitGroupID);
+
+    public PlayerConfigSO GetPlayerConfig() => config;
 
     public int GetCurrentAttackTriggerHash()
     {
@@ -398,14 +437,6 @@ public class PlayerStateMachine : ITargetable
         }
         return hash;
     }
-
-    public PlayerConfigSO GetPlayerConfig() => config;
-    public ActionDataSO GetCurrentActionData() => currentActionData;
-    public List<InputFlags> GetComboSequence() => comboSequence;
-    public void ClearCurrentAction() => currentActionData = null;
-    public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;
-    public bool HasAlreadyHit(int hitGroupID) => registeredHitGroupIds.Contains(hitGroupID);
-    public void RegisterHitGroup(int hitGroupID) => registeredHitGroupIds.Add(hitGroupID);
 
     public Hurtbox_Type GetCurrentHurtboxType()
     {

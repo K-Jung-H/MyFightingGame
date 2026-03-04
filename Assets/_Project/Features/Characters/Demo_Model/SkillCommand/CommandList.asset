@@ -23,8 +23,8 @@ MonoBehaviour:
     - requiredFlags: 1
       isExactMatchRequired: 0
     timeWindowFrames: 30
-    targetState: 3
-    validStates: 0000000002000000
+    targetState: 8
+    validStates: 5
     actionData: {fileID: 0}
   - commandName: Sprint
     priority: 20
@@ -40,6 +40,6 @@ MonoBehaviour:
     - requiredFlags: 1
       isExactMatchRequired: 0
     timeWindowFrames: 60
-    targetState: 4
-    validStates: 000000000200000003000000
+    targetState: 16
+    validStates: 13
     actionData: {fileID: 0}

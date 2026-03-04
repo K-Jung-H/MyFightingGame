@@ -7,6 +7,6 @@ public class CharacterDataSO : ScriptableObject
     public PlayerConfigSO config;
     public CommandListSO commandList;
     public ComboTreeSO comboTree;
-    public HitAnimationMapSO hitAnimMap;
+    public StateAnimationMapSO hitAnimMap;
     public EffectTableSO effectTable;
 }

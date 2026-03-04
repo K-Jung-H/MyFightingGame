@@ -55,8 +55,8 @@ MonoBehaviour:
     - requiredFlags: 16
       isExactMatchRequired: 0
     timeWindowFrames: 15
-    targetState: 32
-    validStates: 37
+    targetState: 16
+    validStates: 23
     actionData: {fileID: 11400000, guid: daaa05b8b6674a34caa40eda1a3eba46, type: 2}
   - commandName: Dash_Kick_Attack
     priority: 0

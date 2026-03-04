@@ -87,14 +87,6 @@ public class SprintingState : PlayerStateBase
     }
 }
 
-public class StunState : PlayerStateBase
-{
-    public StunState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
-
-    public override PlayerState_Type GetStateType() => PlayerState_Type.Stun;
-
-    public override void UpdateTick(PlayerInput input) { }
-}
 
 public class AttackingState : PlayerStateBase
 {

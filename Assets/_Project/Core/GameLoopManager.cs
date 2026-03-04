@@ -250,7 +250,6 @@ public class GameLoopManager : MonoBehaviour
             case PlayerState_Type.Running: return 0.2f;
             case PlayerState_Type.Walking: return 0.5f;
             case PlayerState_Type.Idle: return 1.0f;
-            case PlayerState_Type.Stun: return 1.5f;
             default: return 1.0f;
         }
     }

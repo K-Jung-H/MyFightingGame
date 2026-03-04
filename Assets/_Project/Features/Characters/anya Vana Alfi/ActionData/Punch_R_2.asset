@@ -20,6 +20,9 @@ MonoBehaviour:
       startupFrames: 21
       recoveryFrames: 23
       cancelWindowStartFrame: 20
+    useRootMotion: 0
+    useRootRotation: 0
+    rootMotionPath: []
     hitboxEvents:
     - activeStartFrame: 10
       boxPath:
@@ -53,7 +56,7 @@ MonoBehaviour:
         extents: {x: 0.05, y: 0.1, z: 0.05}
       hitGroupID: 0
       attackType: 0
-      targetHurtState: 1
+      targetHurtState: 2
       damage: 50
       hitstunFrames: 100
       localPushbackVector: {x: 0, y: 0, z: 0.2}

@@ -18,6 +18,8 @@ public abstract class HitStateBase : PlayerStateBase
 
 public class StandHitState : HitStateBase
 {
+    private int hitstunDuration;
+
     public StandHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.StandHit;
@@ -26,22 +28,56 @@ public class StandHitState : HitStateBase
     {
         base.Enter();
         
-        bool isGuardHit = currentHurtInfo.targetHurtState == HurtState_Type.GuardHit;
-        float pushbackMultiplier = isGuardHit ? 0.5f : 1.0f;
-        
-        Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
-        horizontalPushback.y = 0f;
-        stateMachine.ApplyPushback(horizontalPushback * pushbackMultiplier);
+        hitstunDuration = currentHurtInfo.hurtStunFrames;
     }
 
     public override void UpdateTick(PlayerInput input)
     {
         int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isStunCompleted = currentFrame >= currentHurtInfo.hurtStunFrames;
-        
-        if (isStunCompleted)
+        bool isHitstunComplete = currentFrame >= hitstunDuration;
+
+        if (isHitstunComplete)
         {
             stateMachine.TransitionTo(PlayerState_Type.Idle);
+        }
+    }
+}
+
+public class StunningState : HitStateBase
+{
+    private int stunningDuration;
+
+    public StunningState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Stunning;
+
+    public override void Enter()
+    {
+        base.Enter();
+        
+        stunningDuration = config.GetStunningFrames();
+
+        bool isFromStand = stateMachine.GetPosition().y <= 0f;
+        if (isFromStand)
+        {
+            Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
+            horizontalPushback.y = 0f;
+            stateMachine.ApplyPushback(horizontalPushback);
+        }
+
+        Debug.Log("Enter Stun");
+    }
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        int currentFrame = stateMachine.GetStateFrameCounter();
+        bool isStunningComplete = currentFrame >= stunningDuration;
+        
+        if (isStunningComplete)
+        {
+            stateMachine.TransitionTo(PlayerState_Type.LayingDown);
+            Debug.Log("Exit Stun");
+
         }
     }
 }
@@ -55,72 +91,157 @@ public class AirHitState : HitStateBase
     public override void Enter()
     {
         base.Enter();
-        
-        Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
-        horizontalPushback.y = 0f;
-        stateMachine.ApplyPushback(horizontalPushback);
     }
 
     public override void UpdateTick(PlayerInput input)
     {
-        Vector3 currentPos = stateMachine.GetPosition();
-        float currentYVelocity = stateMachine.GetYVelocity();
-        
-        bool isGrounded = currentPos.y <= 0f && currentYVelocity <= 0f;
+        bool isGrounded = stateMachine.GetPosition().y <= 0f && stateMachine.GetVelocity().y <= 0f;
+
         if (isGrounded)
         {
-            stateMachine.TransitionTo(PlayerState_Type.Knockdown);
+            Vector3 currentPos = stateMachine.GetPosition();
+            currentPos.y = 0f;
+            stateMachine.SetPosition(currentPos);
+            
+            stateMachine.TransitionTo(PlayerState_Type.GroundSmash);
         }
     }
 }
 
-public class KnockdownState : HitStateBase
+public class GroundSmashState : HitStateBase
 {
-    private int knockdownFrames = 30;
+    private int smashDuration;
+    private bool isBouncing;
 
-    public KnockdownState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+    public GroundSmashState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState_Type GetStateType() => PlayerState_Type.Knockdown;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.GroundSmash;
 
     public override void Enter()
     {
         base.Enter();
-        
-        bool isFromStand = stateMachine.GetPosition().y <= 0f;
-        if (isFromStand)
+
+        float currentFallSpeed = stateMachine.GetVelocity().y;
+        isBouncing = currentFallSpeed <= config.GetBounceVelocityThreshold();
+
+        if (isBouncing)
         {
-            Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
-            horizontalPushback.y = 0f;
-            stateMachine.ApplyPushback(horizontalPushback);
+            smashDuration = config.GetGroundSmashBounceFrames();
+            Vector3 currentVelocity = stateMachine.GetVelocity();
+            currentVelocity.y = Mathf.Abs(currentFallSpeed) * config.GetBounceVelocityMultiplier();
+            stateMachine.SetVelocity(currentVelocity);
+        }
+        else
+        {
+            smashDuration = config.GetGroundSmashLayFrames();
+            stateMachine.SetVelocity(Vector3.zero);
         }
     }
 
     public override void UpdateTick(PlayerInput input)
     {
         int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isKnockdownCompleted = currentFrame >= knockdownFrames;
-        
-        if (isKnockdownCompleted)
+        bool isSmashComplete = currentFrame >= smashDuration;
+
+        if (isSmashComplete)
         {
-            stateMachine.TransitionTo(PlayerState_Type.WakeUp);
+            if (isBouncing)
+            {
+                stateMachine.TransitionTo(PlayerState_Type.AirHit);
+            }
+            else
+            {
+                stateMachine.TransitionTo(PlayerState_Type.LayingDown);
+            }
         }
     }
 }
 
-public class WakeUpState : HitStateBase
+
+
+public class LayingDownState : HitStateBase
 {
-    private int wakeupFrames = 20;
+    public LayingDownState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.LayingDown;
+
+    public override void Enter()
+    {
+        base.Enter();
+
+        stateMachine.SetVelocity(Vector3.zero);
+    }
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        bool isInputDetected = input.flags != 0;
+        
+        if (isInputDetected)
+        {
+            WakeUp_Type selectedType = EvaluateWakeUpInput(input);
+            stateMachine.SetWakeUpType(selectedType);
+            stateMachine.TransitionTo(PlayerState_Type.WakeUp);
+        }
+    }
+
+    private WakeUp_Type EvaluateWakeUpInput(PlayerInput input)
+    {
+        bool isAttackPressed = (input.flags & InputFlags.LightAttack) != 0;
+        if (isAttackPressed)
+        {
+            return WakeUp_Type.Attack;
+        }
+
+        bool isLeftPressed = (input.flags & InputFlags.Left) != 0;
+        if (isLeftPressed)
+        {
+            return WakeUp_Type.RollLeft;
+        }
+
+        bool isRightPressed = (input.flags & InputFlags.Right) != 0;
+        if (isRightPressed)
+        {
+            return WakeUp_Type.RollRight;
+        }
+
+        bool isForwardPressed = (input.flags & InputFlags.Up) != 0;
+        if (isForwardPressed)
+        {
+            return WakeUp_Type.RollForward;
+        }
+
+        bool isBackwardPressed = (input.flags & InputFlags.Down) != 0;
+        if (isBackwardPressed)
+        {
+            return WakeUp_Type.RollBackward;
+        }
+
+        return WakeUp_Type.InPlace;
+    }
+}
+
+public class WakeUpState : PlayerStateBase
+{
+    private int wakeUpDuration;
 
     public WakeUpState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.WakeUp;
 
+    public override void Enter()
+    {
+        WakeUp_Type currentType = stateMachine.GetWakeUpType();
+        wakeUpDuration = config.GetWakeUpFrames(currentType);
+        
+        stateMachine.SetVelocity(Vector3.zero);
+    }
+
     public override void UpdateTick(PlayerInput input)
     {
         int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isWakeUpCompleted = currentFrame >= wakeupFrames;
-        
-        if (isWakeUpCompleted)
+        bool isWakeUpComplete = currentFrame >= wakeUpDuration;
+
+        if (isWakeUpComplete)
         {
             stateMachine.TransitionTo(PlayerState_Type.Idle);
         }

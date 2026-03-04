@@ -4,9 +4,15 @@ public class CharacterVisual : MonoBehaviour
 {
     [SerializeField] private Animator characterAnimator;
     
+    [Header("Animation Blend Settings")]
+    [SerializeField] private float attackBlendTime = 0f;
+    [SerializeField] private float hitBlendTime = 0f;
+    [SerializeField] private float commandBlendTime = 0.1f;
+    [SerializeField] private float locomotionBlendTime = 0.1f;
+    
     private EffectTableSO effectTable;
     private PlayerStateMachine logicMachine;
-    private HitAnimationMapSO hitAnimMap;
+    private StateAnimationMapSO stateAnimMap;
     private Vector3 targetPosition;
     private float targetSpeed;
     private Vector3 targetDirection;
@@ -20,10 +26,10 @@ public class CharacterVisual : MonoBehaviour
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
     private static readonly int LocomotionHash = Animator.StringToHash("Move Blend Tree");
 
-    public void InitializeVisual(PlayerStateMachine stateMachine, HitAnimationMapSO hitMap, EffectTableSO fxTable)
+    public void InitializeVisual(PlayerStateMachine stateMachine, StateAnimationMapSO stateMap, EffectTableSO fxTable)
     {
         logicMachine = stateMachine;
-        hitAnimMap = hitMap;
+        stateAnimMap = stateMap;
         effectTable = fxTable;
         previousState = (PlayerState_Type)(-1);
     }
@@ -119,7 +125,9 @@ public class CharacterVisual : MonoBehaviour
 
         bool isHitState = currentState == PlayerState_Type.StandHit || 
                           currentState == PlayerState_Type.AirHit || 
-                          currentState == PlayerState_Type.Knockdown || 
+                          currentState == PlayerState_Type.Stunning || 
+                          currentState == PlayerState_Type.GroundSmash ||
+                          currentState == PlayerState_Type.LayingDown ||
                           currentState == PlayerState_Type.WakeUp;
 
         if (isHitState && stateFrame == 1)
@@ -128,7 +136,7 @@ public class CharacterVisual : MonoBehaviour
         }
         else if (logicMachine.CheckAndConsumeCommandAction(out int commandHash))
         {
-            characterAnimator.CrossFadeInFixedTime(commandHash, 0.1f, 0);
+            characterAnimator.CrossFadeInFixedTime(commandHash, commandBlendTime, 0);
         }
         else if (currentState == PlayerState_Type.Attacking && stateFrame == 1)
         {
@@ -146,14 +154,31 @@ public class CharacterVisual : MonoBehaviour
     private void PlayHitAnimation(PlayerState_Type currentState)
     {
         string mappedAnimName = currentState.ToString();
-        bool hasHitMap = hitAnimMap != null;
-        if (hasHitMap)
+        bool hasStateMap = stateAnimMap != null;
+        
+        bool isWakeUpState = currentState == PlayerState_Type.WakeUp;
+        if (isWakeUpState)
         {
-            mappedAnimName = hitAnimMap.GetHitAnimationName(currentState);
+            WakeUp_Type wakeUpType = logicMachine.GetWakeUpType();
+            if (hasStateMap)
+            {
+                mappedAnimName = stateAnimMap.GetWakeUpAnimationName(wakeUpType);
+            }
+            else
+            {
+                mappedAnimName = $"WakeUp_{wakeUpType}";
+            }
+        }
+        else
+        {
+            if (hasStateMap)
+            {
+                mappedAnimName = stateAnimMap.GetStateAnimationName(currentState);
+            }
         }
         
         int finalHash = logicMachine.GetAnimationHash(mappedAnimName);
-        characterAnimator.CrossFadeInFixedTime(finalHash, 0.1f, 0);
+        characterAnimator.CrossFadeInFixedTime(finalHash, hitBlendTime, 0);
     }
 
     private void PlayAttackAnimation()
@@ -162,7 +187,7 @@ public class CharacterVisual : MonoBehaviour
         bool hasValidAttackHash = finalHash != 0;
         if (hasValidAttackHash)
         {
-            characterAnimator.CrossFadeInFixedTime(finalHash, 0.1f, 0);
+            characterAnimator.CrossFadeInFixedTime(finalHash, attackBlendTime, 0);
         }
     }
 
@@ -174,16 +199,17 @@ public class CharacterVisual : MonoBehaviour
                                    currentState == PlayerState_Type.Sprinting;
             
         bool isPreviousAction = previousState == PlayerState_Type.Attacking || 
-                                previousState == PlayerState_Type.Stun || 
                                 previousState == PlayerState_Type.StandHit || 
                                 previousState == PlayerState_Type.AirHit || 
-                                previousState == PlayerState_Type.Knockdown || 
+                                previousState == PlayerState_Type.Stunning || 
+                                previousState == PlayerState_Type.GroundSmash ||
+                                previousState == PlayerState_Type.LayingDown ||
                                 previousState == PlayerState_Type.WakeUp;
 
         bool shouldTransitionToLocomotion = isCurrentLocomotion && isPreviousAction;
         if (shouldTransitionToLocomotion)
         {
-            characterAnimator.CrossFadeInFixedTime(LocomotionHash, 0.1f, 0);
+            characterAnimator.CrossFadeInFixedTime(LocomotionHash, locomotionBlendTime, 0);
         }
     }
 

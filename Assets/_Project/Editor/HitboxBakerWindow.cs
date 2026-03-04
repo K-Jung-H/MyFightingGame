@@ -39,15 +39,24 @@ public class HitboxBakerWindow : EditorWindow
     {
         GUILayout.Label("Hitbox Baker Settings", EditorStyles.boldLabel);
 
-        EditorGUI.BeginChangeCheck();
         targetCharacter = (GameObject)EditorGUILayout.ObjectField("Target Character", targetCharacter, typeof(GameObject), true);
         targetRootBone = (Transform)EditorGUILayout.ObjectField("Target Root Bone", targetRootBone, typeof(Transform), true);
-        targetActionData = (ActionDataSO)EditorGUILayout.ObjectField("Target Action Data", targetActionData, typeof(ActionDataSO), false);
         playerConfig = (PlayerConfigSO)EditorGUILayout.ObjectField("Player Config", playerConfig, typeof(PlayerConfigSO), false);
         
-        if (EditorGUI.EndChangeCheck() && targetActionData != null && targetActionData.animationClip != null)
+        EditorGUI.BeginChangeCheck();
+        targetActionData = (ActionDataSO)EditorGUILayout.ObjectField("Target Action Data", targetActionData, typeof(ActionDataSO), false);
+        
+        if (EditorGUI.EndChangeCheck() && targetActionData != null)
         {
-            InitializeLogicData();
+            if (targetActionData.frameData == null)
+            {
+                targetActionData.frameData = new AnimationFrameData();
+            }
+
+            if (targetActionData.animationClip != null && targetActionData.frameData.logicData.totalFrames <= 0)
+            {
+                InitializeLogicData();
+            }
         }
 
         if (targetCharacter != null && targetActionData != null && targetActionData.animationClip != null)
@@ -84,26 +93,40 @@ public class HitboxBakerWindow : EditorWindow
 
     private void InitializeLogicData()
     {
-        int calculatedTotal = Mathf.RoundToInt(targetActionData.animationClip.length / Time.fixedDeltaTime);
-        
-        if (targetActionData.frameData.logicData.totalFrames != calculatedTotal)
-        {
-            int baseSplit = calculatedTotal / 3;
-            int remainder = calculatedTotal % 3;
+        if (targetActionData == null || targetActionData.animationClip == null) return;
 
-            targetActionData.frameData.logicData.totalFrames = calculatedTotal;
-            targetActionData.frameData.logicData.startupFrames = baseSplit;
-            targetActionData.frameData.logicData.recoveryFrames = baseSplit + remainder;
-            targetActionData.frameData.logicData.cancelWindowStartFrame = baseSplit * 2;
-            
-            EditorUtility.SetDirty(targetActionData);
-        }
+        float clipLength = targetActionData.animationClip.length;
+        float frameRate = targetActionData.animationClip.frameRate;
+        int calculatedTotal = Mathf.RoundToInt(clipLength * frameRate);
+        
+        int baseSplit = calculatedTotal / 3;
+        int remainder = calculatedTotal % 3;
+
+        targetActionData.frameData.logicData.totalFrames = calculatedTotal;
+        targetActionData.frameData.logicData.startupFrames = baseSplit;
+        targetActionData.frameData.logicData.recoveryFrames = baseSplit + remainder;
+        targetActionData.frameData.logicData.cancelWindowStartFrame = baseSplit * 2;
+        
+        EditorUtility.SetDirty(targetActionData);
     }
 
     private void DrawLogicDataEditor()
     {
         EditorGUILayout.Space();
+        
+        GUILayout.BeginHorizontal();
         GUILayout.Label("Logic Data (Editable)", EditorStyles.boldLabel);
+        
+        if (GUILayout.Button("Reset", GUILayout.Width(60)))
+        {
+            if (targetActionData != null && targetActionData.animationClip != null)
+            {
+                Undo.RecordObject(targetActionData, "Reset Logic Data");
+                InitializeLogicData();
+                GUI.FocusControl(null); 
+            }
+        }
+        GUILayout.EndHorizontal();
         
         EditorGUI.BeginChangeCheck();
         var logic = targetActionData.frameData.logicData;
@@ -339,7 +362,6 @@ public class HitboxBakerWindow : EditorWindow
             EditorGUILayout.EndScrollView();
         }
     }
-    
 
     private void DrawTimelineAndPreview()
     {

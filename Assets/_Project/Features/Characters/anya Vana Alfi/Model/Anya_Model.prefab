@@ -1528,6 +1528,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: a239c42cf5d2954439aabd04f7b44765, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 0a8eae5fc1c88aa448a65ee4225da14f, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6000407479487422213, guid: 0a8eae5fc1c88aa448a65ee4225da14f, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.000000012747478
@@ -1854,6 +1858,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterVisual
   characterAnimator: {fileID: 2615895611444638989}
+  attackBlendTime: 0.1
+  hitBlendTime: 0
+  commandBlendTime: 0.1
+  locomotionBlendTime: 0.1
 --- !u!4 &9031445617771753184 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 608321761475470972, guid: 0a8eae5fc1c88aa448a65ee4225da14f, type: 3}

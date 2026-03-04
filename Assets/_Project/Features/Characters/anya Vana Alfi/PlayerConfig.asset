@@ -16,6 +16,17 @@ MonoBehaviour:
   runSpeed: 0.18
   sprintSpeed: 0.25
   turnLerpSpeed: 0.2
+  wakeUpInPlaceFrames: 50
+  wakeUpRollForwardFrames: 40
+  wakeUpRollBackwardFrames: 45
+  wakeUpRollLeftFrames: 35
+  wakeUpRollRightFrames: 35
+  wakeUpAttackFrames: 30
+  gravityScale: 1
+  bounceVelocityThreshold: -10
+  bounceVelocityMultiplier: 0.5
+  groundSmashBounceFrames: 10
+  groundSmashLayFrames: 15
   defaultHurtboxes:
   - type: 0
     boxes:
@@ -31,6 +42,8 @@ MonoBehaviour:
       extents: {x: 0, y: 0, z: 0}
   - type: 3
     boxes: []
+  commandBufferWindow: 15
   tapWindowFrames: 15
   autoSprintFrames: 60
+  stunningFrames: 150
   attackFrameLimit: 30
