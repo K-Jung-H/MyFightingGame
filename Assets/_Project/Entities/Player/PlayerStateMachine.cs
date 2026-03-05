@@ -322,7 +322,8 @@ public class PlayerStateMachine : ITargetable
 
         bool isAlreadyInAirHit = currentStateType == PlayerState_Type.AirHit || 
                                  currentStateType == PlayerState_Type.GroundSmash ||
-                                 currentStateType == PlayerState_Type.LayingDown;
+                                 currentStateType == PlayerState_Type.LayingDown ||
+                                 currentStateType == PlayerState_Type.WakeUp;
 
         bool isJuggleBumpNeeded = (!isGrounded || isAlreadyInAirHit) && finalPushback.y < 0.25f;
         if (isJuggleBumpNeeded)

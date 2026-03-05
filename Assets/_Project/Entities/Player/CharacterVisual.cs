@@ -154,9 +154,11 @@ public class CharacterVisual : MonoBehaviour
     private void PlayHitAnimation(PlayerState_Type currentState)
     {
         string mappedAnimName = currentState.ToString();
-        bool hasStateMap = stateAnimMap != null;
+        bool isStateMapValid = stateAnimMap != null;
         
         bool isWakeUpState = currentState == PlayerState_Type.WakeUp;
+        bool isLayingDownState = currentState == PlayerState_Type.LayingDown;
+
         if (isWakeUpState)
         {
             WakeUpState wakeUpState = logicMachine.GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
@@ -164,7 +166,7 @@ public class CharacterVisual : MonoBehaviour
 
             WakeUp_Type currentWakeUpType = isWakeUpStateValid ? wakeUpState.GetScheduledWakeUpType() : WakeUp_Type.InPlace;
             
-            if (hasStateMap)
+            if (isStateMapValid)
             {
                 mappedAnimName = stateAnimMap.GetWakeUpAnimationName(currentWakeUpType);
             }
@@ -173,7 +175,22 @@ public class CharacterVisual : MonoBehaviour
                 mappedAnimName = $"WakeUp_{currentWakeUpType}";
             }
         }
-        else if (hasStateMap)
+        else if (isLayingDownState)
+        {
+            LayingDownState layState = logicMachine.GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
+            bool isLayStateValid = layState != null;
+            bool isFromRoll = isLayStateValid && layState.IsFromRoll();
+
+            if (isStateMapValid)
+            {
+                mappedAnimName = stateAnimMap.GetLayingDownAnimationName(isFromRoll);
+            }
+            else
+            {
+                mappedAnimName = isFromRoll ? "LayingDown_Idle" : "LayingDown_Initial";
+            }
+        }
+        else if (isStateMapValid)
         {
             mappedAnimName = stateAnimMap.GetStateAnimationName(currentState);
         }

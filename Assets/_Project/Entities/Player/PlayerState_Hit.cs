@@ -152,9 +152,21 @@ public class GroundSmashState : HitStateBase
 
 public class LayingDownState : HitStateBase
 {
+    private bool isFromRoll;
+
     public LayingDownState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.LayingDown;
+
+    public void SetFromRoll(bool value)
+    {
+        isFromRoll = value;
+    }
+
+    public bool IsFromRoll()
+    {
+        return isFromRoll;
+    }
 
     public override void Enter()
     {
@@ -162,17 +174,24 @@ public class LayingDownState : HitStateBase
         stateMachine.SetVelocity(Vector3.zero);
     }
 
+    public override void Exit()
+    {
+        base.Exit();
+        isFromRoll = false;
+    }
+
     public override void UpdateTick(PlayerInput input)
     {
-        bool isInputDetected = input.flags != 0;
+        bool isDirectionalInputDetected = (input.flags & (InputFlags.Left | InputFlags.Right | InputFlags.Up | InputFlags.Down)) != 0;
 
-        if (isInputDetected)
+        if (isDirectionalInputDetected)
         {
+            stateMachine.ClearInputBuffer();
+
             WakeUp_Type selectedType = EvaluateWakeUpInput(input);
-
             WakeUpState wakeUpState = stateMachine.GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+            
             bool isWakeUpStateValid = wakeUpState != null;
-
             if (isWakeUpStateValid)
             {
                 wakeUpState.SetWakeUpType(selectedType);
@@ -184,12 +203,6 @@ public class LayingDownState : HitStateBase
 
     private WakeUp_Type EvaluateWakeUpInput(PlayerInput input)
     {
-        bool isAttackPressed = (input.flags & InputFlags.LightAttack) != 0;
-        if (isAttackPressed)
-        {
-            return WakeUp_Type.Attack;
-        }
-
         bool isLeftPressed = (input.flags & InputFlags.Left) != 0;
         if (isLeftPressed)
         {
@@ -218,7 +231,7 @@ public class LayingDownState : HitStateBase
     }
 }
 
-public class WakeUpState : PlayerStateBase
+public class WakeUpState : HitStateBase
 {
     private WakeUp_Type scheduledWakeUpType;
     private int wakeUpDuration;
@@ -240,7 +253,6 @@ public class WakeUpState : PlayerStateBase
     public override void Enter()
     {
         base.Enter();
-        
         wakeUpDuration = config.GetWakeUpFrames(scheduledWakeUpType);
         stateMachine.SetVelocity(Vector3.zero);
     }
@@ -248,11 +260,27 @@ public class WakeUpState : PlayerStateBase
     public override void UpdateTick(PlayerInput input)
     {
         int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isWakeUpComplete = currentFrame >= wakeUpDuration;
+        bool isActionComplete = currentFrame >= wakeUpDuration;
 
-        if (isWakeUpComplete)
+        if (isActionComplete)
         {
-            stateMachine.TransitionTo(PlayerState_Type.Idle);
+            bool isGroundRoll = scheduledWakeUpType == WakeUp_Type.RollLeft || scheduledWakeUpType == WakeUp_Type.RollRight;
+            
+            if (isGroundRoll)
+            {
+                LayingDownState layState = stateMachine.GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
+                bool isLayStateValid = layState != null;
+                if (isLayStateValid)
+                {
+                    layState.SetFromRoll(true);
+                }
+                
+                stateMachine.TransitionTo(PlayerState_Type.LayingDown);
+            }
+            else
+            {
+                stateMachine.TransitionTo(PlayerState_Type.Idle);
+            }
         }
     }
 }

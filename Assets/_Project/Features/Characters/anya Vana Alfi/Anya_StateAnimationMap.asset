@@ -16,8 +16,9 @@ MonoBehaviour:
   airHit: {fileID: -6894513051456882905, guid: d5a328ab938234e469428eb760a32843, type: 3}
   stunning: {fileID: -203655887218126122, guid: 073349fe1684326458408986f3d3ab94, type: 3}
   groundSmash: {fileID: -203655887218126122, guid: d5a328ab938234e469428eb760a32843, type: 3}
-  layingDown: {fileID: -203655887218126122, guid: 1e43dfe4933a4ab4b97d069a49a05b87, type: 3}
   wakeUp: {fileID: -203655887218126122, guid: 88d38d3bf06863d429085ea51452e868, type: 3}
+  layingDownInitial: {fileID: -203655887218126122, guid: 1e43dfe4933a4ab4b97d069a49a05b87, type: 3}
+  layingDownIdle: {fileID: -203655887218126122, guid: e10d3f6932806ed4aac72055c8a27b70, type: 3}
   wakeUpInPlace: {fileID: -203655887218126122, guid: 88d38d3bf06863d429085ea51452e868, type: 3}
   wakeUpRollForward: {fileID: -203655887218126122, guid: 0c534df7dfbf24446b71fe62c833ad7a, type: 3}
   wakeUpRollBackward: {fileID: -203655887218126122, guid: 0c534df7dfbf24446b71fe62c833ad7a, type: 3}

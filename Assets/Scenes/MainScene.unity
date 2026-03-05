@@ -155,8 +155,8 @@ MonoBehaviour:
   playerCollisionMinDistance: 0.5
   globalGravity: 0.02
   hitFeedbackTable:
-  - attackType: 2
-    hitstopFrames: 10
+  - attackType: 0
+    hitstopFrames: 15
     cameraShakeIntensity: 0
   - attackType: 3
     hitstopFrames: 20
@@ -545,7 +545,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2615895611444638989, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_ApplyRootMotion
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake

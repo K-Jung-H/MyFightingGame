@@ -17,10 +17,10 @@ MonoBehaviour:
   sprintSpeed: 0.25
   turnLerpSpeed: 0.2
   wakeUpInPlaceFrames: 50
-  wakeUpRollForwardFrames: 40
+  wakeUpRollForwardFrames: 60
   wakeUpRollBackwardFrames: 45
-  wakeUpRollLeftFrames: 35
-  wakeUpRollRightFrames: 35
+  wakeUpRollLeftFrames: 70
+  wakeUpRollRightFrames: 70
   wakeUpAttackFrames: 30
   gravityScale: 1
   bounceVelocityThreshold: -0.3
@@ -45,5 +45,4 @@ MonoBehaviour:
   commandBufferWindow: 15
   tapWindowFrames: 15
   autoSprintFrames: 60
-  stunningFrames: 150
-  attackFrameLimit: 30
+  stunningFrames: 90

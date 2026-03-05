@@ -8,8 +8,11 @@ public class StateAnimationMapSO : ScriptableObject
     public AnimationClip airHit;
     public AnimationClip stunning;
     public AnimationClip groundSmash;
-    public AnimationClip layingDown;
     public AnimationClip wakeUp;
+
+    [Header("Laying Down States")]
+    public AnimationClip layingDownInitial;
+    public AnimationClip layingDownIdle;
 
     [Header("Wake Up Types")]
     public AnimationClip wakeUpInPlace;
@@ -29,7 +32,6 @@ public class StateAnimationMapSO : ScriptableObject
             case PlayerState_Type.AirHit: clip = airHit; break;
             case PlayerState_Type.Stunning: clip = stunning; break;
             case PlayerState_Type.GroundSmash: clip = groundSmash; break;
-            case PlayerState_Type.LayingDown: clip = layingDown; break;
             case PlayerState_Type.WakeUp: clip = wakeUp; break;
         }
 
@@ -39,6 +41,18 @@ public class StateAnimationMapSO : ScriptableObject
         }
         
         return state.ToString();
+    }
+
+    public string GetLayingDownAnimationName(bool isFromRoll)
+    {
+        AnimationClip clip = isFromRoll ? layingDownIdle : layingDownInitial;
+
+        if (clip != null)
+        {
+            return clip.name;
+        }
+
+        return isFromRoll ? "LayingDown_Idle" : "LayingDown_Initial";
     }
 
     public string GetWakeUpAnimationName(WakeUp_Type wakeUpType)
