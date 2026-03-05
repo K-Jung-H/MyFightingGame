@@ -159,35 +159,58 @@ public class CharacterVisual : MonoBehaviour
         bool isWakeUpState = currentState == PlayerState_Type.WakeUp;
         if (isWakeUpState)
         {
-            WakeUp_Type wakeUpType = logicMachine.GetWakeUpType();
+            WakeUpState wakeUpState = logicMachine.GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+            bool isWakeUpStateValid = wakeUpState != null;
+
+            WakeUp_Type currentWakeUpType = isWakeUpStateValid ? wakeUpState.GetScheduledWakeUpType() : WakeUp_Type.InPlace;
+            
             if (hasStateMap)
             {
-                mappedAnimName = stateAnimMap.GetWakeUpAnimationName(wakeUpType);
+                mappedAnimName = stateAnimMap.GetWakeUpAnimationName(currentWakeUpType);
             }
             else
             {
-                mappedAnimName = $"WakeUp_{wakeUpType}";
+                mappedAnimName = $"WakeUp_{currentWakeUpType}";
             }
         }
-        else
+        else if (hasStateMap)
         {
-            if (hasStateMap)
-            {
-                mappedAnimName = stateAnimMap.GetStateAnimationName(currentState);
-            }
+            mappedAnimName = stateAnimMap.GetStateAnimationName(currentState);
         }
         
         int finalHash = logicMachine.GetAnimationHash(mappedAnimName);
-        characterAnimator.CrossFadeInFixedTime(finalHash, hitBlendTime, 0);
+        SafeCrossFade(finalHash, mappedAnimName, hitBlendTime, "Hit/State");
     }
 
     private void PlayAttackAnimation()
     {
         int finalHash = logicMachine.GetCurrentAttackTriggerHash();
-        bool hasValidAttackHash = finalHash != 0;
-        if (hasValidAttackHash)
+        bool isInvalidHash = finalHash == 0;
+
+        if (isInvalidHash)
         {
-            characterAnimator.CrossFadeInFixedTime(finalHash, attackBlendTime, 0);
+            Debug.LogWarning("[Animation Warning] 실행 시도한 공격의 애니메이션 해시가 0입니다.");
+            return;
+        }
+
+        var actionData = logicMachine.GetCurrentActionData();
+        string actionInfo = actionData != null ? $"{actionData.name} (State: {actionData.animationStateName})" : "Unknown Action";
+        
+        SafeCrossFade(finalHash, actionInfo, attackBlendTime, "Attack");
+    }
+
+    private void SafeCrossFade(int hash, string debugName, float blendTime, string category)
+    {
+        bool hasState = characterAnimator.HasState(0, hash);
+
+        if (hasState)
+        {
+            Debug.Log($"[Animation Play] {category}: {debugName}");
+            characterAnimator.CrossFadeInFixedTime(hash, blendTime, 0);
+        }
+        else
+        {
+            Debug.LogError($"[Animation Missing] {category} 애니메이션 '{debugName}'이 컨트롤러에 없습니다. (Hash: {hash})");
         }
     }
 

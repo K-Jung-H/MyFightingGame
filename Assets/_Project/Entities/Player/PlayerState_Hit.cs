@@ -64,8 +64,6 @@ public class StunningState : HitStateBase
             horizontalPushback.y = 0f;
             stateMachine.ApplyPushback(horizontalPushback);
         }
-
-        Debug.Log("Enter Stun");
     }
 
     public override void UpdateTick(PlayerInput input)
@@ -76,8 +74,6 @@ public class StunningState : HitStateBase
         if (isStunningComplete)
         {
             stateMachine.TransitionTo(PlayerState_Type.LayingDown);
-            Debug.Log("Exit Stun");
-
         }
     }
 }
@@ -95,14 +91,10 @@ public class AirHitState : HitStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        bool isGrounded = stateMachine.GetPosition().y <= 0f && stateMachine.GetVelocity().y <= 0f;
+        bool isFallingAndGrounded = stateMachine.isGrounded && stateMachine.GetVelocity().y <= 0f;
 
-        if (isGrounded)
+        if (isFallingAndGrounded)
         {
-            Vector3 currentPos = stateMachine.GetPosition();
-            currentPos.y = 0f;
-            stateMachine.SetPosition(currentPos);
-            
             stateMachine.TransitionTo(PlayerState_Type.GroundSmash);
         }
     }
@@ -120,15 +112,14 @@ public class GroundSmashState : HitStateBase
     public override void Enter()
     {
         base.Enter();
-
-        float currentFallSpeed = stateMachine.GetVelocity().y;
-        isBouncing = currentFallSpeed <= config.GetBounceVelocityThreshold();
+        float impactFallSpeed = stateMachine.lastImpactVelocity.y;
+        isBouncing = impactFallSpeed <= config.GetBounceVelocityThreshold();
 
         if (isBouncing)
         {
             smashDuration = config.GetGroundSmashBounceFrames();
             Vector3 currentVelocity = stateMachine.GetVelocity();
-            currentVelocity.y = Mathf.Abs(currentFallSpeed) * config.GetBounceVelocityMultiplier();
+            currentVelocity.y = Mathf.Abs(impactFallSpeed) * config.GetBounceVelocityMultiplier();
             stateMachine.SetVelocity(currentVelocity);
         }
         else
@@ -168,18 +159,25 @@ public class LayingDownState : HitStateBase
     public override void Enter()
     {
         base.Enter();
-
         stateMachine.SetVelocity(Vector3.zero);
     }
 
     public override void UpdateTick(PlayerInput input)
     {
         bool isInputDetected = input.flags != 0;
-        
+
         if (isInputDetected)
         {
             WakeUp_Type selectedType = EvaluateWakeUpInput(input);
-            stateMachine.SetWakeUpType(selectedType);
+
+            WakeUpState wakeUpState = stateMachine.GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+            bool isWakeUpStateValid = wakeUpState != null;
+
+            if (isWakeUpStateValid)
+            {
+                wakeUpState.SetWakeUpType(selectedType);
+            }
+            
             stateMachine.TransitionTo(PlayerState_Type.WakeUp);
         }
     }
@@ -222,17 +220,28 @@ public class LayingDownState : HitStateBase
 
 public class WakeUpState : PlayerStateBase
 {
+    private WakeUp_Type scheduledWakeUpType;
     private int wakeUpDuration;
 
     public WakeUpState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.WakeUp;
 
+    public void SetWakeUpType(WakeUp_Type type)
+    {
+        scheduledWakeUpType = type;
+    }
+
+    public WakeUp_Type GetScheduledWakeUpType()
+    {
+        return scheduledWakeUpType;
+    }
+
     public override void Enter()
     {
-        WakeUp_Type currentType = stateMachine.GetWakeUpType();
-        wakeUpDuration = config.GetWakeUpFrames(currentType);
+        base.Enter();
         
+        wakeUpDuration = config.GetWakeUpFrames(scheduledWakeUpType);
         stateMachine.SetVelocity(Vector3.zero);
     }
 

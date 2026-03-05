@@ -16,6 +16,8 @@ MonoBehaviour:
   - commandName: Run
     priority: 50
     sequence:
+    - requiredFlags: 0
+      isExactMatchRequired: 0
     - requiredFlags: 1
       isExactMatchRequired: 0
     - requiredFlags: 0
@@ -23,25 +25,8 @@ MonoBehaviour:
     - requiredFlags: 1
       isExactMatchRequired: 0
     timeWindowFrames: 30
-    targetState: 8
-    validStates: 5
-    actionData: {fileID: 0}
-  - commandName: Sprint
-    priority: 20
-    sequence:
-    - requiredFlags: 1
-      isExactMatchRequired: 0
-    - requiredFlags: 0
-      isExactMatchRequired: 0
-    - requiredFlags: 1
-      isExactMatchRequired: 0
-    - requiredFlags: 0
-      isExactMatchRequired: 0
-    - requiredFlags: 1
-      isExactMatchRequired: 0
-    timeWindowFrames: 60
     targetState: 4
-    validStates: 9
+    validStates: 3
     actionData: {fileID: 0}
   - commandName: Swing
     priority: 0
@@ -81,17 +66,17 @@ MonoBehaviour:
     - requiredFlags: 16
       isExactMatchRequired: 0
     timeWindowFrames: 15
-    targetState: 32
-    validStates: 8
+    targetState: 16
+    validStates: 12
     actionData: {fileID: 11400000, guid: 2609f7e24efcb4942b213130991d1680, type: 2}
   - commandName: Upper Punch
     priority: 0
     sequence:
     - requiredFlags: 34
-      isExactMatchRequired: 0
+      isExactMatchRequired: 1
     timeWindowFrames: 15
-    targetState: 32
-    validStates: 44
+    targetState: 16
+    validStates: 15
     actionData: {fileID: 11400000, guid: 8583e93afe8bc9449999de1b56e39b98, type: 2}
   - commandName: Hook
     priority: 0
@@ -99,6 +84,6 @@ MonoBehaviour:
     - requiredFlags: 22
       isExactMatchRequired: 0
     timeWindowFrames: 15
-    targetState: 32
-    validStates: 60
+    targetState: 16
+    validStates: 31
     actionData: {fileID: 11400000, guid: e440f3913713b0644b4acc517709829d, type: 2}

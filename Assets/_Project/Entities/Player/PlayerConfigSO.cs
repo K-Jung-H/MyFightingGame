@@ -52,11 +52,15 @@ public class PlayerConfigSO : ScriptableObject
     [Header("Input Settings")]
     public int commandBufferWindow = 15;
     public int tapWindowFrames = 15;
-    public int autoSprintFrames = 60;
 
     [Header("State Settings")]
+    [SerializeField] private int autoSprintFrames = 120;
     [SerializeField] private int stunningFrames = 30;
-    public int attackFrameLimit = 30;
+
+    public int GetAutoSprintFrames()
+    {
+        return autoSprintFrames;
+    }
 
     public int GetStunningFrames()
     {

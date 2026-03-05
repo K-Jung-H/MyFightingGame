@@ -3,45 +3,42 @@ using System.Collections.Generic;
 
 public class PlayerStateMachine : ITargetable
 {
-    private Dictionary<PlayerState_Type, PlayerStateBase> states;
-    private PlayerStateBase currentStateObject;
-    public PlayerInput currentInput { get; private set; }
-    
-    protected PlayerState_Type currentState;
-    protected Vector3 position;
-    protected Vector3 currentDirection;
-    protected Vector3 lookDirection;
-    protected Vector3 velocity;
-    protected WakeUp_Type currentWakeUpType;
-    
-    protected ITargetable targetEntity;
-    protected int hitstopCounter;
-    
-    protected PlayerInput previousInput;
-    protected InputFlags currentKeyDownFlags;
-    protected InputFlags lastTappedDirection;
-    protected int lastTapFrame;
-    protected int consecutiveTaps;
-    protected int runningForwardFrames;
-    protected int stateFrameCounter;
-    protected int currentFrame;
-    protected float globalGravity;
-
     private PlayerConfigSO config;
     private InputBuffer inputBuffer;
     private ActionResolver actionResolver;
-    
+    protected ITargetable targetEntity;
+
+    private Dictionary<PlayerState_Type, PlayerStateBase> states;
+    private PlayerStateBase currentStateObject;
+    protected PlayerState_Type cachedCurrentState;
+
+    public bool isGrounded { get; private set; }
+    public Vector3 lastImpactVelocity { get; private set; }
+    protected Vector3 position;
+    protected Vector3 velocity;
+    protected Vector3 currentDirection;
+    protected Vector3 lookDirection;
+    protected float globalGravity;
+    protected bool isRootMotionActiveThisFrame;
+
+    public PlayerInput currentInput { get; private set; }
+    protected PlayerInput previousInput;
+    protected InputFlags currentKeyDownFlags;
+
     private List<InputFlags> comboSequence = new List<InputFlags>();
     private ActionRequest? bufferedActionRequest;
     private int bufferedActionFrame;
+
+    protected int currentFrame;
+    protected int stateFrameCounter;
+
     private ActionDataSO currentActionData;
     private bool isCommandActionTriggered;
-    protected bool isRootMotionActiveThisFrame;
-
     private Dictionary<string, int> animationHashCache = new Dictionary<string, int>();
 
     private HurtInfo currentHurtInfo;
     private HashSet<int> registeredHitGroupIds = new HashSet<int>();
+    protected int hitstopCounter;
 
     public virtual void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
     {
@@ -63,7 +60,7 @@ public class PlayerStateMachine : ITargetable
         actionResolver.Initialize(cmdList, comboTreeData);
 
         InitializeStates();
-        currentState = (PlayerState_Type)(-1); 
+        cachedCurrentState = (PlayerState_Type)(-1); 
         TransitionTo(PlayerState_Type.Idle);
     }
 
@@ -85,7 +82,8 @@ public class PlayerStateMachine : ITargetable
 
     public virtual void UpdateTick(PlayerInput input)
     {
-        if (hitstopCounter > 0)
+        bool isHitstopActive = hitstopCounter > 0;
+        if (isHitstopActive)
         {
             hitstopCounter--;
             return;
@@ -98,9 +96,8 @@ public class PlayerStateMachine : ITargetable
         
         inputBuffer.AddInput(input);
         UpdateLookDirection();
-        UpdateTapContext(input.flags);
         
-        ActionRequest? evaluatedAction = actionResolver.EvaluateInput(inputBuffer, input.flags, currentKeyDownFlags, currentFrame, currentState, comboSequence);
+        ActionRequest? evaluatedAction = actionResolver.EvaluateInput(inputBuffer, input.flags, currentKeyDownFlags, currentFrame, GetCurrentState(), comboSequence);
 
         if (evaluatedAction.HasValue)
         {
@@ -109,18 +106,39 @@ public class PlayerStateMachine : ITargetable
         }
 
         bool isCancelable = true;
-        if (currentState == PlayerState_Type.Attacking)
+        bool isAttacking = GetCurrentState() == PlayerState_Type.Attacking;
+        
+        if (isAttacking)
         {
             int cancelFrame = currentStateObject is AttackingState atkState ? atkState.GetCancelWindow() : 999;
             isCancelable = stateFrameCounter >= cancelFrame;
         }
 
-        if (isCancelable && bufferedActionRequest.HasValue)
+        bool isActionBuffered = bufferedActionRequest.HasValue;
+        if (isCancelable && isActionBuffered)
         {
             bool isWithinBufferWindow = (currentFrame - bufferedActionFrame) <= config.commandBufferWindow;
+            
             if (isWithinBufferWindow)
             {
-                ExecuteActionRequest(bufferedActionRequest.Value);
+                ActionRequest request = bufferedActionRequest.Value;
+                bool isTargetingAttack = request.targetState == PlayerState_Type.Attacking;
+                
+                if (isTargetingAttack)
+                {
+                    if (CanTransitionToAttack())
+                    {
+                        ExecuteActionRequest(request);
+                    }
+                    else
+                    {
+                        bufferedActionRequest = null;
+                    }
+                }
+                else
+                {
+                    ExecuteActionRequest(request);
+                }
             }
             else
             {
@@ -130,7 +148,8 @@ public class PlayerStateMachine : ITargetable
         
         isRootMotionActiveThisFrame = false;
 
-        if (currentStateObject != null)
+        bool isStateObjectValid = currentStateObject != null;
+        if (isStateObjectValid)
         {
             currentStateObject.UpdateTick(input);
         }
@@ -140,22 +159,24 @@ public class PlayerStateMachine : ITargetable
         previousInput = input;
     }
 
+    public bool CanTransitionToAttack()
+    {
+        PlayerState_Type currentState = GetCurrentState();
+
+        bool isHit = currentState == PlayerState_Type.StandHit || currentState == PlayerState_Type.AirHit;
+        bool isDown = currentState == PlayerState_Type.LayingDown || currentState == PlayerState_Type.WakeUp || currentState == PlayerState_Type.GroundSmash;
+        bool isStunned = currentState == PlayerState_Type.Stunning;
+        bool isGrounded = this.isGrounded; 
+
+        return !(isHit || isDown || isStunned);
+    }
+
     private void ProcessPhysics()
     {
         float deceleration = globalGravity * config.gravityScale;
         
         velocity.x = Mathf.MoveTowards(velocity.x, 0f, deceleration);
         velocity.z = Mathf.MoveTowards(velocity.z, 0f, deceleration);
-
-        bool isAlreadyGrounded = position.y <= 0f && velocity.y <= 0f;
-        if (isAlreadyGrounded)
-        {
-            position.y = 0f;
-            velocity.y = 0f;
-            position.x += velocity.x;
-            position.z += velocity.z;
-            return;
-        }
 
         if (!isRootMotionActiveThisFrame)
         {
@@ -164,14 +185,21 @@ public class PlayerStateMachine : ITargetable
         
         position += velocity;
 
-        bool isGrounded = position.y <= 0f;
+        isGrounded = position.y <= 0f;
+
         if (isGrounded)
         {
-            position.y = 0f;
-            if (velocity.y < 0f)
+            bool isFalling = velocity.y < 0f;
+            if (isFalling)
             {
+                lastImpactVelocity = velocity;
                 velocity.y = 0f;
             }
+            position.y = 0f;
+        }
+        else
+        {
+            lastImpactVelocity = Vector3.zero;
         }
     }
 
@@ -188,16 +216,19 @@ public class PlayerStateMachine : ITargetable
         else
         {
             TransitionTo(PlayerState_Type.Idle);
-            runningForwardFrames = 0;
-            consecutiveTaps = 0;
         }
     }
 
     private void ApplyMovement()
     {
         float speed = config.walkSpeed;
-        if (currentState == PlayerState_Type.Running) speed = config.runSpeed;
-        else if (currentState == PlayerState_Type.Sprinting) speed = config.sprintSpeed;
+        PlayerState_Type stateType = GetCurrentState();
+        
+        bool isRunning = stateType == PlayerState_Type.Running;
+        bool isSprinting = stateType == PlayerState_Type.Sprinting;
+        
+        if (isRunning) speed = config.runSpeed;
+        else if (isSprinting) speed = config.sprintSpeed;
 
         Vector3 worldMoveDir = Quaternion.LookRotation(lookDirection) * currentDirection;
         position += worldMoveDir * speed;
@@ -205,7 +236,7 @@ public class PlayerStateMachine : ITargetable
 
     protected virtual void UpdateLookDirection()
     {
-        bool isLookUpdateDisabled = targetEntity == null || currentState == PlayerState_Type.Attacking;
+        bool isLookUpdateDisabled = targetEntity == null || GetCurrentState() == PlayerState_Type.Attacking;
         if (isLookUpdateDisabled) return;
 
         Vector3 diff = targetEntity.GetPosition() - position;
@@ -231,41 +262,23 @@ public class PlayerStateMachine : ITargetable
         }
     }
 
-    private void UpdateTapContext(InputFlags currentFlags)
-    {
-        InputFlags dirMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
-        InputFlags currentDir = currentFlags & dirMask;
-        InputFlags prevDir = previousInput.flags & dirMask;
-
-        bool isDirectionChanged = currentDir != InputFlags.None && currentDir != prevDir;
-        if (isDirectionChanged)
-        {
-            bool isConsecutiveTap = currentDir == lastTappedDirection && (currentFrame - lastTapFrame) <= config.tapWindowFrames;
-            if (isConsecutiveTap)
-            {
-                consecutiveTaps++;
-            }
-            else
-            {
-                consecutiveTaps = 1;
-            }
-            lastTappedDirection = currentDir;
-            lastTapFrame = currentFrame;
-        }
-    }
-
     public void TransitionTo(PlayerState_Type newState, bool forceTransition = false)
     {
-        if (states == null || !states.ContainsKey(newState)) return;
-        if (!forceTransition && currentState == newState) return;
+        bool isStateInvalid = states == null || !states.ContainsKey(newState);
+        if (isStateInvalid) return;
+        
+        bool isSameState = !forceTransition && cachedCurrentState == newState;
+        if (isSameState) return;
 
-        if (currentStateObject != null) currentStateObject.Exit();
+        bool isCurrentStateValid = currentStateObject != null;
+        if (isCurrentStateValid) currentStateObject.Exit();
 
-        currentState = newState;
+        cachedCurrentState = newState;
         currentStateObject = states[newState];
         stateFrameCounter = 0;
 
-        if (newState != PlayerState_Type.Attacking)
+        bool isNotAttacking = newState != PlayerState_Type.Attacking;
+        if (isNotAttacking)
         {
             registeredHitGroupIds.Clear();
         }
@@ -277,6 +290,12 @@ public class PlayerStateMachine : ITargetable
     {
         currentActionData = request.actionData;
         isCommandActionTriggered = request.isCommandAction;
+
+        bool hasActionData = currentActionData != null;
+        if (hasActionData)
+        {
+            Debug.Log($"[Attack Triggered] Action: {currentActionData.name}, AnimState: {currentActionData.animationStateName}, IsCommand: {isCommandActionTriggered}");
+        }
 
         registeredHitGroupIds.Clear();
 
@@ -296,17 +315,26 @@ public class PlayerStateMachine : ITargetable
 
     public void ApplyHit(HurtInfo hurtData)
     {
-        if (currentState == PlayerState_Type.LayingDown)
-        {
-            return;
-        }
-        
+        PlayerState_Type currentStateType = GetCurrentState();
+     
         currentHurtInfo = hurtData;
-        SetVelocity(hurtData.pushbackVector);
+        Vector3 finalPushback = hurtData.pushbackVector;
+
+        bool isAlreadyInAirHit = currentStateType == PlayerState_Type.AirHit || 
+                                 currentStateType == PlayerState_Type.GroundSmash ||
+                                 currentStateType == PlayerState_Type.LayingDown;
+
+        bool isJuggleBumpNeeded = (!isGrounded || isAlreadyInAirHit) && finalPushback.y < 0.25f;
+        if (isJuggleBumpNeeded)
+        {
+            finalPushback.y = 0.25f; 
+        }
+
+        SetVelocity(finalPushback);
 
         PlayerState_Type nextState = PlayerState_Type.StandHit;
 
-        if (currentState == PlayerState_Type.AirHit)
+        if (isAlreadyInAirHit)
         {
             nextState = PlayerState_Type.AirHit;
         }
@@ -328,6 +356,8 @@ public class PlayerStateMachine : ITargetable
             }
         }
 
+        ClearComboSequence();
+
         TransitionTo(nextState, true);
     }
 
@@ -343,15 +373,8 @@ public class PlayerStateMachine : ITargetable
         velocity.y = 0f;
     }
 
-    // =========================================================================
-    // Getters, Setters & Utility Functions
-    // =========================================================================
-
     public Vector3 GetVelocity() => velocity;
     public void SetVelocity(Vector3 targetVelocity) => velocity = targetVelocity;
-    
-    public WakeUp_Type GetWakeUpType() => currentWakeUpType;
-    public void SetWakeUpType(WakeUp_Type type) => currentWakeUpType = type;
 
     public void ApplyHitstop(int frames) => hitstopCounter = frames;
     public int GetHitstopCounter() => hitstopCounter;
@@ -366,12 +389,15 @@ public class PlayerStateMachine : ITargetable
 
     public Vector3 GetDirection() => currentDirection;
     public Vector3 GetLookDirection() => lookDirection;
-    public PlayerState_Type GetCurrentState() => currentState;
+    
+    public PlayerState_Type GetCurrentState() => cachedCurrentState;
     public int GetStateFrameCounter() => stateFrameCounter;
-
-    public void IncrementRunningForwardFrames() => runningForwardFrames++;
-    public int GetRunningForwardFrames() => runningForwardFrames;
-    public int GetConsecutiveTaps() => consecutiveTaps;
+    
+    public PlayerStateBase GetStateObject(PlayerState_Type stateType)
+    {
+        states.TryGetValue(stateType, out PlayerStateBase state);
+        return state;
+    }
 
     public PlayerInput GetPreviousInput() => previousInput;
     public InputFlags GetKeyDownFlags() => currentKeyDownFlags;
@@ -379,9 +405,14 @@ public class PlayerStateMachine : ITargetable
 
     public float GetCurrentSpeed()
     {
-        if (currentState == PlayerState_Type.Walking) return 1.0f;
-        if (currentState == PlayerState_Type.Running) return 2.0f;
-        if (currentState == PlayerState_Type.Sprinting) return 3.0f;
+        PlayerState_Type stateType = GetCurrentState();
+        bool isWalking = stateType == PlayerState_Type.Walking;
+        bool isRunning = stateType == PlayerState_Type.Running;
+        bool isSprinting = stateType == PlayerState_Type.Sprinting;
+
+        if (isWalking) return 1.0f;
+        if (isRunning) return 2.0f;
+        if (isSprinting) return 3.0f;
         return 0.0f;
     }
 
@@ -406,10 +437,14 @@ public class PlayerStateMachine : ITargetable
 
     public int GetCurrentAttackTriggerHash()
     {
-        bool hasValidActionName = currentActionData != null && !string.IsNullOrEmpty(currentActionData.animationStateName);
-        if (hasValidActionName)
+        bool hasValidActionData = currentActionData != null;
+        if (hasValidActionData)
         {
-            return GetAnimationHash(currentActionData.animationStateName);        
+            bool hasValidActionName = !string.IsNullOrEmpty(currentActionData.animationStateName);
+            if (hasValidActionName)
+            {
+                return GetAnimationHash(currentActionData.animationStateName);        
+            }
         }
         return 0;
     }
@@ -417,20 +452,29 @@ public class PlayerStateMachine : ITargetable
     public bool CheckAndConsumeCommandAction(out int actionHash)
     {
         actionHash = 0;
-        if (currentActionData != null && isCommandActionTriggered)
+        bool hasValidActionData = currentActionData != null;
+        
+        if (hasValidActionData && isCommandActionTriggered)
         {
             actionHash = GetAnimationHash(currentActionData.animationStateName);
         }
         
-        bool triggered = isCommandActionTriggered;
+        bool isTriggered = isCommandActionTriggered;
         isCommandActionTriggered = false;
-        return triggered;
+        return isTriggered;
     }
 
     public int GetAnimationHash(string stateName)
     {
-        if (string.IsNullOrEmpty(stateName)) return 0;
-        if (!animationHashCache.TryGetValue(stateName, out int hash))
+        bool isStateNameEmpty = string.IsNullOrEmpty(stateName);
+        if (isStateNameEmpty)
+        {
+            Debug.LogWarning("[Animation Error] Attempted to get hash for an empty or null state name.");
+            return 0;
+        }
+        
+        bool hasHash = animationHashCache.TryGetValue(stateName, out int hash);
+        if (!hasHash)
         {
             hash = Animator.StringToHash(stateName);
             animationHashCache.Add(stateName, hash);
@@ -440,16 +484,21 @@ public class PlayerStateMachine : ITargetable
 
     public Hurtbox_Type GetCurrentHurtboxType()
     {
-        bool isAttackingWithHurtboxes = currentState == PlayerState_Type.Attacking && currentActionData != null && currentActionData.frameData.hurtboxEvents != null;
+        bool isAttacking = GetCurrentState() == PlayerState_Type.Attacking;
+        bool hasValidActionData = currentActionData != null;
         
-        if (isAttackingWithHurtboxes)
+        if (isAttacking && hasValidActionData)
         {
-            foreach (var evt in currentActionData.frameData.hurtboxEvents)
+            bool hasHurtboxEvents = currentActionData.frameData.hurtboxEvents != null;
+            if (hasHurtboxEvents)
             {
-                bool isWithinHurtboxFrame = stateFrameCounter >= evt.startFrame && stateFrameCounter <= evt.endFrame;
-                if (isWithinHurtboxFrame)
+                foreach (var evt in currentActionData.frameData.hurtboxEvents)
                 {
-                    return evt.hurtboxType;
+                    bool isWithinHurtboxFrame = stateFrameCounter >= evt.startFrame && stateFrameCounter <= evt.endFrame;
+                    if (isWithinHurtboxFrame)
+                    {
+                        return evt.hurtboxType;
+                    }
                 }
             }
         }

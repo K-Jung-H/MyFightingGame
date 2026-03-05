@@ -47,21 +47,29 @@ public class WalkingState : PlayerStateBase
 
 public class RunningState : PlayerStateBase
 {
+    private int runningForwardFrames;
+
     public RunningState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.Running;
+
+    public override void Enter()
+    {
+        base.Enter();
+        runningForwardFrames = 0;
+    }
 
     public override void UpdateTick(PlayerInput input)
     {
         stateMachine.ProcessMovementLogic(input);
 
-        bool isForward = (input.flags & InputFlags.Up) != 0;
-        if (isForward)
+        bool isStillRunning = stateMachine.GetCurrentState() == PlayerState_Type.Running;
+        if (isStillRunning)
         {
-            stateMachine.IncrementRunningForwardFrames();
+            runningForwardFrames++;
             
-            bool isSprintThresholdMet = stateMachine.GetRunningForwardFrames() >= config.autoSprintFrames;
-            if (isSprintThresholdMet)
+            bool isSprintThresholdReached = runningForwardFrames >= config.GetAutoSprintFrames(); 
+            if (isSprintThresholdReached)
             {
                 stateMachine.TransitionTo(PlayerState_Type.Sprinting);
             }

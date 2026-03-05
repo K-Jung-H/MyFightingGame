@@ -20,6 +20,9 @@ MonoBehaviour:
       startupFrames: 29
       recoveryFrames: 29
       cancelWindowStartFrame: 20
+    useRootMotion: 0
+    useRootRotation: 0
+    rootMotionPath: []
     hitboxEvents:
     - activeStartFrame: 16
       boxPath:
