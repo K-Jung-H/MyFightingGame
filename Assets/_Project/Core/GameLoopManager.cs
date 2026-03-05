@@ -7,10 +7,18 @@ using UnityEngine.InputSystem;
 public class PlayerSessionContext
 {
     public CharacterDataSO characterData;
-    
+    public InputBinding customBinding;
     [HideInInspector] public GameObject instance;
     [HideInInspector] public CharacterVisual visual;
     [HideInInspector] public PlayerStateMachine stateMachine;
+
+    public InputBinding GetBinding(bool isPlayerOne)
+    {
+        if (customBinding != null && customBinding.IsValid())
+            return customBinding;
+
+        return isPlayerOne ? InputBinding.GetDefaultP1() : InputBinding.GetDefaultP2();
+    }
 }
 
 public class GameLoopManager : MonoBehaviour
@@ -56,13 +64,15 @@ public class GameLoopManager : MonoBehaviour
 
     private void InitializePlayers()
     {
-        inputProvider = new LocalInputProvider();
+        InputBinding p1Final = playerOne.GetBinding(true);
+        InputBinding p2Final = playerTwo.GetBinding(false);
+
+        inputProvider = new LocalInputProvider(p1Final, p2Final);
 
         SetupPlayer(playerOne, p1SpawnPos);
         SetupPlayer(playerTwo, p2SpawnPos);
 
-        bool hasBothStateMachines = playerOne.stateMachine != null && playerTwo.stateMachine != null;
-        if (hasBothStateMachines)
+        if (playerOne.stateMachine != null && playerTwo.stateMachine != null)
         {
             playerOne.stateMachine.SetTarget(playerTwo.stateMachine);
             playerTwo.stateMachine.SetTarget(playerOne.stateMachine);
@@ -102,9 +112,18 @@ public class GameLoopManager : MonoBehaviour
 
     private void Update()
     {
-        if (isSimulationRunning && inputProvider != null)
+        bool isUpdateValid = isSimulationRunning && inputProvider != null && cameraManager != null;
+        if (isUpdateValid)
         {
-            inputProvider.AccumulateInputFlags();
+            bool isP1OnRight = cameraManager.IsPlayerOneOnRightSide();
+            bool isP1FacingRight = !isP1OnRight;
+            bool isP2FacingRight = isP1OnRight;
+
+            inputProvider.AccumulateInputFlags(isP1FacingRight, isP2FacingRight);
+
+            Vector3 currentDepthAxis = cameraManager.GetDepthAxis();
+            playerOne.stateMachine.SetDepthAxis(currentDepthAxis);
+            playerTwo.stateMachine.SetDepthAxis(currentDepthAxis);
         }
 
         bool isDebugAttackPressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;

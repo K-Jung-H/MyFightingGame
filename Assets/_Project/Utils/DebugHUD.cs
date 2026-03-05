@@ -172,47 +172,51 @@ public class DebugHUD : MonoBehaviour
 
     private string InputFlagsToString(InputFlags flags)
     {
-        bool isEmpty = flags == InputFlags.None;
-        if (isEmpty) return "None";
+        bool isNone = flags == InputFlags.None;
+        if (isNone) return "None";
 
-        string dirStr = "";
+        string directionString = "";
         bool isUp = (flags & InputFlags.Up) != 0;
         bool isDown = (flags & InputFlags.Down) != 0;
-        bool isLeft = (flags & InputFlags.Left) != 0;
-        bool isRight = (flags & InputFlags.Right) != 0;
+        bool isForward = (flags & InputFlags.Forward) != 0;
+        bool isBack = (flags & InputFlags.Back) != 0;
 
-        if (isUp && isDown) dirStr = "↕";
-        else if (isLeft && isRight) dirStr = "↔";
-        else if (isUp && isRight) dirStr = "↗";
-        else if (isUp && isLeft) dirStr = "↖";
-        else if (isDown && isRight) dirStr = "↘";
-        else if (isDown && isLeft) dirStr = "↙";
-        else if (isUp) dirStr = "↑";
-        else if (isDown) dirStr = "↓";
-        else if (isLeft) dirStr = "←";
-        else if (isRight) dirStr = "→";
+        if (isUp && isDown) directionString = "↕";
+        else if (isBack && isForward) directionString = "↔";
+        else if (isUp && isForward) directionString = "↗";
+        else if (isUp && isBack) directionString = "↖";
+        else if (isDown && isForward) directionString = "↘";
+        else if (isDown && isBack) directionString = "↙";
+        else if (isUp) directionString = "↑";
+        else if (isDown) directionString = "↓";
+        else if (isBack) directionString = "←";
+        else if (isForward) directionString = "→";
 
-        string atkStr = "";
-        bool isLight = (flags & InputFlags.LightAttack) != 0;
-        bool isHeavy = (flags & InputFlags.HeavyAttack) != 0;
+        string attackString = "";
+        bool isLP = (flags & InputFlags.LP) != 0;
+        bool isRP = (flags & InputFlags.RP) != 0;
+        bool isLK = (flags & InputFlags.LK) != 0;
+        bool isRK = (flags & InputFlags.RK) != 0;
 
-        if (isLight) atkStr += "L";
-        if (isHeavy) atkStr += (atkStr.Length > 0 ? " + R" : "R");
+        if (isLP) attackString += (attackString.Length > 0 ? " + LP" : "LP");
+        if (isRP) attackString += (attackString.Length > 0 ? " + RP" : "RP");
+        if (isLK) attackString += (attackString.Length > 0 ? " + LK" : "LK");
+        if (isRK) attackString += (attackString.Length > 0 ? " + RK" : "RK");
 
-        bool hasDirection = !string.IsNullOrEmpty(dirStr);
-        bool hasAttack = !string.IsNullOrEmpty(atkStr);
+        bool isDirectionPresent = !string.IsNullOrEmpty(directionString);
+        bool isAttackPresent = !string.IsNullOrEmpty(attackString);
 
-        if (hasDirection && hasAttack)
+        if (isDirectionPresent && isAttackPresent)
         {
-            return $"{dirStr} + {atkStr}";
+            return $"{directionString} + {attackString}";
         }
-        else if (hasDirection)
+        else if (isDirectionPresent)
         {
-            return dirStr;
+            return directionString;
         }
-        else if (hasAttack)
+        else if (isAttackPresent)
         {
-            return atkStr;
+            return attackString;
         }
 
         return flags.ToString(); 

@@ -278,10 +278,11 @@ public class CharacterVisual : MonoBehaviour
         }
     }
 
-    private void UpdateAnimatorParameters()
+private void UpdateAnimatorParameters()
     {
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 10f);
-        currentDirection = Vector3.Lerp(currentDirection, targetDirection, Time.deltaTime * 10f);       
+        Vector3 localTargetDirection = transform.InverseTransformDirection(targetDirection);
+        currentDirection = Vector3.Lerp(currentDirection, localTargetDirection, Time.deltaTime * 10f);       
         
         bool hasAnimator = characterAnimator != null;
         if (hasAnimator)
@@ -291,4 +292,6 @@ public class CharacterVisual : MonoBehaviour
             characterAnimator.SetFloat(VerticalHash, currentDirection.z);
         }
     }
+
+    
 }

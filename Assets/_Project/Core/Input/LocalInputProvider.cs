@@ -5,11 +5,19 @@ public class LocalInputProvider
 {
     private InputFlags accumulatedFlagsPlayerOne;
     private InputFlags accumulatedFlagsPlayerTwo;
+    private InputBinding playerOneBinding;
+    private InputBinding playerTwoBinding;
 
-    public void AccumulateInputFlags()
+    public LocalInputProvider(InputBinding firstBinding, InputBinding secondBinding)
     {
-        accumulatedFlagsPlayerOne |= PollInput(0);
-        accumulatedFlagsPlayerTwo |= PollInput(1);
+        playerOneBinding = firstBinding;
+        playerTwoBinding = secondBinding;
+    }
+
+    public void AccumulateInputFlags(bool isPlayerOneFacingRight, bool isPlayerTwoFacingRight)
+    {
+        accumulatedFlagsPlayerOne |= PollInput(playerOneBinding, isPlayerOneFacingRight);
+        accumulatedFlagsPlayerTwo |= PollInput(playerTwoBinding, isPlayerTwoFacingRight);
     }
 
     public PlayerInput GetCurrentInput(int currentFrame, int playerIndex)
@@ -31,37 +39,33 @@ public class LocalInputProvider
         return input;
     }
 
-    private InputFlags PollInput(int playerIndex)
+    private InputFlags PollInput(InputBinding binding, bool isFacingRight)
     {
         bool isUp = false;
         bool isDown = false;
-        bool isLeft = false;
-        bool isRight = false;
-        bool isLight = false;
-        bool isHeavy = false;
+        bool isPhysicalLeft = false;
+        bool isPhysicalRight = false;
+        bool isLP = false;
+        bool isRP = false;
+        bool isLK = false;
+        bool isRK = false;
 
         if (Keyboard.current != null)
         {
-            if (playerIndex == 0)
-            {
-                isUp = Keyboard.current.upArrowKey.isPressed;
-                isDown = Keyboard.current.downArrowKey.isPressed;
-                isLeft = Keyboard.current.leftArrowKey.isPressed;
-                isRight = Keyboard.current.rightArrowKey.isPressed;
-                isLight = Keyboard.current.zKey.isPressed;
-                isHeavy = Keyboard.current.xKey.isPressed;
-            }
-            else
-            {
-                isUp = Keyboard.current.wKey.isPressed;
-                isDown = Keyboard.current.sKey.isPressed;
-                isLeft = Keyboard.current.aKey.isPressed;
-                isRight = Keyboard.current.dKey.isPressed;
-                isLight = Keyboard.current.vKey.isPressed;
-                isHeavy = Keyboard.current.bKey.isPressed;
-            }
+            isUp = Keyboard.current[binding.upKey].isPressed;
+            isDown = Keyboard.current[binding.downKey].isPressed;
+            isPhysicalLeft = Keyboard.current[binding.leftKey].isPressed;
+            isPhysicalRight = Keyboard.current[binding.rightKey].isPressed;
+            
+            isLP = Keyboard.current[binding.lpKey].isPressed;
+            isRP = Keyboard.current[binding.rpKey].isPressed;
+            isLK = Keyboard.current[binding.lkKey].isPressed;
+            isRK = Keyboard.current[binding.rkKey].isPressed;
         }
 
-        return PacketManager.CreateFlags(isUp, isDown, isLeft, isRight, isLight, isHeavy);
+        bool isForward = isFacingRight ? isPhysicalRight : isPhysicalLeft;
+        bool isBack = isFacingRight ? isPhysicalLeft : isPhysicalRight;
+
+        return PacketManager.CreateFlags(isUp, isDown, isForward, isBack, isLP, isRP, isLK, isRK);
     }
 }

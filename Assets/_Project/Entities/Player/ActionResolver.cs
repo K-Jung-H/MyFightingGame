@@ -24,7 +24,8 @@ public class ActionResolver
     {
         CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
         
-        if (matchedCommand != null)
+        bool isCommandMatched = matchedCommand != null;
+        if (isCommandMatched)
         {
             inputBuffer.Clear();
             return new ActionRequest 
@@ -36,12 +37,13 @@ public class ActionResolver
             };
         }
 
-        InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
+        InputFlags attackMask = InputFlags.LP | InputFlags.RP | InputFlags.LK | InputFlags.RK;
         InputFlags newlyPressedAttack = newlyPressedFlags & attackMask;
 
-        if (newlyPressedAttack != InputFlags.None)
+        bool isAttackPressed = newlyPressedAttack != InputFlags.None;
+        if (isAttackPressed)
         {
-            InputFlags directionMask = InputFlags.Up | InputFlags.Down | InputFlags.Left | InputFlags.Right;
+            InputFlags directionMask = InputFlags.Up | InputFlags.Down | InputFlags.Forward | InputFlags.Back;
             InputFlags combinedInput = newlyPressedAttack | (currentInput & directionMask);
 
             bool isAttacking = currentState == PlayerState_Type.Attacking;
@@ -53,7 +55,8 @@ public class ActionResolver
                 testSequence.Add(combinedInput);
                 
                 ComboNode nextCombo = comboTree != null ? comboTree.GetNodeFromSequence(testSequence) : null;
-                if (nextCombo != null)
+                bool isNextComboValid = nextCombo != null;
+                if (isNextComboValid)
                 {
                     return new ActionRequest 
                     { 
@@ -68,7 +71,8 @@ public class ActionResolver
             }
             
             ComboNode firstCombo = comboTree != null ? comboTree.FindBestMatchNode(comboTree.startingAttacks, combinedInput) : null;
-            if (firstCombo != null)
+            bool isFirstComboValid = firstCombo != null;
+            if (isFirstComboValid)
             {
                 return new ActionRequest 
                 { 

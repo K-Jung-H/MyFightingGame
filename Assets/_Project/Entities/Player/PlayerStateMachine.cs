@@ -15,6 +15,7 @@ public class PlayerStateMachine : ITargetable
     public bool isGrounded { get; private set; }
     public Vector3 lastImpactVelocity { get; private set; }
     protected Vector3 position;
+    protected Vector3 depthAxis = Vector3.forward;
     protected Vector3 velocity;
     protected Vector3 currentDirection;
     protected Vector3 lookDirection;
@@ -230,8 +231,18 @@ public class PlayerStateMachine : ITargetable
         if (isRunning) speed = config.runSpeed;
         else if (isSprinting) speed = config.sprintSpeed;
 
-        Vector3 worldMoveDir = Quaternion.LookRotation(lookDirection) * currentDirection;
-        position += worldMoveDir * speed;
+        position += currentDirection * speed;
+    }
+
+    public void ApplyRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
+    {
+        Vector3 worldDeltaPos = Quaternion.LookRotation(lookDirection) * deltaPosition;
+        position += worldDeltaPos;
+
+        lookDirection = deltaRotation * lookDirection;
+
+        isRootMotionActiveThisFrame = true;
+        velocity.y = 0f;
     }
 
     protected virtual void UpdateLookDirection()
@@ -362,18 +373,6 @@ public class PlayerStateMachine : ITargetable
         TransitionTo(nextState, true);
     }
 
-    public void ApplyRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
-    {
-        Vector3 worldDeltaPos = Quaternion.LookRotation(currentDirection) * deltaPosition;
-        position += worldDeltaPos;
-
-        currentDirection = deltaRotation * currentDirection;
-        lookDirection = deltaRotation * lookDirection;
-
-        isRootMotionActiveThisFrame = true;
-        velocity.y = 0f;
-    }
-
     public Vector3 GetVelocity() => velocity;
     public void SetVelocity(Vector3 targetVelocity) => velocity = targetVelocity;
 
@@ -384,6 +383,8 @@ public class PlayerStateMachine : ITargetable
     
     public void SetPosition(Vector3 newPos) => position = newPos;
     public Vector3 GetPosition() => position;
+
+    public void SetDepthAxis(Vector3 axis) => depthAxis = axis;
 
     public void SetGlobalGravity(float gravity) => globalGravity = gravity;
     public void SetTarget(ITargetable target) => targetEntity = target;
@@ -419,9 +420,21 @@ public class PlayerStateMachine : ITargetable
 
     public Vector3 GetRawInputVector(InputFlags flags)
     {
-        float x = ((flags & InputFlags.Right) != 0 ? 1 : 0) - ((flags & InputFlags.Left) != 0 ? 1 : 0);
-        float z = ((flags & InputFlags.Up) != 0 ? 1 : 0) - ((flags & InputFlags.Down) != 0 ? 1 : 0);
-        return new Vector3(x, 0, z).normalized;
+        float logicalForward = ((flags & InputFlags.Forward) != 0 ? 1 : 0) - ((flags & InputFlags.Back) != 0 ? 1 : 0);
+        float depthInput = ((flags & InputFlags.Up) != 0 ? 1 : 0) - ((flags & InputFlags.Down) != 0 ? 1 : 0);
+
+        Vector3 lookAxis = Vector3.forward;
+        bool hasTarget = targetEntity != null;
+        if (hasTarget)
+        {
+            lookAxis = targetEntity.GetPosition() - position;
+            lookAxis.y = 0f;
+            lookAxis.Normalize();
+        }
+
+        Vector3 moveVec = (lookAxis * logicalForward) + (depthAxis * depthInput);
+
+        return moveVec.normalized;
     }
 
     public void ClearComboSequence() => comboSequence.Clear();

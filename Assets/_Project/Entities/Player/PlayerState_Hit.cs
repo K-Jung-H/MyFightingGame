@@ -182,7 +182,7 @@ public class LayingDownState : HitStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        bool isDirectionalInputDetected = (input.flags & (InputFlags.Left | InputFlags.Right | InputFlags.Up | InputFlags.Down)) != 0;
+        bool isDirectionalInputDetected = (input.flags & (InputFlags.Forward | InputFlags.Back | InputFlags.Up | InputFlags.Down)) != 0;
 
         if (isDirectionalInputDetected)
         {
@@ -203,25 +203,25 @@ public class LayingDownState : HitStateBase
 
     private WakeUp_Type EvaluateWakeUpInput(PlayerInput input)
     {
-        bool isLeftPressed = (input.flags & InputFlags.Left) != 0;
+        bool isLeftPressed = (input.flags & InputFlags.Up) != 0;
         if (isLeftPressed)
         {
             return WakeUp_Type.RollLeft;
         }
 
-        bool isRightPressed = (input.flags & InputFlags.Right) != 0;
+        bool isRightPressed = (input.flags & InputFlags.Down) != 0;
         if (isRightPressed)
         {
             return WakeUp_Type.RollRight;
         }
 
-        bool isForwardPressed = (input.flags & InputFlags.Up) != 0;
+        bool isForwardPressed = (input.flags & InputFlags.Forward) != 0;
         if (isForwardPressed)
         {
             return WakeUp_Type.RollForward;
         }
 
-        bool isBackwardPressed = (input.flags & InputFlags.Down) != 0;
+        bool isBackwardPressed = (input.flags & InputFlags.Back) != 0;
         if (isBackwardPressed)
         {
             return WakeUp_Type.RollBackward;

@@ -50,23 +50,41 @@ public class CameraManager : MonoBehaviour
 
     public void TriggerShake(float magnitude = -1f, float duration = -1f)
     {
-        float m = magnitude < 0 ? defaultShakeMagnitude : magnitude;
-        float d = duration < 0 ? defaultShakeDuration : duration;
-        StartCoroutine(ProcessShake(m, d));
+        float shakeMagnitude = magnitude < 0 ? defaultShakeMagnitude : magnitude;
+        float shakeDuration = duration < 0 ? defaultShakeDuration : duration;
+        StartCoroutine(ProcessShake(shakeMagnitude, shakeDuration));
     }
 
     private IEnumerator ProcessShake(float magnitude, float duration)
     {
-        float elapsed = 0f;
-        while (elapsed < duration)
+        float elapsedTimer = 0f;
+        while (elapsedTimer < duration)
         {
-            float x = Random.Range(-1f, 1f) * magnitude;
-            float y = Random.Range(-1f, 1f) * magnitude;
-            shakeOffset = new Vector3(x, y, 0f);
-            elapsed += Time.deltaTime;
+            float randomX = Random.Range(-1f, 1f) * magnitude;
+            float randomY = Random.Range(-1f, 1f) * magnitude;
+            shakeOffset = new Vector3(randomX, randomY, 0f);
+            elapsedTimer += Time.deltaTime;
             yield return null;
         }
         shakeOffset = Vector3.zero;
+    }
+
+    public bool IsPlayerOneOnRightSide()
+    {
+        bool isTargetMissing = playerOne == null || playerTwo == null;
+        if (isTargetMissing) return true;
+
+        Vector3 cameraRight = transform.right;
+        cameraRight.y = 0f;
+        cameraRight.Normalize();
+
+        Vector3 playerOneToTwo = playerTwo.position - playerOne.position;
+        playerOneToTwo.y = 0f;
+
+        float dotResult = Vector3.Dot(playerOneToTwo, cameraRight);
+        bool isPlayerOneOnLeftSide = dotResult > 0f;
+
+        return !isPlayerOneOnLeftSide;
     }
 
     private void LateUpdate()
@@ -85,26 +103,58 @@ public class CameraManager : MonoBehaviour
 
     private void UpdateCameraTransform()
     {
-        Vector3 p1Pos = playerOne.position;
-        Vector3 p2Pos = playerTwo.position;
-        Vector3 centerPosition = Vector3.Lerp(p1Pos, p2Pos, 0.5f);
+        Vector3 positionP1 = playerOne.position;
+        Vector3 positionP2 = playerTwo.position;
+        Vector3 centerPosition = Vector3.Lerp(positionP1, positionP2, 0.5f);
 
-        float distance3D = Vector3.Distance(p1Pos, p2Pos);
-        Vector3 viewDirection = isReverseView ? Vector3.forward : Vector3.back;
+        Vector3 directionP1ToP2 = positionP2 - positionP1;
+        directionP1ToP2.y = 0f;
 
+        bool isOverlapping = directionP1ToP2.sqrMagnitude < 0.001f;
+        if (isOverlapping)
+        {
+            directionP1ToP2 = transform.right;
+        }
+        else
+        {
+            directionP1ToP2.Normalize();
+        }
+
+        Vector3 normal1 = Vector3.Cross(Vector3.up, directionP1ToP2).normalized;
+        Vector3 normal2 = -normal1;
+
+        Vector3 currentCameraDirection = transform.position - centerPosition;
+        currentCameraDirection.y = 0f;
+        currentCameraDirection.Normalize();
+
+        Vector3 cameraOffsetDirection = Vector3.Dot(normal1, currentCameraDirection) > 0f ? normal1 : normal2;
+        
+        if (isReverseView)
+        {
+            cameraOffsetDirection = -cameraOffsetDirection;
+        }
+
+        float distance3D = Vector3.Distance(positionP1, positionP2);
         float desiredDistance = ((distance3D * zoomSensitivity) + distanceOffset) * currentZoomMultiplier;
         desiredDistance = Mathf.Clamp(desiredDistance, minDistance, maxDistance);
 
-        Vector3 targetPos = centerPosition + (viewDirection * desiredDistance);
-        targetPos.y = centerPosition.y + heightOffset;
+        Vector3 targetPosition = centerPosition + (cameraOffsetDirection * desiredDistance);
+        targetPosition.y = centerPosition.y + heightOffset;
 
-        transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref currentVelocity, movementSmoothTime);
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref currentVelocity, movementSmoothTime);
         transform.position += transform.TransformDirection(shakeOffset);
 
         Vector3 lookAtPoint = centerPosition;
         lookAtPoint.y = centerPosition.y + (heightOffset * 0.8f);
         
-        Quaternion targetRot = Quaternion.LookRotation(lookAtPoint - transform.position);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime / rotationSmoothTime);
+        Quaternion targetRotation = Quaternion.LookRotation(lookAtPoint - transform.position);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime / rotationSmoothTime);
+    }
+
+    public Vector3 GetDepthAxis()
+    {
+        Vector3 depthAxis = transform.forward;
+        depthAxis.y = 0f;
+        return depthAxis.normalized;
     }
 }

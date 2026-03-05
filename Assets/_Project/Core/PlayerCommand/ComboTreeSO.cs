@@ -76,28 +76,34 @@ public class ComboTreeSO : ScriptableObject
 
     public ComboNode FindBestMatchNode(List<ComboNode> nodes, InputFlags input)
     {
-        if (nodes == null || nodes.Count == 0) return null;
+        bool isNodesEmpty = nodes == null || nodes.Count == 0;
+        if (isNodesEmpty) return null;
 
-        InputFlags attackMask = InputFlags.LightAttack | InputFlags.HeavyAttack;
+        InputFlags attackMask = InputFlags.LP | InputFlags.RP | InputFlags.LK | InputFlags.RK;
         InputFlags inputAttack = input & attackMask;
 
         ComboNode bestNode = null;
-        int bestDirCount = -1;
+        int bestDirectionCount = -1;
 
         foreach (var node in nodes)
         {
             InputFlags nodeAttack = node.requiredInput & attackMask;
-            if (nodeAttack != inputAttack) continue;
+            bool isAttackMatching = nodeAttack == inputAttack;
+            
+            if (!isAttackMatching) continue;
 
-            if ((input & node.requiredInput) == node.requiredInput)
+            bool isInputSatisfied = (input & node.requiredInput) == node.requiredInput;
+            
+            if (isInputSatisfied)
             {
-                InputFlags nodeDir = node.requiredInput & ~attackMask;
-                int dirCount = CountSetBits((int)nodeDir);
+                InputFlags nodeDirection = node.requiredInput & ~attackMask;
+                int directionCount = CountSetBits((int)nodeDirection);
 
-                if (dirCount > bestDirCount)
+                bool isBetterMatch = directionCount > bestDirectionCount;
+                if (isBetterMatch)
                 {
                     bestNode = node;
-                    bestDirCount = dirCount;
+                    bestDirectionCount = directionCount;
                 }
             }
         }
