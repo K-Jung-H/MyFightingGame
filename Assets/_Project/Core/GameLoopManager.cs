@@ -2,20 +2,22 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
-
 [System.Serializable]
 public class PlayerSessionContext
 {
     public CharacterDataSO characterData;
     public InputBinding customBinding;
     [HideInInspector] public GameObject instance;
-    [HideInInspector] public CharacterVisual visual;
-    [HideInInspector] public PlayerStateMachine stateMachine;
+    [HideInInspector] public PlayerRenderer renderer;
+    [HideInInspector] public PlayerController controller;
 
     public InputBinding GetBinding(bool isPlayerOne)
     {
-        if (customBinding != null && customBinding.IsValid())
+        bool hasCustomBinding = customBinding != null && customBinding.IsValid();
+        if (hasCustomBinding)
+        {
             return customBinding;
+        }
 
         return isPlayerOne ? InputBinding.GetDefaultP1() : InputBinding.GetDefaultP2();
     }
@@ -45,18 +47,19 @@ public class GameLoopManager : MonoBehaviour
     private bool isSimulationRunning;
 
     public int GetCurrentTick() => currentTick;
-    public PlayerState_Type GetP1State() => playerOne.stateMachine != null ? playerOne.stateMachine.GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP1Pos() => playerOne.stateMachine != null ? playerOne.stateMachine.GetPosition() : Vector3.zero;
-    public PlayerState_Type GetP2State() => playerTwo.stateMachine != null ? playerTwo.stateMachine.GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP2Pos() => playerTwo.stateMachine != null ? playerTwo.stateMachine.GetPosition() : Vector3.zero;
-    public PlayerStateMachine GetPlayerOneStateMachine() => playerOne.stateMachine;
-    public PlayerStateMachine GetPlayerTwoStateMachine() => playerTwo.stateMachine;
+    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
+    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
+    public PlayerController GetPlayerOneController() => playerOne.controller;
+    public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
     private void Awake()
     {
         InitializePlayers();
         
-        if(cameraManager != null)
+        bool hasCameraManager = cameraManager != null;
+        if(hasCameraManager)
         {
             cameraManager.SetTargetPlayers(playerOne.instance, playerTwo.instance);
         }
@@ -72,10 +75,11 @@ public class GameLoopManager : MonoBehaviour
         SetupPlayer(playerOne, p1SpawnPos);
         SetupPlayer(playerTwo, p2SpawnPos);
 
-        if (playerOne.stateMachine != null && playerTwo.stateMachine != null)
+        bool hasBothControllers = playerOne.controller != null && playerTwo.controller != null;
+        if (hasBothControllers)
         {
-            playerOne.stateMachine.SetTarget(playerTwo.stateMachine);
-            playerTwo.stateMachine.SetTarget(playerOne.stateMachine);
+            playerOne.controller.SetTarget(playerTwo.controller);
+            playerTwo.controller.SetTarget(playerOne.controller);
         }
 
         currentTick = 0;
@@ -88,22 +92,22 @@ public class GameLoopManager : MonoBehaviour
         if (isDataInvalid) return;
 
         context.instance = Instantiate(context.characterData.characterPrefab, spawnPos, Quaternion.identity);
-        context.visual = context.instance.GetComponent<CharacterVisual>();
+        context.renderer = context.instance.GetComponent<PlayerRenderer>();
 
-        context.stateMachine = new PlayerStateMachine();
-        context.stateMachine.Initialize(
+        context.controller = new PlayerController();
+        context.controller.Initialize(
             spawnPos, 
             context.characterData.config, 
             context.characterData.commandList, 
             context.characterData.comboTree
         );
-        context.stateMachine.SetGlobalGravity(globalGravity);
+        context.controller.GetPhysics().SetGlobalGravity(globalGravity);
 
-        bool hasVisual = context.visual != null;
-        if (hasVisual)
+        bool hasRenderer = context.renderer != null;
+        if (hasRenderer)
         {
-            context.visual.InitializeVisual(
-                context.stateMachine, 
+            context.renderer.InitializeRenderer(
+                context.controller, 
                 context.characterData.hitAnimMap, 
                 context.characterData.effectTable
             );
@@ -122,11 +126,22 @@ public class GameLoopManager : MonoBehaviour
             inputProvider.AccumulateInputFlags(isP1FacingRight, isP2FacingRight);
 
             Vector3 currentDepthAxis = cameraManager.GetDepthAxis();
-            playerOne.stateMachine.SetDepthAxis(currentDepthAxis);
-            playerTwo.stateMachine.SetDepthAxis(currentDepthAxis);
+            
+            bool isP1Valid = playerOne.controller != null;
+            if (isP1Valid)
+            {
+                playerOne.controller.GetPhysics().SetDepthAxis(currentDepthAxis);
+            }
+            
+            bool isP2Valid = playerTwo.controller != null;
+            if (isP2Valid)
+            {
+                playerTwo.controller.GetPhysics().SetDepthAxis(currentDepthAxis);
+            }
         }
 
-        bool isDebugAttackPressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+        bool hasKeyboard = Keyboard.current != null;
+        bool isDebugAttackPressed = hasKeyboard && Keyboard.current.spaceKey.wasPressedThisFrame;
         if (isDebugAttackPressed)
         {
             DebugDealDamageToBoth();
@@ -143,18 +158,18 @@ public class GameLoopManager : MonoBehaviour
     
     private void RunTick()
     {
-        bool isPlayerOneValid = playerOne.stateMachine != null;
+        bool isPlayerOneValid = playerOne.controller != null;
         if (isPlayerOneValid)
         {
             PlayerInput p1Input = inputProvider.GetCurrentInput(currentTick, 0);
-            playerOne.stateMachine.UpdateTick(p1Input);
+            playerOne.controller.UpdateTick(p1Input);
         }
 
-        bool isPlayerTwoValid = playerTwo.stateMachine != null;
+        bool isPlayerTwoValid = playerTwo.controller != null;
         if (isPlayerTwoValid)
         {
             PlayerInput p2Input = inputProvider.GetCurrentInput(currentTick, 1);
-            playerTwo.stateMachine.UpdateTick(p2Input);
+            playerTwo.controller.UpdateTick(p2Input);
         }
 
         ResolveAttacks(playerOne, playerTwo);
@@ -169,8 +184,8 @@ public class GameLoopManager : MonoBehaviour
 
     public void DebugDealDamageToBoth()
     {
-        bool isInvalidMachines = playerOne.stateMachine == null || playerTwo.stateMachine == null;
-        if (isInvalidMachines) return;
+        bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
+        if (isInvalidControllers) return;
 
         HurtInfo debugHurt = new HurtInfo 
         { 
@@ -181,17 +196,16 @@ public class GameLoopManager : MonoBehaviour
             isHardKnockdown = false
         };
 
-        playerOne.stateMachine.ApplyHit(debugHurt);
-        playerTwo.stateMachine.ApplyHit(debugHurt);
-
-        Debug.Log("[Debug] 양 플레이어에게 1 데미지를 가했습니다.");
+        playerOne.controller.GetCombat().ApplyHit(debugHurt, playerOne.controller);
+        playerTwo.controller.GetCombat().ApplyHit(debugHurt, playerTwo.controller);
     }
 
     private HitFeedbackData GetHitFeedback(Attack_Type type)
     {
         foreach (var feedback in hitFeedbackTable)
         {
-            if (feedback.attackType == type)
+            bool isMatchingType = feedback.attackType == type;
+            if (isMatchingType)
             {
                 return feedback;
             }
@@ -201,33 +215,33 @@ public class GameLoopManager : MonoBehaviour
 
     private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
     {
-        PlayerStateMachine attacker = attackerContext.stateMachine;
-        PlayerStateMachine defender = defenderContext.stateMachine;
+        PlayerController attacker = attackerContext.controller;
+        PlayerController defender = defenderContext.controller;
 
-        bool isNotAttacking = attacker.GetCurrentState() != PlayerState_Type.Attacking;
+        bool isNotAttacking = attacker.GetStateMachine().GetCurrentState() != PlayerState_Type.Attacking;
         if (isNotAttacking) return;
         
-        ActionDataSO attackerAction = attacker.GetCurrentActionData();
+        ActionDataSO attackerAction = attacker.GetStateMachine().GetCurrentActionData();
         bool isInvalidAction = attackerAction == null || attackerAction.frameData.hitboxEvents == null;
         if (isInvalidAction) return;
 
-        Hurtbox_Type defenderHurtboxType = defender.GetCurrentHurtboxType();
-        CollisionBox[] defenderBoxes = defender.GetPlayerConfig().GetHurtboxBoxes(defenderHurtboxType);
+        Hurtbox_Type defenderHurtboxType = Hurtbox_Type.Standing;
+        CollisionBox[] defenderBoxes = defender.GetConfig().GetHurtboxBoxes(defenderHurtboxType);
 
         bool isHit = HitboxManager.EvaluateHit(
-            attacker.GetPosition(), attacker.GetLookDirection(), attackerAction.frameData.hitboxEvents, attacker.GetStateFrameCounter(),
-            defender.GetPosition(), defender.GetLookDirection(), defenderBoxes,
+            attacker.GetPosition(), attacker.GetPhysics().GetLookDirection(), attackerAction.frameData.hitboxEvents, attacker.GetStateMachine().GetStateFrameCounter(),
+            defender.GetPosition(), defender.GetPhysics().GetLookDirection(), defenderBoxes,
             out HitboxEvent hitEvent, out Vector3 hitPoint, out string debugReason
         );
 
         if (!isHit) return;
 
-        bool isNewHit = !attacker.HasAlreadyHit(hitEvent.hitGroupID);
+        bool isNewHit = !attacker.GetCombat().HasAlreadyHit(hitEvent.hitGroupID);
         if (isNewHit)
         {
-            attacker.RegisterHitGroup(hitEvent.hitGroupID);
+            attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
             
-            Vector3 attackerLookDirection = attacker.GetLookDirection();
+            Vector3 attackerLookDirection = attacker.GetPhysics().GetLookDirection();
             Vector3 rightDirection = Vector3.Cross(Vector3.up, attackerLookDirection);
             
             Vector3 worldPushback = (attackerLookDirection * hitEvent.localPushbackVector.z) + 
@@ -243,43 +257,44 @@ public class GameLoopManager : MonoBehaviour
                 isHardKnockdown = hitEvent.isHardKnockdown
             };
             
-            defender.ApplyHit(hurtInfo);
+            defender.GetCombat().ApplyHit(hurtInfo, defender);
 
             HitFeedbackData feedback = GetHitFeedback(hitEvent.attackType);
             
-            if (feedback.hitstopFrames > 0)
+            bool hasHitstop = feedback.hitstopFrames > 0;
+            if (hasHitstop)
             {
-                attacker.ApplyHitstop(feedback.hitstopFrames);
-                defender.ApplyHitstop(feedback.hitstopFrames);
+                attacker.GetCombat().ApplyHitstop(feedback.hitstopFrames);
+                defender.GetCombat().ApplyHitstop(feedback.hitstopFrames);
             }
 
-            bool hasDefenderVisual = defenderContext.visual != null;
-            if (hasDefenderVisual)
+            bool hasDefenderRenderer = defenderContext.renderer != null;
+            if (hasDefenderRenderer)
             {
-                defenderContext.visual.PlayHitSpark(hitPoint, EffectType.Hit);
+                defenderContext.renderer.PlayHitSpark(hitPoint, EffectType.Hit);
             }
         }
     }
     
     private float GetPushbackWeight(PlayerState_Type state)
     {
-        switch (state)
-        {
-            case PlayerState_Type.Sprinting: return 0.0f;
-            case PlayerState_Type.Running: return 0.2f;
-            case PlayerState_Type.Walking: return 0.5f;
-            case PlayerState_Type.Idle: return 1.0f;
-            default: return 1.0f;
-        }
+        bool isSprinting = state == PlayerState_Type.Sprinting;
+        bool isRunning = state == PlayerState_Type.Running;
+        bool isWalking = state == PlayerState_Type.Walking;
+
+        if (isSprinting) return 0.0f;
+        if (isRunning) return 0.2f;
+        if (isWalking) return 0.5f;
+        return 1.0f;
     }
 
     private void ResolvePlayerCollision()
     {
-        bool isInvalidMachines = playerOne.stateMachine == null || playerTwo.stateMachine == null;
-        if (isInvalidMachines) return;
+        bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
+        if (isInvalidControllers) return;
 
-        Vector3 p1Pos = playerOne.stateMachine.GetPosition();
-        Vector3 p2Pos = playerTwo.stateMachine.GetPosition();
+        Vector3 p1Pos = playerOne.controller.GetPosition();
+        Vector3 p2Pos = playerTwo.controller.GetPosition();
         
         Vector3 diff = p1Pos - p2Pos;
         diff.y = 0;
@@ -292,8 +307,8 @@ public class GameLoopManager : MonoBehaviour
             float totalPushDist = playerCollisionMinDistance - distance;
             Vector3 pushDir = diff / distance;
 
-            PlayerState_Type p1State = playerOne.stateMachine.GetCurrentState();
-            PlayerState_Type p2State = playerTwo.stateMachine.GetCurrentState();
+            PlayerState_Type p1State = playerOne.controller.GetStateMachine().GetCurrentState();
+            PlayerState_Type p2State = playerTwo.controller.GetStateMachine().GetCurrentState();
 
             float w1 = GetPushbackWeight(p1State);
             float w2 = GetPushbackWeight(p2State);
@@ -310,8 +325,8 @@ public class GameLoopManager : MonoBehaviour
             float p1Ratio = w1 / totalWeight;
             float p2Ratio = w2 / totalWeight;
 
-            playerOne.stateMachine.ApplyPushback(pushDir * (totalPushDist * p1Ratio));
-            playerTwo.stateMachine.ApplyPushback(-pushDir * (totalPushDist * p2Ratio));
+            playerOne.controller.GetPhysics().ApplyPushback(pushDir * (totalPushDist * p1Ratio));
+            playerTwo.controller.GetPhysics().ApplyPushback(-pushDir * (totalPushDist * p2Ratio));
         }
     }
 
@@ -323,9 +338,9 @@ public class GameLoopManager : MonoBehaviour
 
     private void UpdatePlayerVisual(PlayerSessionContext context)
     {
-        bool isInvalidContext = context == null || context.visual == null;
+        bool isInvalidContext = context == null || context.renderer == null;
         if (isInvalidContext) return;
 
-        context.visual.UpdateVisual();
+        context.renderer.UpdateRenderer();
     }
 }

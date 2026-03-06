@@ -62,12 +62,12 @@ public class InputBuffer
         bool isLatestMatched = CheckStepMatch(command.sequence[stepIndex], latestInput.flags);
         if (!isLatestMatched) return false;
         
-        bool hasMultipleInputs = buffer.Count > 1;
-        if (hasMultipleInputs)
+        bool hasPreviousInput = buffer.Count > 1;
+        if (hasPreviousInput)
         {
             var prevInput = buffer.First.Next.Value;
-            bool isPrevMatched = CheckStepMatch(command.sequence[stepIndex], prevInput.flags);
-            if (isPrevMatched) return false;
+            bool isPrevAlreadyMatched = CheckStepMatch(command.sequence[stepIndex], prevInput.flags);
+            if (isPrevAlreadyMatched) return false;
         }
 
         stepIndex--; 
@@ -77,8 +77,7 @@ public class InputBuffer
             bool isTooOld = buffered.frame < frameLimit;
             if (isTooOld) break;
 
-            bool isAllStepsMatched = stepIndex < 0;
-            if (isAllStepsMatched) return true;
+            if (stepIndex < 0) return true;
 
             CommandStep currentStep = command.sequence[stepIndex];
             bool isCurrentStepMatched = CheckStepMatch(currentStep, buffered.flags);
@@ -86,19 +85,6 @@ public class InputBuffer
             if (isCurrentStepMatched)
             {
                 stepIndex--;
-            }
-            else
-            {
-                bool hasInputFlags = buffered.flags != InputFlags.None;
-                if (hasInputFlags)
-                {
-                    CommandStep nextStep = command.sequence[stepIndex + 1];
-                    bool isNextStepMatched = CheckStepMatch(nextStep, buffered.flags);
-                    if (!isNextStepMatched)
-                    {
-                        return false; 
-                    }
-                }
             }
         }
 

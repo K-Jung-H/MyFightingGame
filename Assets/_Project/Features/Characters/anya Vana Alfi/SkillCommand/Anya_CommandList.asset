@@ -18,11 +18,11 @@ MonoBehaviour:
     sequence:
     - requiredFlags: 0
       isExactMatchRequired: 0
-    - requiredFlags: 1
+    - requiredFlags: 4
       isExactMatchRequired: 0
     - requiredFlags: 0
       isExactMatchRequired: 0
-    - requiredFlags: 1
+    - requiredFlags: 4
       isExactMatchRequired: 0
     timeWindowFrames: 30
     targetState: 4
@@ -58,6 +58,36 @@ MonoBehaviour:
     targetState: 32
     validStates: 28
     actionData: {fileID: 11400000, guid: e440f3913713b0644b4acc517709829d, type: 2}
+  - commandName: SideStep_Up
+    priority: 0
+    sequence:
+    - requiredFlags: 0
+      isExactMatchRequired: 1
+    - requiredFlags: 1
+      isExactMatchRequired: 1
+    - requiredFlags: 0
+      isExactMatchRequired: 1
+    - requiredFlags: 1
+      isExactMatchRequired: 1
+    timeWindowFrames: 15
+    targetState: 16384
+    validStates: 7
+    actionData: {fileID: 0}
+  - commandName: SideStep_Down
+    priority: 0
+    sequence:
+    - requiredFlags: 0
+      isExactMatchRequired: 1
+    - requiredFlags: 2
+      isExactMatchRequired: 1
+    - requiredFlags: 0
+      isExactMatchRequired: 1
+    - requiredFlags: 2
+      isExactMatchRequired: 0
+    timeWindowFrames: 15
+    targetState: 16384
+    validStates: 7
+    actionData: {fileID: 0}
   - commandName: Dash_Punch_Attack
     priority: 0
     sequence:
@@ -76,7 +106,7 @@ MonoBehaviour:
       isExactMatchRequired: 1
     timeWindowFrames: 15
     targetState: 16
-    validStates: 15
+    validStates: 2063
     actionData: {fileID: 11400000, guid: 8583e93afe8bc9449999de1b56e39b98, type: 2}
   - commandName: Hook
     priority: 0

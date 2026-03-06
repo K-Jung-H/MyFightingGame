@@ -16,6 +16,10 @@ MonoBehaviour:
   runSpeed: 0.18
   sprintSpeed: 0.25
   turnLerpSpeed: 0.2
+  crouchWalkSpeed: 0.06
+  sideStepSpeed: 0.3
+  sideWalkSpeed: 0.05
+  sideStepFrames: 5
   wakeUpInPlaceFrames: 50
   wakeUpRollForwardFrames: 60
   wakeUpRollBackwardFrames: 45

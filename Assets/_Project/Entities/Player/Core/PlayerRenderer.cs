@@ -1,17 +1,16 @@
 using UnityEngine;
 
-public class CharacterVisual : MonoBehaviour
+public class PlayerRenderer : MonoBehaviour
 {
     [SerializeField] private Animator characterAnimator;
     
-    [Header("Animation Blend Settings")]
     [SerializeField] private float attackBlendTime = 0f;
     [SerializeField] private float hitBlendTime = 0f;
     [SerializeField] private float commandBlendTime = 0.1f;
     [SerializeField] private float locomotionBlendTime = 0.1f;
     
     private EffectTableSO effectTable;
-    private PlayerStateMachine logicMachine;
+    private PlayerController controller;
     private StateAnimationMapSO stateAnimMap;
     private Vector3 targetPosition;
     private float targetSpeed;
@@ -25,10 +24,11 @@ public class CharacterVisual : MonoBehaviour
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
     private static readonly int LocomotionHash = Animator.StringToHash("Move Blend Tree");
+    private static readonly int IsCrouchingHash = Animator.StringToHash("IsCrouching");
 
-    public void InitializeVisual(PlayerStateMachine stateMachine, StateAnimationMapSO stateMap, EffectTableSO fxTable)
+    public void InitializeRenderer(PlayerController playerController, StateAnimationMapSO stateMap, EffectTableSO fxTable)
     {
-        logicMachine = stateMachine;
+        controller = playerController;
         stateAnimMap = stateMap;
         effectTable = fxTable;
         previousState = (PlayerState_Type)(-1);
@@ -37,21 +37,23 @@ public class CharacterVisual : MonoBehaviour
     public void PlayHitSpark(Vector3 hitPosition, EffectType effectType)
     {
         VfxClipSO resolvedClip = effectTable != null ? effectTable.GetClip(effectType) : null;
-        
         bool isClipValid = resolvedClip != null;
+        
         if (isClipValid)
         {
             VfxManager.Instance.SpawnVfxAtPosition(resolvedClip, hitPosition, Quaternion.identity);
         }
     }
 
-    public void UpdateVisual()
+    public void UpdateRenderer()
     {
-        if (logicMachine == null) return;
+        bool isControllerNull = controller == null;
+        if (isControllerNull) return;
 
-        bool isHitstopActive = logicMachine.GetHitstopCounter() > 0;
+        bool isHitstopActive = controller.GetCombat().GetHitstopCounter() > 0;
+        bool hasAnimator = characterAnimator != null;
 
-        if (characterAnimator != null)
+        if (hasAnimator)
         {
             characterAnimator.speed = isHitstopActive ? 0f : 1f;
         }
@@ -65,11 +67,11 @@ public class CharacterVisual : MonoBehaviour
 
     private void EvaluateVfxEvents()
     {
-        ActionDataSO currentAction = logicMachine.GetCurrentActionData();
+        ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
         bool isActionInvalid = currentAction == null || currentAction.frameData.vfxEvents == null;
         if (isActionInvalid) return;
 
-        int currentFrame = logicMachine.GetStateFrameCounter();
+        int currentFrame = controller.GetStateMachine().GetStateFrameCounter();
 
         foreach (var vfxEvent in currentAction.frameData.vfxEvents)
         {
@@ -110,16 +112,45 @@ public class CharacterVisual : MonoBehaviour
 
     private void SyncTransformWithLogic()
     {
-        targetPosition = logicMachine.GetPosition();
-        targetSpeed = logicMachine.GetCurrentSpeed();
-        targetDirection = logicMachine.GetDirection();
-        targetLookDirection = logicMachine.GetLookDirection();
+        targetPosition = controller.GetPhysics().GetPosition();
+        
+        PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
+        targetSpeed = GetSpeedFromState(currentState); 
+        
+        targetDirection = controller.GetPhysics().GetCurrentDirection();
+        targetLookDirection = controller.GetPhysics().GetLookDirection();
+    }
+
+    private float GetSpeedFromState(PlayerState_Type stateType)
+    {
+        bool isWalking = stateType == PlayerState_Type.Walking;
+        bool isRunning = stateType == PlayerState_Type.Running;
+        bool isSprinting = stateType == PlayerState_Type.Sprinting;
+        bool isCrouching = stateType == PlayerState_Type.Crouching;
+
+        if (isWalking) return 1.0f;
+        if (isRunning) return 2.0f;
+        if (isSprinting) return 3.0f;
+        
+        if (isCrouching)
+        {
+            Vector3 currentVelocity = controller.GetPhysics().GetVelocity();
+            currentVelocity.y = 0f;
+            
+            bool hasCrouchMovement = currentVelocity.sqrMagnitude > 0.0001f;
+            if (hasCrouchMovement)
+            {
+                return 1.0f;
+            }
+        }
+
+        return 0.0f;
     }
 
     private void EvaluateAndPlayAnimation()
     {
-        PlayerState_Type currentState = logicMachine.GetCurrentState();
-        int stateFrame = logicMachine.GetStateFrameCounter();
+        PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
+        int stateFrame = controller.GetStateMachine().GetStateFrameCounter();
         
         bool isStateChanged = previousState != currentState;
 
@@ -134,7 +165,7 @@ public class CharacterVisual : MonoBehaviour
         {
             PlayHitAnimation(currentState);
         }
-        else if (logicMachine.CheckAndConsumeCommandAction(out int commandHash))
+        else if (controller.GetStateMachine().CheckAndConsumeCommandAction(out int commandHash))
         {
             characterAnimator.CrossFadeInFixedTime(commandHash, commandBlendTime, 0);
         }
@@ -161,7 +192,7 @@ public class CharacterVisual : MonoBehaviour
 
         if (isWakeUpState)
         {
-            WakeUpState wakeUpState = logicMachine.GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+            WakeUpState wakeUpState = controller.GetStateMachine().GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
             bool isWakeUpStateValid = wakeUpState != null;
 
             WakeUp_Type currentWakeUpType = isWakeUpStateValid ? wakeUpState.GetScheduledWakeUpType() : WakeUp_Type.InPlace;
@@ -177,7 +208,7 @@ public class CharacterVisual : MonoBehaviour
         }
         else if (isLayingDownState)
         {
-            LayingDownState layState = logicMachine.GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
+            LayingDownState layState = controller.GetStateMachine().GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
             bool isLayStateValid = layState != null;
             bool isFromRoll = isLayStateValid && layState.IsFromRoll();
 
@@ -195,39 +226,41 @@ public class CharacterVisual : MonoBehaviour
             mappedAnimName = stateAnimMap.GetStateAnimationName(currentState);
         }
         
-        int finalHash = logicMachine.GetAnimationHash(mappedAnimName);
-        SafeCrossFade(finalHash, mappedAnimName, hitBlendTime, "Hit/State");
+        int finalHash = controller.GetStateMachine().GetAnimationHash(mappedAnimName);
+        SafeCrossFade(finalHash, hitBlendTime);
     }
 
     private void PlayAttackAnimation()
     {
-        int finalHash = logicMachine.GetCurrentAttackTriggerHash();
-        bool isInvalidHash = finalHash == 0;
+        ActionDataSO actionData = controller.GetStateMachine().GetCurrentActionData();
+        bool hasValidActionData = actionData != null;
+        int finalHash = 0;
 
+        if (hasValidActionData)
+        {
+            bool hasValidActionName = !string.IsNullOrEmpty(actionData.animationStateName);
+            if (hasValidActionName)
+            {
+                finalHash = controller.GetStateMachine().GetAnimationHash(actionData.animationStateName);
+            }
+        }
+
+        bool isInvalidHash = finalHash == 0;
         if (isInvalidHash)
         {
-            Debug.LogWarning("[Animation Warning] 실행 시도한 공격의 애니메이션 해시가 0입니다.");
             return;
         }
 
-        var actionData = logicMachine.GetCurrentActionData();
-        string actionInfo = actionData != null ? $"{actionData.name} (State: {actionData.animationStateName})" : "Unknown Action";
-        
-        SafeCrossFade(finalHash, actionInfo, attackBlendTime, "Attack");
+        SafeCrossFade(finalHash, attackBlendTime);
     }
 
-    private void SafeCrossFade(int hash, string debugName, float blendTime, string category)
+    private void SafeCrossFade(int hash, float blendTime)
     {
         bool hasState = characterAnimator.HasState(0, hash);
 
         if (hasState)
         {
-            Debug.Log($"[Animation Play] {category}: {debugName}");
             characterAnimator.CrossFadeInFixedTime(hash, blendTime, 0);
-        }
-        else
-        {
-            Debug.LogError($"[Animation Missing] {category} 애니메이션 '{debugName}'이 컨트롤러에 없습니다. (Hash: {hash})");
         }
     }
 
@@ -255,7 +288,11 @@ public class CharacterVisual : MonoBehaviour
 
     private void Update()
     {
-        if (logicMachine != null && logicMachine.GetHitstopCounter() > 0) return;
+        bool isControllerNull = controller == null;
+        if (isControllerNull) return;
+
+        bool isHitstopActive = controller.GetCombat().GetHitstopCounter() > 0;
+        if (isHitstopActive) return;
 
         UpdateTransformInterpolation();
         UpdateAnimatorParameters();
@@ -278,20 +315,29 @@ public class CharacterVisual : MonoBehaviour
         }
     }
 
-private void UpdateAnimatorParameters()
+
+    private void UpdateAnimatorParameters()
     {
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 10f);
-        Vector3 localTargetDirection = transform.InverseTransformDirection(targetDirection);
-        currentDirection = Vector3.Lerp(currentDirection, localTargetDirection, Time.deltaTime * 10f);       
+        if (currentSpeed < 0.01f) currentSpeed = 0f;
+
+        Vector3 rawInput = controller.currentInput.flags != InputFlags.None ? 
+                        controller.GetStateMachine().GetStateObject(controller.GetStateMachine().GetCurrentState()).GetRawInputVector(controller.currentInput.flags) : 
+                        Vector3.zero;
+
+        currentDirection = Vector3.Lerp(currentDirection, rawInput, Time.deltaTime * 15f);
         
         bool hasAnimator = characterAnimator != null;
         if (hasAnimator)
         {
             characterAnimator.SetFloat(MoveSpeedHash, currentSpeed);
+            
             characterAnimator.SetFloat(HorizontalHash, currentDirection.x);
             characterAnimator.SetFloat(VerticalHash, currentDirection.z);
+
+            PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
+            bool isCurrentlyCrouching = currentState == PlayerState_Type.Crouching;
+            characterAnimator.SetBool(IsCrouchingHash, isCurrentlyCrouching);
         }
     }
-
-    
 }

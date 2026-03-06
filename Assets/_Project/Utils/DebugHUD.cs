@@ -4,8 +4,8 @@ using System.Collections.Generic;
 public class DebugHUD : MonoBehaviour
 {
     [SerializeField] private GameLoopManager gameLoopManager;
-    [SerializeField] private PlayerStateMachine p1StateMachine;
-    [SerializeField] private PlayerStateMachine p2StateMachine;
+    [SerializeField] private PlayerController p1Controller;
+    [SerializeField] private PlayerController p2Controller;
 
     private Queue<string> p1InputLogQueue = new Queue<string>();
     private Queue<string> p2InputLogQueue = new Queue<string>();
@@ -17,38 +17,39 @@ public class DebugHUD : MonoBehaviour
 
     private void Start()
     {
-        TryConnectStateMachines();
+        TryConnectControllers();
     }
 
-    private void TryConnectStateMachines()
+    private void TryConnectControllers()
     {
-        bool isAlreadyConnected = p1StateMachine != null && p2StateMachine != null;
+        bool isAlreadyConnected = p1Controller != null && p2Controller != null;
         if (isAlreadyConnected) return;
         
         bool isManagerMissing = gameLoopManager == null;
         if (isManagerMissing) return;
         
-        if (p1StateMachine == null)
+        bool isP1Missing = p1Controller == null;
+        if (isP1Missing)
         {
-            p1StateMachine = gameLoopManager.GetPlayerOneStateMachine();
+            p1Controller = gameLoopManager.GetPlayerOneController();
         }
 
-        if (p2StateMachine == null)
+        bool isP2Missing = p2Controller == null;
+        if (isP2Missing)
         {
-            p2StateMachine = gameLoopManager.GetPlayerTwoStateMachine();
+            p2Controller = gameLoopManager.GetPlayerTwoController();
         }
     }
-
 
     private void OnGUI()
     {
         bool isManagerMissing = gameLoopManager == null;
         if (isManagerMissing) return;
 
-        bool isAnyStateMachineMissing = p1StateMachine == null || p2StateMachine == null;
-        if (isAnyStateMachineMissing)
+        bool isAnyControllerMissing = p1Controller == null || p2Controller == null;
+        if (isAnyControllerMissing)
         {
-            TryConnectStateMachines();
+            TryConnectControllers();
         }
 
         float currentY = 10f;
@@ -75,7 +76,8 @@ public class DebugHUD : MonoBehaviour
             currentY += 5f;
         }
 
-        if (p1StateMachine != null)
+        bool hasP1Controller = p1Controller != null;
+        if (hasP1Controller)
         {
             string p1Title = isShowP1 ? "▼ P1 Input & Action Debug" : "▶ P1 Input & Action Debug";
             if (GUI.Button(new Rect(10, currentY, 280, 20), p1Title))
@@ -86,7 +88,7 @@ public class DebugHUD : MonoBehaviour
 
             if (isShowP1)
             {
-                currentY = DrawInputDebugContent(p1StateMachine, p1InputLogQueue, currentY);
+                currentY = DrawInputDebugContent(p1Controller, p1InputLogQueue, currentY);
             }
             else
             {
@@ -94,7 +96,8 @@ public class DebugHUD : MonoBehaviour
             }
         }
 
-        if (p2StateMachine != null)
+        bool hasP2Controller = p2Controller != null;
+        if (hasP2Controller)
         {
             string p2Title = isShowP2 ? "▼ P2 Input & Action Debug" : "▶ P2 Input & Action Debug";
             if (GUI.Button(new Rect(10, currentY, 280, 20), p2Title))
@@ -105,24 +108,25 @@ public class DebugHUD : MonoBehaviour
 
             if (isShowP2)
             {
-                currentY = DrawInputDebugContent(p2StateMachine, p2InputLogQueue, currentY);
+                currentY = DrawInputDebugContent(p2Controller, p2InputLogQueue, currentY);
             }
         }
     }
 
-    private float DrawInputDebugContent(PlayerStateMachine sm, Queue<string> logQueue, float startY)
+    private float DrawInputDebugContent(PlayerController controller, Queue<string> logQueue, float startY)
     {
         float panelHeight = 350f;
         GUI.Box(new Rect(10, startY, 280, panelHeight), "");
 
-        InputFlags currentHold = sm.currentInput.flags;
+        InputFlags currentHold = controller.currentInput.flags;
         GUI.Label(new Rect(20, startY + 10, 260, 20), $"[Current Hold]: {InputFlagsToString(currentHold)}");
 
-        ActionDataSO currentAction = sm.GetCurrentActionData();
-        string actionName = currentAction != null ? currentAction.animationStateName : "None";
+        ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
+        bool hasCurrentAction = currentAction != null;
+        string actionName = hasCurrentAction ? currentAction.animationStateName : "None";
         GUI.Label(new Rect(20, startY + 35, 260, 20), $"[Current Action]: {actionName}");
 
-        InputFlags keyDown = sm.GetKeyDownFlags();
+        InputFlags keyDown = controller.currentKeyDownFlags;
         bool hasNewInput = keyDown != InputFlags.None;
         if (hasNewInput)
         {
@@ -149,7 +153,7 @@ public class DebugHUD : MonoBehaviour
         GUI.Label(new Rect(20, yOffset, 260, 20), "--- Active Combo Sequence ---");
         yOffset += 20;
 
-        List<InputFlags> comboSeq = sm.GetComboSequence();
+        List<InputFlags> comboSeq = controller.GetActionController().GetComboSequence();
         List<string> formattedCombo = new List<string>();
         
         bool hasComboSequence = comboSeq != null && comboSeq.Count > 0;

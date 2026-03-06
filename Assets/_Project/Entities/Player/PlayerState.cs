@@ -14,7 +14,12 @@ public enum PlayerState_Type
     Stunning = 1 << 7,
     GroundSmash = 1 << 8,
     LayingDown = 1 << 9,
-    WakeUp = 1 << 10
+    WakeUp = 1 << 10,
+    Crouching = 1 << 11,
+    CrouchGuard = 1 << 12,
+    StandGuard = 1 << 13,
+    SideStep = 1 << 14,
+    SideWalk = 1 << 15
 }
 
 public enum WakeUp_Type

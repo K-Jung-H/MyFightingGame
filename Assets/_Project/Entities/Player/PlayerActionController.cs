@@ -87,3 +87,121 @@ public class ActionResolver
         return null;
     }
 }
+
+public struct BufferedAction
+{
+    public ActionRequest request;
+    public int enqueueFrame;
+}
+
+public class ActionBufferManager
+{
+    private BufferedAction? pendingAction;
+
+    public void InitializeBuffer()
+    {
+        pendingAction = null;
+    }
+
+    public void BufferAction(ActionRequest request, int currentFrame)
+    {
+        pendingAction = new BufferedAction { request = request, enqueueFrame = currentFrame };
+    }
+
+    public void ClearExpiredActions(int currentFrame, int bufferWindowFrames)
+    {
+        bool hasPendingAction = pendingAction.HasValue;
+        if (hasPendingAction)
+        {
+            bool isExpired = currentFrame - pendingAction.Value.enqueueFrame > bufferWindowFrames;
+            if (isExpired)
+            {
+                pendingAction = null;
+            }
+        }
+    }
+
+    public ActionRequest? TryGetNextAction()
+    {
+        bool hasPendingAction = pendingAction.HasValue;
+        if (hasPendingAction)
+        {
+            ActionRequest action = pendingAction.Value.request;
+            pendingAction = null;
+            return action;
+        }
+        return null;
+    }
+
+    public void ClearBuffer()
+    {
+        pendingAction = null;
+    }
+
+    public bool IsBufferEmpty()
+    {
+        return !pendingAction.HasValue;
+    }
+}
+
+public class PlayerActionController
+{
+    private InputBuffer inputBuffer;
+    private ActionResolver actionResolver;
+    private ActionBufferManager actionBuffer;
+    private List<InputFlags> comboSequence;
+    private int commandBufferWindow;
+
+    public void Initialize(CommandListSO cmdList, ComboTreeSO comboTreeData, int bufferWindowFrames)
+    {
+        inputBuffer = new InputBuffer(60);
+        comboSequence = new List<InputFlags>();
+        commandBufferWindow = bufferWindowFrames;
+
+        actionResolver = new ActionResolver();
+        actionResolver.Initialize(cmdList, comboTreeData);
+
+        actionBuffer = new ActionBufferManager();
+        actionBuffer.InitializeBuffer();
+    }
+
+    public void ProcessInput(PlayerInput currentInput, InputFlags currentKeyDownFlags, int currentFrame, PlayerState_Type currentState)
+    {
+        inputBuffer.AddInput(currentInput);
+        
+        ActionRequest? evaluatedAction = actionResolver.EvaluateInput(inputBuffer, currentInput.flags, currentKeyDownFlags, currentFrame, currentState, comboSequence);
+
+        bool isActionEvaluated = evaluatedAction.HasValue;
+        if (isActionEvaluated)
+        {
+            actionBuffer.BufferAction(evaluatedAction.Value, currentFrame);
+        }
+    }
+
+    public ActionRequest? GetExecutableAction(int currentFrame)
+    {
+        actionBuffer.ClearExpiredActions(currentFrame, commandBufferWindow);
+        return actionBuffer.TryGetNextAction();
+    }
+
+    public void ClearAllBuffers()
+    {
+        inputBuffer.Clear();
+        actionBuffer.ClearBuffer();
+    }
+
+    public List<InputFlags> GetComboSequence()
+    {
+        return comboSequence;
+    }
+
+    public void ClearComboSequence()
+    {
+        comboSequence.Clear();
+    }
+
+    public void AddToComboSequence(InputFlags requiredInput)
+    {
+        comboSequence.Add(requiredInput);
+    }
+}

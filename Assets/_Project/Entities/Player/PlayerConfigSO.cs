@@ -9,6 +9,12 @@ public class PlayerConfigSO : ScriptableObject
     public float runSpeed = 0.18f;
     public float sprintSpeed = 0.25f;
     public float turnLerpSpeed = 0.2f;
+    public float crouchWalkSpeed = 0.06f;
+
+    [Header("Side Movement Settings")]
+    public float sideStepSpeed = 0.3f;
+    public float sideWalkSpeed = 0.12f;
+    public int sideStepFrames = 15;
 
     [Header("Wake Up Frame Settings")]
     [SerializeField] private int wakeUpInPlaceFrames = 50;
