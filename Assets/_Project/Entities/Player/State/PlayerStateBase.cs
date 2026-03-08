@@ -29,32 +29,35 @@ public abstract class PlayerStateBase
         return 999;
     }
 
-public Vector3 GetRawInputVector(InputFlags flags)
-{
-    Vector3 inputVector = Vector3.zero;
+    public Vector3 GetRawInputVector(InputFlags flags)
+    {
+        Vector3 inputVector = Vector3.zero;
 
-    bool isUpPressed = (flags & InputFlags.Up) != 0;
-    bool isDownPressed = (flags & InputFlags.Down) != 0;
-    bool isForwardPressed = (flags & InputFlags.Forward) != 0;
-    bool isBackPressed = (flags & InputFlags.Back) != 0;
+        bool isUpPressed = (flags & InputFlags.Up) != 0;
+        bool isDownPressed = (flags & InputFlags.Down) != 0;
+        bool isForwardPressed = (flags & InputFlags.Forward) != 0;
+        bool isBackPressed = (flags & InputFlags.Back) != 0;
 
-    if (isForwardPressed) inputVector.z += 1f;
-    if (isBackPressed) inputVector.z -= 1f;
+        if (isForwardPressed) inputVector.z += 1f;
+        if (isBackPressed) inputVector.z -= 1f;
 
-    if (isUpPressed) inputVector.x -= 1f;
-    if (isDownPressed) inputVector.x += 1f;
+        if (isUpPressed) inputVector.x -= 1f;
+        if (isDownPressed) inputVector.x += 1f;
 
-    bool isMagnitudeZero = inputVector.sqrMagnitude == 0f;
-    if (isMagnitudeZero) return Vector3.zero;
+        bool isMagnitudeZero = inputVector.sqrMagnitude == 0f;
+        if (isMagnitudeZero) return Vector3.zero;
 
-    return inputVector.normalized;
-}
+        return inputVector.normalized;
+    }
+
 
     protected void ProcessMovementLogic(PlayerInput input)
     {
         Vector3 inputDir = GetRawInputVector(input.flags);
+        inputDir.x = 0f; 
+
         Vector3 lookDir = physics.GetLookDirection();
-        Vector3 rightDir = Vector3.Cross(Vector3.up, lookDir);
+        Vector3 depthAxis = physics.GetDepthAxis();
 
         float currentMoveSpeed = config.walkSpeed;
         PlayerState_Type currentState = stateMachine.GetCurrentState();
@@ -65,7 +68,10 @@ public Vector3 GetRawInputVector(InputFlags flags)
         if (isRunning) currentMoveSpeed = config.runSpeed;
         else if (isSprinting) currentMoveSpeed = config.sprintSpeed;
 
-        Vector3 moveVelocity = (lookDir * inputDir.z + rightDir * inputDir.x).normalized * currentMoveSpeed;
+        Vector3 lateralMove = depthAxis * -inputDir.x;
+        Vector3 forwardMove = lookDir * inputDir.z;
+
+        Vector3 moveVelocity = (forwardMove + lateralMove).normalized * currentMoveSpeed;
         moveVelocity.y = physics.GetVelocity().y;
 
         physics.SetVelocity(moveVelocity);
@@ -76,7 +82,6 @@ public Vector3 GetRawInputVector(InputFlags flags)
             physics.SetCurrentDirection(new Vector3(moveVelocity.x, 0f, moveVelocity.z).normalized);
         }
     }
-
     protected void ProcessCrouchMovementLogic(PlayerInput input)
     {
         Vector3 inputDir = GetRawInputVector(input.flags);

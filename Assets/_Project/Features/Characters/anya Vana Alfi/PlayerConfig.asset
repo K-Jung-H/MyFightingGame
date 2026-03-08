@@ -19,7 +19,7 @@ MonoBehaviour:
   crouchWalkSpeed: 0.06
   sideStepSpeed: 0.3
   sideWalkSpeed: 0.05
-  sideStepFrames: 5
+  sideStepFrames: 10
   wakeUpInPlaceFrames: 50
   wakeUpRollForwardFrames: 60
   wakeUpRollBackwardFrames: 45

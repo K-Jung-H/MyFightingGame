@@ -8,15 +8,16 @@ public class IdleState : PlayerStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        bool isDownPressed = (input.flags & InputFlags.Down) != 0;
+        InputStateTracker tracker = controller.GetTracker();
+        bool isDownPressed = tracker.IsHeld(InputFlags.Down);
         if (isDownPressed)
         {
             stateMachine.TransitionTo(PlayerState_Type.Crouching);
             return;
         }
 
-        bool hasMovementInput = GetRawInputVector(input.flags) != Vector3.zero;
-        if (hasMovementInput)
+        bool hasForwardBackInput = tracker.IsHeld(InputFlags.Forward) || tracker.IsHeld(InputFlags.Back);
+        if (hasForwardBackInput)
         {
             stateMachine.TransitionTo(PlayerState_Type.Walking);
         }
@@ -31,14 +32,15 @@ public class WalkingState : PlayerStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        bool hasNoInput = GetRawInputVector(input.flags) == Vector3.zero;
-        if (hasNoInput)
+        InputStateTracker tracker = controller.GetTracker();
+        bool hasForwardBackInput = tracker.IsHeld(InputFlags.Forward) || tracker.IsHeld(InputFlags.Back);
+        if (!hasForwardBackInput)
         {
             stateMachine.TransitionTo(PlayerState_Type.Idle);
             return;
         }
         
-        bool isDownPressed = (input.flags & InputFlags.Down) != 0;
+        bool isDownPressed = tracker.IsHeld(InputFlags.Down);
         if (isDownPressed)
         {
             stateMachine.TransitionTo(PlayerState_Type.Crouching);
@@ -65,14 +67,15 @@ public class RunningState : PlayerStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        bool hasNoInput = GetRawInputVector(input.flags) == Vector3.zero;
-        if (hasNoInput)
+        InputStateTracker tracker = controller.GetTracker();
+        bool hasForwardBackInput = tracker.IsHeld(InputFlags.Forward) || tracker.IsHeld(InputFlags.Back);
+        if (!hasForwardBackInput)
         {
             stateMachine.TransitionTo(PlayerState_Type.Idle);
             return;
         }
 
-        bool isDownPressed = (input.flags & InputFlags.Down) != 0;
+        bool isDownPressed = tracker.IsHeld(InputFlags.Down);
         if (isDownPressed)
         {
             stateMachine.TransitionTo(PlayerState_Type.Crouching);
@@ -98,16 +101,16 @@ public class SprintingState : PlayerStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        Vector3 inputVector = GetRawInputVector(input.flags);
-        bool hasNoInput = inputVector == Vector3.zero;
+        InputStateTracker tracker = controller.GetTracker();
+        bool hasForwardBackInput = tracker.IsHeld(InputFlags.Forward) || tracker.IsHeld(InputFlags.Back);
         
-        if (hasNoInput)
+        if (!hasForwardBackInput)
         {
             stateMachine.TransitionTo(PlayerState_Type.Idle);
             return;
         }
 
-        bool isDownPressed = (input.flags & InputFlags.Down) != 0;
+        bool isDownPressed = tracker.IsHeld(InputFlags.Down);
         if (isDownPressed)
         {
             stateMachine.TransitionTo(PlayerState_Type.Crouching);
@@ -156,29 +159,32 @@ public class SideStepState : PlayerStateBase
 
     public override void Enter()
     {
-        InputFlags triggeredFlags = controller.currentInput.flags;
-        bool isUpTriggered = (triggeredFlags & InputFlags.Up) != 0;
-        bool isDownTriggered = (triggeredFlags & InputFlags.Down) != 0;
+        stepDirection = 0f;
+        InputStateTracker tracker = controller.GetTracker();
 
-        if (isUpTriggered)
-        {
-            stepDirection = 1f;
-        }
-        else if (isDownTriggered)
-        {
-            stepDirection = -1f;
-        }
+        bool isUpTriggered = tracker.IsHeld(InputFlags.Up);
+        bool isDownTriggered = tracker.IsHeld(InputFlags.Down);
+
+        if (isUpTriggered) stepDirection = 1f;
+        else if (isDownTriggered) stepDirection = -1f;
+
+        bool isFallbackNeeded = stepDirection == 0f;
+        if (isFallbackNeeded) stepDirection = 1f; 
     }
 
     public override void UpdateTick(PlayerInput input)
     {
-        Vector3 newPos = physics.GetPosition() + physics.GetDepthAxis() * (stepDirection * config.sideStepSpeed);
-        physics.SetPosition(newPos);
+        Vector3 moveVelocity = physics.GetDepthAxis() * (stepDirection * config.sideStepSpeed);
+        moveVelocity.y = physics.GetVelocity().y;
+        physics.SetVelocity(moveVelocity);
 
-        bool isHoldingUp = stepDirection > 0 && (input.flags & InputFlags.Up) != 0;
-        bool isHoldingDown = stepDirection < 0 && (input.flags & InputFlags.Down) != 0;
+        InputStateTracker tracker = controller.GetTracker();
+        bool isHoldingUp = stepDirection > 0 && tracker.IsHeld(InputFlags.Up);
+        bool isHoldingDown = stepDirection < 0 && tracker.IsHeld(InputFlags.Down);
 
-        bool isPastCancelWindow = stateMachine.GetStateFrameCounter() > 10;
+        int cancelFrame = config.sideStepFrames > 2 ? config.sideStepFrames / 2 : 1;
+        bool isPastCancelWindow = stateMachine.GetStateFrameCounter() >= cancelFrame;
+        
         if (isPastCancelWindow && (isHoldingUp || isHoldingDown))
         {
             stateMachine.TransitionTo(PlayerState_Type.SideWalk);
@@ -201,8 +207,9 @@ public class SideWalkState : PlayerStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        bool isHoldingUp = (input.flags & InputFlags.Up) != 0;
-        bool isHoldingDown = (input.flags & InputFlags.Down) != 0;
+        InputStateTracker tracker = controller.GetTracker();
+        bool isHoldingUp = tracker.IsHeld(InputFlags.Up);
+        bool isHoldingDown = tracker.IsHeld(InputFlags.Down);
 
         bool isNoDirectionHeld = !isHoldingUp && !isHoldingDown;
         if (isNoDirectionHeld)
@@ -212,7 +219,8 @@ public class SideWalkState : PlayerStateBase
         }
 
         float currentDirection = isHoldingUp ? 1f : -1f;
-        Vector3 newPos = physics.GetPosition() + physics.GetDepthAxis() * (currentDirection * config.sideWalkSpeed);
-        physics.SetPosition(newPos);
+        Vector3 moveVelocity = physics.GetDepthAxis() * (currentDirection * config.sideWalkSpeed);
+        moveVelocity.y = physics.GetVelocity().y;
+        physics.SetVelocity(moveVelocity);
     }
 }

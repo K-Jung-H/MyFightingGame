@@ -17,12 +17,20 @@ MonoBehaviour:
     priority: 50
     sequence:
     - requiredFlags: 0
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 4
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 0
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 4
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     timeWindowFrames: 30
     targetState: 4
@@ -32,12 +40,20 @@ MonoBehaviour:
     priority: 0
     sequence:
     - requiredFlags: 2
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 10
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 8
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 16
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     timeWindowFrames: 15
     targetState: 16
@@ -47,12 +63,20 @@ MonoBehaviour:
     priority: 0
     sequence:
     - requiredFlags: 1
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 1
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 1
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 33
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     timeWindowFrames: 15
     targetState: 32
@@ -62,12 +86,20 @@ MonoBehaviour:
     priority: 0
     sequence:
     - requiredFlags: 0
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     - requiredFlags: 1
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     - requiredFlags: 0
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     - requiredFlags: 1
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     timeWindowFrames: 15
     targetState: 16384
@@ -77,12 +109,20 @@ MonoBehaviour:
     priority: 0
     sequence:
     - requiredFlags: 0
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     - requiredFlags: 2
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     - requiredFlags: 0
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     - requiredFlags: 2
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     timeWindowFrames: 15
     targetState: 16384
@@ -92,8 +132,12 @@ MonoBehaviour:
     priority: 0
     sequence:
     - requiredFlags: 1
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     - requiredFlags: 16
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     timeWindowFrames: 15
     targetState: 16
@@ -103,6 +147,8 @@ MonoBehaviour:
     priority: 0
     sequence:
     - requiredFlags: 34
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 1
     timeWindowFrames: 15
     targetState: 16
@@ -111,9 +157,15 @@ MonoBehaviour:
   - commandName: Hook
     priority: 0
     sequence:
-    - requiredFlags: 22
+    - requiredFlags: 2
+      executeType: 1
+      requiredHoldFrames: 50
+      isExactMatchRequired: 0
+    - requiredFlags: 18
+      executeType: 0
+      requiredHoldFrames: 0
       isExactMatchRequired: 0
     timeWindowFrames: 15
     targetState: 16
-    validStates: 31
+    validStates: 2079
     actionData: {fileID: 11400000, guid: e440f3913713b0644b4acc517709829d, type: 2}

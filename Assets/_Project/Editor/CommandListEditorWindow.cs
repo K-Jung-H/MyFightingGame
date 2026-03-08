@@ -267,6 +267,36 @@ public class CommandListEditorWindow : EditorWindow
             });
             stepRow.Add(inputField);
 
+            EnumField executeTypeField = new EnumField(step.executeType) { style = { width = 60 } };
+            IntegerField holdFramesField = new IntegerField() { value = step.requiredHoldFrames, style = { width = 40 } };
+
+            holdFramesField.RegisterValueChangedCallback(evt => 
+            {
+                step.requiredHoldFrames = evt.newValue;
+                MarkAssetDirty();
+            });
+
+            holdFramesField.style.display = step.executeType == InputExecuteType.Hold ? DisplayStyle.Flex : DisplayStyle.None;
+
+            executeTypeField.RegisterValueChangedCallback(evt => 
+            {
+                step.executeType = (InputExecuteType)evt.newValue;
+                
+                bool isHoldType = step.executeType == InputExecuteType.Hold;
+                holdFramesField.style.display = isHoldType ? DisplayStyle.Flex : DisplayStyle.None;
+
+                if (!isHoldType)
+                {
+                    step.requiredHoldFrames = 0;
+                    holdFramesField.SetValueWithoutNotify(0);
+                }
+
+                MarkAssetDirty();
+            });
+
+            stepRow.Add(executeTypeField);
+            stepRow.Add(holdFramesField);
+
             Toggle exactMatchToggle = new Toggle("Exact Match") { value = step.isExactMatchRequired };
             exactMatchToggle.RegisterValueChangedCallback(evt => 
             {
@@ -288,7 +318,7 @@ public class CommandListEditorWindow : EditorWindow
 
         Button addStepButton = new Button(() => 
         {
-            currentSelection.sequence.Add(new CommandStep { requiredFlags = InputFlags.None, isExactMatchRequired = false });
+            currentSelection.sequence.Add(new CommandStep { requiredFlags = InputFlags.None, isExactMatchRequired = false, executeType = InputExecuteType.Tap, requiredHoldFrames = 0 });
             MarkAssetDirty();
             RefreshDetailsView();
         }) { text = "+ Add Step", style = { marginTop = 5 } };

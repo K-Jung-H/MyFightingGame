@@ -126,9 +126,10 @@ public class PlayerRenderer : MonoBehaviour
         bool isWalking = stateType == PlayerState_Type.Walking;
         bool isRunning = stateType == PlayerState_Type.Running;
         bool isSprinting = stateType == PlayerState_Type.Sprinting;
+        bool isSideWalking = stateType == PlayerState_Type.SideWalk || stateType == PlayerState_Type.SideStep;
         bool isCrouching = stateType == PlayerState_Type.Crouching;
 
-        if (isWalking) return 1.0f;
+        if (isWalking || isSideWalking) return 1.0f;
         if (isRunning) return 2.0f;
         if (isSprinting) return 3.0f;
         
@@ -269,7 +270,9 @@ public class PlayerRenderer : MonoBehaviour
         bool isCurrentLocomotion = currentState == PlayerState_Type.Idle || 
                                    currentState == PlayerState_Type.Walking || 
                                    currentState == PlayerState_Type.Running || 
-                                   currentState == PlayerState_Type.Sprinting;
+                                   currentState == PlayerState_Type.Sprinting ||
+                                   currentState == PlayerState_Type.SideWalk ||
+                                   currentState == PlayerState_Type.SideStep;
             
         bool isPreviousAction = previousState == PlayerState_Type.Attacking || 
                                 previousState == PlayerState_Type.StandHit || 
@@ -277,7 +280,8 @@ public class PlayerRenderer : MonoBehaviour
                                 previousState == PlayerState_Type.Stunning || 
                                 previousState == PlayerState_Type.GroundSmash ||
                                 previousState == PlayerState_Type.LayingDown ||
-                                previousState == PlayerState_Type.WakeUp;
+                                previousState == PlayerState_Type.WakeUp ||
+                                previousState == PlayerState_Type.SideStep; 
 
         bool shouldTransitionToLocomotion = isCurrentLocomotion && isPreviousAction;
         if (shouldTransitionToLocomotion)
@@ -321,19 +325,20 @@ public class PlayerRenderer : MonoBehaviour
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 10f);
         if (currentSpeed < 0.01f) currentSpeed = 0f;
 
-        Vector3 rawInput = controller.currentInput.flags != InputFlags.None ? 
-                        controller.GetStateMachine().GetStateObject(controller.GetStateMachine().GetCurrentState()).GetRawInputVector(controller.currentInput.flags) : 
-                        Vector3.zero;
+        Vector3 worldVelocity = controller.GetPhysics().GetVelocity();
+        Vector3 localVelocity = transform.InverseTransformDirection(worldVelocity);
 
-        currentDirection = Vector3.Lerp(currentDirection, rawInput, Time.deltaTime * 15f);
-        
         bool hasAnimator = characterAnimator != null;
         if (hasAnimator)
         {
             characterAnimator.SetFloat(MoveSpeedHash, currentSpeed);
             
-            characterAnimator.SetFloat(HorizontalHash, currentDirection.x);
-            characterAnimator.SetFloat(VerticalHash, currentDirection.z);
+            float maxSpeed = controller.GetConfig().walkSpeed; 
+            if (maxSpeed > 0)
+            {
+                characterAnimator.SetFloat(HorizontalHash, localVelocity.x / maxSpeed);
+                characterAnimator.SetFloat(VerticalHash, localVelocity.z / maxSpeed);
+            }
 
             PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
             bool isCurrentlyCrouching = currentState == PlayerState_Type.Crouching;

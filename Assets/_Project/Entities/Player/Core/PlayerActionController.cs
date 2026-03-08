@@ -11,11 +11,13 @@ public struct ActionRequest
 
 public class ActionResolver
 {
+    private PlayerController controller;
     private CommandListSO commandList;
     private ComboTreeSO comboTree;
 
-    public void Initialize(CommandListSO cmds, ComboTreeSO combos)
+    public void Initialize(PlayerController playerController, CommandListSO cmds, ComboTreeSO combos)
     {
+        controller = playerController;
         commandList = cmds;
         comboTree = combos;
     }
@@ -146,20 +148,25 @@ public class ActionBufferManager
 
 public class PlayerActionController
 {
+    private PlayerController controller;
     private InputBuffer inputBuffer;
     private ActionResolver actionResolver;
     private ActionBufferManager actionBuffer;
     private List<InputFlags> comboSequence;
     private int commandBufferWindow;
 
-    public void Initialize(CommandListSO cmdList, ComboTreeSO comboTreeData, int bufferWindowFrames)
+    public void Initialize(PlayerController playerController, CommandListSO cmdList, ComboTreeSO comboTreeData, int bufferWindowFrames)
     {
+        controller = playerController;
+        
         inputBuffer = new InputBuffer(60);
+        inputBuffer.Initialize(controller);
+
         comboSequence = new List<InputFlags>();
         commandBufferWindow = bufferWindowFrames;
 
         actionResolver = new ActionResolver();
-        actionResolver.Initialize(cmdList, comboTreeData);
+        actionResolver.Initialize(controller, cmdList, comboTreeData);
 
         actionBuffer = new ActionBufferManager();
         actionBuffer.InitializeBuffer();
