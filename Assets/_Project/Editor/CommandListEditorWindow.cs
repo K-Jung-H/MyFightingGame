@@ -228,6 +228,8 @@ public class CommandListEditorWindow : EditorWindow
         });
         rightPane.Add(validStatesField);
 
+        VisualElement summaryContainer = new VisualElement();
+
         ObjectField actionDataField = new ObjectField("Action Data") 
         { 
             objectType = typeof(ActionDataSO), 
@@ -236,12 +238,55 @@ public class CommandListEditorWindow : EditorWindow
         actionDataField.RegisterValueChangedCallback(evt => 
         { 
             currentSelection.actionData = (ActionDataSO)evt.newValue; 
+            DrawActionHitboxSummary(currentSelection.actionData, summaryContainer);
             MarkAssetDirty();
         });
         rightPane.Add(actionDataField);
+        rightPane.Add(summaryContainer);
+
+        DrawActionHitboxSummary(currentSelection.actionData, summaryContainer);
 
         rightPane.Add(new Label("Command Sequence") { style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 15, marginBottom = 5 } });
         DrawSequenceList();
+    }
+
+    private void DrawActionHitboxSummary(ActionDataSO actionData, VisualElement container)
+    {
+        container.Clear();
+        
+        bool hasValidHitbox = actionData != null && 
+                              actionData.frameData != null && 
+                              actionData.frameData.hitboxEvents != null && 
+                              actionData.frameData.hitboxEvents.Length > 0;
+
+        if (hasValidHitbox)
+        {
+            HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
+            
+            VisualElement box = new VisualElement 
+            { 
+                style = 
+                { 
+                    backgroundColor = new Color(0.15f, 0.15f, 0.15f), 
+                    paddingBottom = 5, 
+                    paddingTop = 5, 
+                    paddingLeft = 5, 
+                    marginTop = 5, 
+                    marginBottom = 5, 
+                    borderTopLeftRadius = 3,
+                    borderTopRightRadius = 3,
+                    borderBottomLeftRadius = 3,
+                    borderBottomRightRadius = 3
+                } 
+            };
+            
+            box.Add(new Label("[Hitbox Summary]") { style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.7f, 0.7f, 1f) } });
+            box.Add(new Label($"Attack Height: {firstHit.attackHeight}"));
+            box.Add(new Label($"Damage: {firstHit.damage}"));
+            box.Add(new Label($"Stun (Hit/Block): {firstHit.hitstunFrames} / {firstHit.blockStunFrames}"));
+
+            container.Add(box);
+        }
     }
 
     private void DrawSequenceList()

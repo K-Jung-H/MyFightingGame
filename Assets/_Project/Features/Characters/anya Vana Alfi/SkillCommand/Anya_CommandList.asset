@@ -81,7 +81,7 @@ MonoBehaviour:
     timeWindowFrames: 15
     targetState: 32
     validStates: 28
-    actionData: {fileID: 11400000, guid: e440f3913713b0644b4acc517709829d, type: 2}
+    actionData: {fileID: 11400000, guid: 4c03114c24ab093448171b8e1140b882, type: 2}
   - commandName: SideStep_Up
     priority: 0
     sequence:

@@ -261,11 +261,14 @@ public class HitboxBakerWindow : EditorWindow
                     GUILayout.EndHorizontal();
 
                     int groupID = EditorGUILayout.IntField("Hit Group ID", marker.hitGroupID);
+                    
+                    Attack_Height attackHeight = (Attack_Height)EditorGUILayout.EnumPopup("Attack Height", marker.attackHeight);
                     Attack_Type attackType = (Attack_Type)EditorGUILayout.EnumPopup("Attack Type", marker.attackType);
                     HurtState_Type targetState = (HurtState_Type)EditorGUILayout.EnumPopup("Target Hurt State", marker.targetHurtState);
                     
                     int damage = EditorGUILayout.IntField("Damage", marker.damage);
                     int hitstun = EditorGUILayout.IntField("Hitstun Frames", marker.hitstunFrames);
+                    int blockstun = EditorGUILayout.IntField("Blockstun Frames", marker.blockStunFrames);
                     Vector3 pushback = EditorGUILayout.Vector3Field("Local Pushback Vector", marker.localPushbackVector);
                     bool isKnockdown = EditorGUILayout.Toggle("Is Hard Knockdown", marker.isHardKnockdown);
                     
@@ -278,12 +281,17 @@ public class HitboxBakerWindow : EditorWindow
                         marker.recordStartFrame = start;
                         marker.recordEndFrame = end;
                         marker.hitGroupID = groupID;
+                        
+                        marker.attackHeight = attackHeight;
                         marker.attackType = attackType;
                         marker.targetHurtState = targetState;
+                        
                         marker.damage = damage;
                         marker.hitstunFrames = hitstun;
+                        marker.blockStunFrames = blockstun;
                         marker.localPushbackVector = pushback;
                         marker.isHardKnockdown = isKnockdown;
+                        
                         marker.boxExtents = extents;
                         EditorUtility.SetDirty(marker);
                     }
@@ -616,10 +624,12 @@ public class HitboxBakerWindow : EditorWindow
             {
                 activeStartFrame = marker.recordStartFrame,
                 hitGroupID = marker.hitGroupID,
+                attackHeight = marker.attackHeight,
                 attackType = marker.attackType,
                 targetHurtState = marker.targetHurtState,
                 damage = marker.damage,
                 hitstunFrames = marker.hitstunFrames,
+                blockStunFrames = marker.blockStunFrames,
                 localPushbackVector = marker.localPushbackVector,
                 isHardKnockdown = marker.isHardKnockdown
             };

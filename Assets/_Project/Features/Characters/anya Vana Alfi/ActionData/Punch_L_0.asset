@@ -24,12 +24,8 @@ MonoBehaviour:
     useRootRotation: 0
     rootMotionPath: []
     hitboxEvents:
-    - activeStartFrame: 10
+    - activeStartFrame: 12
       boxPath:
-      - localPosition: {x: -0.2544142, y: 0.6219932, z: -0.189383}
-        extents: {x: 0.05, y: 0.1, z: 0.05}
-      - localPosition: {x: -0.29021814, y: 0.58520925, z: -0.08230187}
-        extents: {x: 0.05, y: 0.1, z: 0.05}
       - localPosition: {x: -0.29503664, y: 0.5555506, z: 0.075989544}
         extents: {x: 0.05, y: 0.1, z: 0.05}
       - localPosition: {x: -0.27453455, y: 0.5701378, z: 0.30261844}
@@ -54,15 +50,27 @@ MonoBehaviour:
         extents: {x: 0.05, y: 0.1, z: 0.05}
       - localPosition: {x: 0.02880117, y: 0.6874819, z: 0.9759736}
         extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.024740577, y: 0.6911869, z: 0.9565134}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
       hitGroupID: 0
-      attackType: 0
+      attackHeight: 1
+      attackType: 1
       targetHurtState: 0
-      damage: 50
-      hitstunFrames: 100
-      localPushbackVector: {x: 0, y: 0, z: 0}
+      damage: 5
+      hitstunFrames: 20
+      blockStunFrames: 10
+      localPushbackVector: {x: 0, y: 0, z: 0.05}
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0
       endFrame: 55
       hurtboxType: 0
-    vfxEvents: []
+    vfxEvents:
+    - startFrame: 0
+      endFrame: 18
+      intervalFrames: 2
+      effectType: 3
+      targetBone: 17
+      localPositionOffset: {x: 0, y: 0.1, z: 0}
+      localRotationOffset: {x: 0, y: 0, z: 0, w: 1}
+      isAttached: 0

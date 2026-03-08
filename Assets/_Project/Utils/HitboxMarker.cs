@@ -8,11 +8,13 @@ public class HitboxMarker : MonoBehaviour
     public int recordEndFrame;
     public int hitGroupID;
     
+    public Attack_Height attackHeight;
     public Attack_Type attackType;
     public HurtState_Type targetHurtState;
     
     public int damage;
     public int hitstunFrames;
+    public int blockStunFrames;
     public Vector3 localPushbackVector;
     public bool isHardKnockdown;
     

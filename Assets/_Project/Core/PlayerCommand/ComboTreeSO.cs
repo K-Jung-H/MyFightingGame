@@ -6,7 +6,10 @@ public class ComboNode
 {
     public InputFlags requiredInput;
     public ActionDataSO actionData;
-    
+
+    [HideInInspector]
+    public UnityEngine.Vector2 position;
+
     [SerializeReference]
     public List<ComboNode> nextAttacks = new List<ComboNode>();
 }

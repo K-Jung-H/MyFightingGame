@@ -15,6 +15,44 @@ public class ComboGraphNode : Node
 
     public EnumFlagsField inputEnumField;
     public ObjectField actionObjectField;
+    public VisualElement hitboxSummaryContainer;
+
+    public void RefreshHitboxSummary()
+    {
+        hitboxSummaryContainer.Clear();
+        
+        bool hasValidHitbox = actionData != null && 
+                            actionData.frameData != null && 
+                            actionData.frameData.hitboxEvents != null && 
+                            actionData.frameData.hitboxEvents.Length > 0;
+
+        if (hasValidHitbox)
+        {
+            HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
+            
+            VisualElement box = new VisualElement 
+            { 
+                style = 
+                { 
+                    backgroundColor = new Color(0.15f, 0.15f, 0.15f), 
+                    paddingBottom = 5, 
+                    paddingTop = 5, 
+                    paddingLeft = 5, 
+                    marginTop = 5, 
+                    borderTopLeftRadius = 3,
+                    borderTopRightRadius = 3,
+                    borderBottomLeftRadius = 3,
+                    borderBottomRightRadius = 3
+                } 
+            };
+            
+            box.Add(new Label("[Hitbox Summary]") { style = { fontSize = 10, color = new Color(0.6f, 0.8f, 1f), unityFontStyleAndWeight = FontStyle.Bold } });
+            box.Add(new Label($"Height: {firstHit.attackHeight}") { style = { fontSize = 10 } });
+            box.Add(new Label($"Dmg: {firstHit.damage} | Stun: {firstHit.hitstunFrames}/{firstHit.blockStunFrames}") { style = { fontSize = 10 } });
+
+            hitboxSummaryContainer.Add(box);
+        }
+    }
 }
 
 public class ComboGraphWindow : EditorWindow
@@ -83,10 +121,6 @@ public class ComboGraphWindow : EditorWindow
             GraphSaveUtility saveUtility = GraphSaveUtility.GetInstance(comboGraphView, targetComboTree);
             saveUtility.SaveGraph();
         }
-        else
-        {
-            Debug.LogWarning("Target Tree Asset is not assigned!");
-        }
     }
 
     private void LoadGraphData()
@@ -96,10 +130,6 @@ public class ComboGraphWindow : EditorWindow
         {
             GraphSaveUtility saveUtility = GraphSaveUtility.GetInstance(comboGraphView, targetComboTree);
             saveUtility.LoadGraph();
-        }
-        else
-        {
-            Debug.LogWarning("Target Tree Asset is not assigned!");
         }
     }
 }
@@ -154,6 +184,8 @@ public class ComboGraphView : GraphView
         comboNode.inputEnumField = inputEnumField;
         comboNode.mainContainer.Add(inputEnumField);
 
+        comboNode.hitboxSummaryContainer = new VisualElement();
+
         ObjectField actionObjectField = new ObjectField("Action Data");
         actionObjectField.objectType = typeof(ActionDataSO);
         actionObjectField.RegisterValueChangedCallback(evt =>
@@ -169,9 +201,13 @@ public class ComboGraphView : GraphView
             {
                 comboNode.title = "Empty Node";
             }
+
+            comboNode.RefreshHitboxSummary();
         });
+        
         comboNode.actionObjectField = actionObjectField;
         comboNode.mainContainer.Add(actionObjectField);
+        comboNode.mainContainer.Add(comboNode.hitboxSummaryContainer);
 
         comboNode.RefreshExpandedState();
         comboNode.RefreshPorts();
@@ -311,6 +347,7 @@ public class GraphSaveUtility
         {
             requiredInput = graphNode.requiredInput,
             actionData = graphNode.actionData,
+            position = graphNode.GetPosition().position,
             nextAttacks = new List<ComboNode>()
         };
 
@@ -338,18 +375,13 @@ public class GraphSaveUtility
 
         Dictionary<ComboNode, ComboGraphNode> nodeMap = new Dictionary<ComboNode, ComboGraphNode>();
 
-        float currentXOffset = 100f;
-        float currentYOffset = 100f;
-
         foreach (ComboNode rootCombo in targetTreeAsset.startingAttacks)
         {
-            CreateGraphNodeRecursively(rootCombo, null, ref currentXOffset, ref currentYOffset, nodeMap);
-            currentXOffset += 300f;
-            currentYOffset = 100f;
+            CreateGraphNodeRecursively(rootCombo, null, nodeMap);
         }
     }
 
-    private void CreateGraphNodeRecursively(ComboNode comboData, ComboGraphNode parentGraphNode, ref float xOffset, ref float yOffset, Dictionary<ComboNode, ComboGraphNode> nodeMap)
+    private void CreateGraphNodeRecursively(ComboNode comboData, ComboGraphNode parentGraphNode, Dictionary<ComboNode, ComboGraphNode> nodeMap)
     {
         bool isAlreadyCreated = nodeMap.ContainsKey(comboData);
         ComboGraphNode currentGraphNode;
@@ -367,7 +399,7 @@ public class GraphSaveUtility
                 nodeName = comboData.actionData.animationStateName;
             }
 
-            currentGraphNode = targetGraphView.CreateNode(nodeName, new Vector2(xOffset, yOffset));
+            currentGraphNode = targetGraphView.CreateNode(nodeName, comboData.position);
             currentGraphNode.requiredInput = comboData.requiredInput;
             currentGraphNode.actionData = comboData.actionData;
 
@@ -381,10 +413,10 @@ public class GraphSaveUtility
             if (hasObjectField)
             {
                 currentGraphNode.actionObjectField.SetValueWithoutNotify(comboData.actionData);
+                currentGraphNode.RefreshHitboxSummary();
             }
 
             nodeMap.Add(comboData, currentGraphNode);
-            yOffset += 250f;
         }
 
         bool hasParent = parentGraphNode != null;
@@ -399,7 +431,7 @@ public class GraphSaveUtility
 
         foreach (ComboNode childCombo in comboData.nextAttacks)
         {
-            CreateGraphNodeRecursively(childCombo, currentGraphNode, ref xOffset, ref yOffset, nodeMap);
+            CreateGraphNodeRecursively(childCombo, currentGraphNode, nodeMap);
         }
     }
 

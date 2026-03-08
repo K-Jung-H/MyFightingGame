@@ -173,7 +173,7 @@ MonoBehaviour:
       lkKey: 0
       rkKey: 0
     instance: {fileID: 0}
-    visual: {fileID: 0}
+    renderer: {fileID: 0}
   playerTwo:
     characterData: {fileID: 11400000, guid: 2a18729c9b8390a4e9f8eb076df13273, type: 2}
     customBinding:
@@ -186,7 +186,7 @@ MonoBehaviour:
       lkKey: 0
       rkKey: 0
     instance: {fileID: 0}
-    visual: {fileID: 0}
+    renderer: {fileID: 0}
   p1SpawnPos: {x: -2, y: 0, z: 0}
   p2SpawnPos: {x: 2, y: 0, z: 0}
 --- !u!4 &22342366
@@ -566,12 +566,48 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: damage
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: hitstunFrames
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: blockStunFrames
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 70
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.z
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
@@ -598,12 +634,28 @@ PrefabInstance:
       value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: effectType
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: intervalFrames
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 70
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8263449897585667959, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalPosition.x
