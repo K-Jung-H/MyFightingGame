@@ -23,11 +23,9 @@ public enum Attack_Type
 
 public enum HurtState_Type
 {
-    StandHit,
+    Hit,
     AirHit,
-    KnockDown,
-    GroundHit,
-    GuardHit
+    StunHit,
 }
 
 public enum EffectType

@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public struct EvaluationResult
 {
     public bool isEvaded;
@@ -8,11 +10,11 @@ public struct EvaluationResult
 
 public class CombatEvaluator
 {
-    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState)
+    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, PlayerConfigSO config, bool isMoving)
     {
         EvaluationResult result = new EvaluationResult();
         
-        PlayerState_Type? determinedState = DetermineTargetState(hitEvent, defenderState);
+        PlayerState_Type? determinedState = DetermineTargetState(hitEvent, defenderState, isMoving);
         result.isEvaded = determinedState == null;
         
         if (result.isEvaded)
@@ -20,16 +22,39 @@ public class CombatEvaluator
             return result;
         }
 
-        result.targetState = determinedState.Value;
-        bool isBlocked = result.targetState == PlayerState_Type.StandBlock || result.targetState == PlayerState_Type.CrouchBlock;
+        bool isBlocked = determinedState.Value == PlayerState_Type.StandBlock || determinedState.Value == PlayerState_Type.CrouchBlock;
+
+        if (!isBlocked)
+        {
+            if (hitEvent.targetHurtState == HurtState_Type.AirHit)
+            {
+                result.targetState = PlayerState_Type.AirHit;
+            }
+            else if (hitEvent.targetHurtState == HurtState_Type.StunHit)
+            {
+                result.targetState = PlayerState_Type.Stunning;
+            }
+            else
+            {
+                result.targetState = determinedState.Value;
+            }
+        }
+        else
+        {
+            result.targetState = determinedState.Value;
+        }
+
+        int actualHitStun = hitEvent.hitstunFrames > 0 ? hitEvent.hitstunFrames : config.GetDefaultHitStunFrames();
+        int actualBlockStun = hitEvent.blockStunFrames > 0 ? hitEvent.blockStunFrames : config.GetDefaultBlockStunFrames();
 
         result.hurtInfo = new HurtInfo
         {
             damage = isBlocked ? 0 : hitEvent.damage,
-            hurtStunFrames = isBlocked ? hitEvent.blockStunFrames : hitEvent.hitstunFrames,
-            pushbackVector = hitEvent.localPushbackVector,
-            targetHurtState = MapToHurtState(result.targetState),
-            isHardKnockdown = isBlocked ? false : hitEvent.isHardKnockdown
+            hurtStunFrames = isBlocked ? actualBlockStun : actualHitStun,
+            pushbackVector = isBlocked ? Vector3.zero : hitEvent.localPushbackVector,
+            targetHurtState = isBlocked ? HurtState_Type.Hit : hitEvent.targetHurtState,
+            isHardKnockdown = isBlocked ? false : hitEvent.isHardKnockdown,
+            attackHeight = hitEvent.attackHeight
         };
 
         result.feedbackData = new HitFeedbackData
@@ -42,37 +67,40 @@ public class CombatEvaluator
         return result;
     }
 
-    private PlayerState_Type? DetermineTargetState(HitboxEvent hitEvent, PlayerState_Type defenderState)
+    private PlayerState_Type? DetermineTargetState(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving)
     {
         bool isStanding = defenderState == PlayerState_Type.Idle ||
                           defenderState == PlayerState_Type.Walking ||
                           defenderState == PlayerState_Type.SideWalk ||
                           defenderState == PlayerState_Type.Running ||
-                          defenderState == PlayerState_Type.Sprinting;
+                          defenderState == PlayerState_Type.Sprinting ||
+                          defenderState == PlayerState_Type.SideStep ||
+                          defenderState == PlayerState_Type.StandBlock ||
+                          defenderState == PlayerState_Type.StandHit;
 
-        bool isCrouching = defenderState == PlayerState_Type.Crouching;
+        bool isCrouching = defenderState == PlayerState_Type.Crouching ||
+                           defenderState == PlayerState_Type.CrouchBlock ||
+                           defenderState == PlayerState_Type.CrouchHit;
+
+        bool canBlock = defenderState == PlayerState_Type.Idle || 
+                        (defenderState == PlayerState_Type.Crouching && !isMoving) || 
+                        defenderState == PlayerState_Type.StandBlock || 
+                        defenderState == PlayerState_Type.CrouchBlock;
 
         if (isStanding)
         {
             if (hitEvent.attackHeight == Attack_Height.Low) return PlayerState_Type.StandHit;
-            return PlayerState_Type.StandBlock;
+            return canBlock ? PlayerState_Type.StandBlock : PlayerState_Type.StandHit;
         }
 
         if (isCrouching)
         {
             if (hitEvent.attackHeight == Attack_Height.High) return null;
-            if (hitEvent.attackHeight == Attack_Height.Low) return PlayerState_Type.CrouchBlock;
+            if (hitEvent.attackHeight == Attack_Height.Low) return canBlock ? PlayerState_Type.CrouchBlock : PlayerState_Type.CrouchHit;
             if (hitEvent.attackHeight == Attack_Height.Mid) return PlayerState_Type.CrouchHit;
         }
 
         return PlayerState_Type.StandHit;
-    }
-
-    private HurtState_Type MapToHurtState(PlayerState_Type state)
-    {
-        if (state == PlayerState_Type.StandBlock || state == PlayerState_Type.CrouchBlock) return HurtState_Type.GuardHit;
-        if (state == PlayerState_Type.CrouchHit) return HurtState_Type.GroundHit;
-        return HurtState_Type.StandHit;
     }
 
     private int CalculateHitstop(Attack_Type type, bool isBlocked)

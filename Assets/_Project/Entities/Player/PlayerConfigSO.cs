@@ -31,29 +31,8 @@ public class PlayerConfigSO : ScriptableObject
     [SerializeField] private int groundSmashBounceFrames = 10;
     [SerializeField] private int groundSmashLayFrames = 15;
 
-    public float GetBounceVelocityThreshold() => bounceVelocityThreshold;
-    public float GetBounceVelocityMultiplier() => bounceVelocityMultiplier;
-    public int GetGroundSmashBounceFrames() => groundSmashBounceFrames;
-    public int GetGroundSmashLayFrames() => groundSmashLayFrames;
-
+    [Header("Hurtbox Settings")]
     public List<HurtboxPreset> defaultHurtboxes;
-
-    public CollisionBox[] GetHurtboxBoxes(Hurtbox_Type type)
-    {
-        bool hasDefaultHurtboxes = defaultHurtboxes != null;
-        if (hasDefaultHurtboxes)
-        {
-            for (int i = 0; i < defaultHurtboxes.Count; i++)
-            {
-                bool isTypeMatch = defaultHurtboxes[i].type == type;
-                if (isTypeMatch)
-                {
-                    return defaultHurtboxes[i].boxes;
-                }
-            }
-        }
-        return null;
-    }
 
     [Header("Input Settings")]
     public int commandBufferWindow = 15;
@@ -63,16 +42,37 @@ public class PlayerConfigSO : ScriptableObject
     [SerializeField] private int autoSprintFrames = 120;
     [SerializeField] private int stunningFrames = 30;
 
-    public int GetAutoSprintFrames()
+    [Header("Default Combat Settings")]
+    [SerializeField] private int defaultHitStunFrames = 15;
+    [SerializeField] private int defaultBlockStunFrames = 10;
+
+
+    public float GetBounceVelocityThreshold() => bounceVelocityThreshold;
+    public float GetBounceVelocityMultiplier() => bounceVelocityMultiplier;
+    public int GetGroundSmashBounceFrames() => groundSmashBounceFrames;
+    public int GetGroundSmashLayFrames() => groundSmashLayFrames;
+    public int GetDefaultHitStunFrames() => defaultHitStunFrames;
+    public int GetDefaultBlockStunFrames() => defaultBlockStunFrames;
+    public int GetAutoSprintFrames() => autoSprintFrames;
+    public int GetStunningFrames() => stunningFrames;
+    public CollisionBox[] GetHurtboxBoxes(Hurtbox_Type type)
     {
-        return autoSprintFrames;
+        if (defaultHurtboxes == null)
+        {
+            return null;
+        }
+
+        foreach (var preset in defaultHurtboxes)
+        {
+            if (preset.type == type)
+            {
+                return preset.boxes;
+            }
+        }
+
+        return null;
     }
 
-    public int GetStunningFrames()
-    {
-        return stunningFrames;
-    }
-    
     public int GetWakeUpFrames(WakeUp_Type type)
     {
         return type switch

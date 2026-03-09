@@ -9,6 +9,7 @@ public abstract class HurtStateBase : PlayerStateBase
 
     public override void Enter()
     {
+        Debug.Log($"[HurtState] Entered State: {GetStateType()}");
         currentHurtInfo = combat.GetCurrentHurtInfo();
         currentStunFrames = currentHurtInfo.hurtStunFrames;
         stateMachine.ClearCurrentAction();

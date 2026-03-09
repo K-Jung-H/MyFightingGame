@@ -67,10 +67,12 @@ MonoBehaviour:
       - localPosition: {x: 0.3791034, y: 1.0721377, z: -0.21739477}
         extents: {x: 0.05, y: 0.1, z: 0.05}
       hitGroupID: 0
+      attackHeight: 1
       attackType: 0
       targetHurtState: 1
       damage: 50
       hitstunFrames: 100
+      blockStunFrames: 0
       localPushbackVector: {x: 0.5, y: 0.5, z: 0.1}
       isHardKnockdown: 0
     hurtboxEvents:

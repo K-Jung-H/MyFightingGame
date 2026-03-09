@@ -50,3 +50,5 @@ MonoBehaviour:
   tapWindowFrames: 15
   autoSprintFrames: 60
   stunningFrames: 90
+  defaultHitStunFrames: 15
+  defaultBlockStunFrames: 15

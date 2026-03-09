@@ -47,17 +47,28 @@ public class PlayerCombat
         registeredHitGroupIds.Add(hitGroupID);
     }
 
-    public void ProcessIncomingHit(HitboxEvent hitEvent, PlayerController controller)
+    public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController controller)
     {
         PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
-        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState);
+        
+        bool isMoving = currentState != PlayerState_Type.Idle && currentState != PlayerState_Type.Crouching;
+        
+        if (currentState == PlayerState_Type.Crouching)
+        {
+            Vector3 horizontalVelocity = controller.GetPhysics().GetVelocity();
+            horizontalVelocity.y = 0f;
+            isMoving = horizontalVelocity.sqrMagnitude > 0.0001f;
+        }
+
+        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState, controller.GetConfig(), isMoving);
 
         if (!result.isEvaded)
         {
             ApplyHitstop(result.feedbackData.hitstopFrames);
-            
             ApplyHit(result, controller);
         }
+
+        return result;
     }
 
     public void ApplyHit(EvaluationResult result, PlayerController controller)
@@ -89,10 +100,6 @@ public class PlayerCombat
         if (isAlreadyInAirHit)
         {
             nextState = PlayerState_Type.AirHit;
-        }
-        else if (hurtData.targetHurtState == HurtState_Type.KnockDown || hurtData.targetHurtState == HurtState_Type.GroundHit)
-        {
-            nextState = PlayerState_Type.Stunning;
         }
 
         actionController.ClearComboSequence();

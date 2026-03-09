@@ -30,66 +30,52 @@ public class StateAnimationMapSO : ScriptableObject
     public AnimationClip wakeUpRollRight;
     public AnimationClip wakeUpAttack;
 
-    public string GetHurtAnimationName(PlayerState_Type state, Attack_Height attackHeight)
+    public AnimationClip GetHurtAnimationClip(PlayerState_Type state, Attack_Height attackHeight)
     {
-        AnimationClip clip = null;
-
         switch (state)
         {
             case PlayerState_Type.StandHit:
-                if (attackHeight == Attack_Height.Low) clip = standHitLow;
-                else if (attackHeight == Attack_Height.Mid) clip = standHitMid;
-                else clip = standHitHigh;
-                break;
+                if (attackHeight == Attack_Height.Low) return standHitLow;
+                if (attackHeight == Attack_Height.Mid) return standHitMid;
+                return standHitHigh;
             case PlayerState_Type.StandBlock:
-                clip = (attackHeight == Attack_Height.Mid) ? standBlockMid : standBlockHigh;
-                break;
+                return (attackHeight == Attack_Height.Mid) ? standBlockMid : standBlockHigh;
             case PlayerState_Type.CrouchHit:
-                clip = crouchHit;
-                break;
+                return crouchHit;
             case PlayerState_Type.CrouchBlock:
-                clip = crouchBlock;
-                break;
+                return crouchBlock;
         }
-
-        return clip != null ? clip.name : state.ToString();
+        return null;
     }
 
-    public string GetStateAnimationName(PlayerState_Type state)
+    public AnimationClip GetStateAnimationClip(PlayerState_Type state)
     {
-        AnimationClip clip = null;
-
         switch (state)
         {
-            case PlayerState_Type.AirHit: clip = airHit; break;
-            case PlayerState_Type.Stunning: clip = stunning; break;
-            case PlayerState_Type.GroundSmash: clip = groundSmash; break;
-            case PlayerState_Type.WakeUp: clip = wakeUp; break;
+            case PlayerState_Type.AirHit: return airHit;
+            case PlayerState_Type.Stunning: return stunning;
+            case PlayerState_Type.GroundSmash: return groundSmash;
+            case PlayerState_Type.WakeUp: return wakeUp;
         }
-
-        return clip != null ? clip.name : state.ToString();
+        return null;
     }
 
-    public string GetLayingDownAnimationName(bool isFromRoll)
+    public AnimationClip GetLayingDownAnimationClip(bool isFromRoll)
     {
-        AnimationClip clip = isFromRoll ? layingDownIdle : layingDownInitial;
-        return clip != null ? clip.name : (isFromRoll ? "LayingDown_Idle" : "LayingDown_Initial");
+        return isFromRoll ? layingDownIdle : layingDownInitial;
     }
 
-    public string GetWakeUpAnimationName(WakeUp_Type wakeUpType)
+    public AnimationClip GetWakeUpAnimationClip(WakeUp_Type wakeUpType)
     {
-        AnimationClip clip = null;
-
         switch (wakeUpType)
         {
-            case WakeUp_Type.InPlace: clip = wakeUpInPlace; break;
-            case WakeUp_Type.RollForward: clip = wakeUpRollForward; break;
-            case WakeUp_Type.RollBackward: clip = wakeUpRollBackward; break;
-            case WakeUp_Type.RollLeft: clip = wakeUpRollLeft; break;
-            case WakeUp_Type.RollRight: clip = wakeUpRollRight; break;
-            case WakeUp_Type.Attack: clip = wakeUpAttack; break;
+            case WakeUp_Type.InPlace: return wakeUpInPlace;
+            case WakeUp_Type.RollForward: return wakeUpRollForward;
+            case WakeUp_Type.RollBackward: return wakeUpRollBackward;
+            case WakeUp_Type.RollLeft: return wakeUpRollLeft;
+            case WakeUp_Type.RollRight: return wakeUpRollRight;
+            case WakeUp_Type.Attack: return wakeUpAttack;
         }
-
-        return clip != null ? clip.name : $"WakeUp_{wakeUpType}";
+        return null;
     }
 }
