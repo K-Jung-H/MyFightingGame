@@ -187,17 +187,6 @@ public class GameLoopManager : MonoBehaviour
         bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
         if (isInvalidControllers) return;
 
-        HurtInfo debugHurt = new HurtInfo 
-        { 
-            damage = 1, 
-            hurtStunFrames = 20,
-            pushbackVector = Vector3.zero,
-            targetHurtState = HurtState_Type.StandHit,
-            isHardKnockdown = false
-        };
-
-        playerOne.controller.GetCombat().ApplyHit(debugHurt, playerOne.controller);
-        playerTwo.controller.GetCombat().ApplyHit(debugHurt, playerTwo.controller);
     }
 
     private HitFeedbackData GetHitFeedback(Attack_Type type)
@@ -215,67 +204,73 @@ public class GameLoopManager : MonoBehaviour
 
     private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
     {
-        PlayerController attacker = attackerContext.controller;
-        PlayerController defender = defenderContext.controller;
+        if (!IsValidAttackAttempt(attackerContext.controller, out ActionDataSO attackerAction)) return;
 
-        bool isNotAttacking = attacker.GetStateMachine().GetCurrentState() != PlayerState_Type.Attacking;
-        if (isNotAttacking) return;
-        
-        ActionDataSO attackerAction = attacker.GetStateMachine().GetCurrentActionData();
-        bool isInvalidAction = attackerAction == null || attackerAction.frameData.hitboxEvents == null;
-        if (isInvalidAction) return;
-
-        Hurtbox_Type defenderHurtboxType = Hurtbox_Type.Standing;
-        CollisionBox[] defenderBoxes = defender.GetConfig().GetHurtboxBoxes(defenderHurtboxType);
+        CollisionBox[] defenderBoxes = defenderContext.controller.GetConfig().GetHurtboxBoxes(Hurtbox_Type.Standing);
 
         bool isHit = HitboxManager.EvaluateHit(
-            attacker.GetPosition(), attacker.GetPhysics().GetLookDirection(), attackerAction.frameData.hitboxEvents, attacker.GetStateMachine().GetStateFrameCounter(),
-            defender.GetPosition(), defender.GetPhysics().GetLookDirection(), defenderBoxes,
+            attackerContext.controller.GetPosition(), attackerContext.controller.GetPhysics().GetLookDirection(), attackerAction.frameData.hitboxEvents, attackerContext.controller.GetStateMachine().GetStateFrameCounter(),
+            defenderContext.controller.GetPosition(), defenderContext.controller.GetPhysics().GetLookDirection(), defenderBoxes,
             out HitboxEvent hitEvent, out Vector3 hitPoint, out string debugReason
         );
 
-        if (!isHit) return;
-
-        bool isNewHit = !attacker.GetCombat().HasAlreadyHit(hitEvent.hitGroupID);
-        if (isNewHit)
+        if (isHit)
         {
-            attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
-            
-            Vector3 attackerLookDirection = attacker.GetPhysics().GetLookDirection();
-            Vector3 rightDirection = Vector3.Cross(Vector3.up, attackerLookDirection);
-            
-            Vector3 worldPushback = (attackerLookDirection * hitEvent.localPushbackVector.z) + 
-                                    (Vector3.up * hitEvent.localPushbackVector.y) + 
-                                    (rightDirection * hitEvent.localPushbackVector.x);
-            
-            HurtInfo hurtInfo = new HurtInfo 
-            { 
-                damage = hitEvent.damage, 
-                hurtStunFrames = hitEvent.hitstunFrames,
-                pushbackVector = worldPushback,
-                targetHurtState = hitEvent.targetHurtState,
-                isHardKnockdown = hitEvent.isHardKnockdown
-            };
-            
-            defender.GetCombat().ApplyHit(hurtInfo, defender);
-
-            HitFeedbackData feedback = GetHitFeedback(hitEvent.attackType);
-            
-            bool hasHitstop = feedback.hitstopFrames > 0;
-            if (hasHitstop)
-            {
-                attacker.GetCombat().ApplyHitstop(feedback.hitstopFrames);
-                defender.GetCombat().ApplyHitstop(feedback.hitstopFrames);
-            }
-
-            bool hasDefenderRenderer = defenderContext.renderer != null;
-            if (hasDefenderRenderer)
-            {
-                defenderContext.renderer.PlayHitSpark(hitPoint, EffectType.Hit);
-            }
+            ProcessSuccessfulHit(attackerContext, defenderContext, hitEvent, hitPoint);
         }
     }
-    
+
+    private bool IsValidAttackAttempt(PlayerController attacker, out ActionDataSO actionData)
+    {
+        actionData = attacker.GetStateMachine().GetCurrentActionData();
+        bool isAttacking = attacker.GetStateMachine().GetCurrentState() == PlayerState_Type.Attacking;
+        bool hasValidData = actionData != null && actionData.frameData.hitboxEvents != null;
+        
+        return isAttacking && hasValidData;
+    }
+
+    private void ProcessSuccessfulHit(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext, HitboxEvent hitEvent, Vector3 hitPoint)
+    {
+        PlayerController attacker = attackerContext.controller;
+        PlayerController defender = defenderContext.controller;
+
+        bool isAlreadyHit = attacker.GetCombat().HasAlreadyHit(hitEvent.hitGroupID);
+        if (isAlreadyHit) return;
+
+        attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
+
+        Vector3 worldPushback = CalculateWorldPushback(attacker.GetPhysics().GetLookDirection(), hitEvent.localPushbackVector);
+        
+        HitboxEvent worldSpaceHitEvent = hitEvent;
+        worldSpaceHitEvent.localPushbackVector = worldPushback;
+        
+        defender.GetCombat().ProcessIncomingHit(worldSpaceHitEvent, defender);
+        ApplyGlobalHitFeedback(attackerContext, defenderContext, hitEvent.attackType, hitPoint);
+    }
+
+    private Vector3 CalculateWorldPushback(Vector3 lookDirection, Vector3 localPushback)
+    {
+        Vector3 rightDirection = Vector3.Cross(Vector3.up, lookDirection);
+        return (lookDirection * localPushback.z) + (Vector3.up * localPushback.y) + (rightDirection * localPushback.x);
+    }
+
+    private void ApplyGlobalHitFeedback(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext, Attack_Type attackType, Vector3 hitPoint)
+    {
+        HitFeedbackData feedback = GetHitFeedback(attackType);
+        
+        bool hasHitstop = feedback.hitstopFrames > 0;
+        if (hasHitstop)
+        {
+            attackerContext.controller.GetCombat().ApplyHitstop(feedback.hitstopFrames);
+        }
+
+        bool hasDefenderRenderer = defenderContext.renderer != null;
+        if (hasDefenderRenderer)
+        {
+            defenderContext.renderer.PlayHitSpark(hitPoint, EffectType.Hit);
+        }
+    }
+
     private float GetPushbackWeight(PlayerState_Type state)
     {
         bool isSprinting = state == PlayerState_Type.Sprinting;

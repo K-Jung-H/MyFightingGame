@@ -12,7 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8738e80a3268b9c48892b56b4050d825, type: 3}
   m_Name: Anya_StateAnimationMap
   m_EditorClassIdentifier: Assembly-CSharp::StateAnimationMapSO
-  standHit: {fileID: 4167775359571186104, guid: f98160ecdb704034aaaa385899dbe695, type: 3}
+  standHitHigh: {fileID: -203655887218126122, guid: 3d5d984d5d1293f40999978cfd41027d, type: 3}
+  standHitMid: {fileID: -203655887218126122, guid: 25f36752190195442b9d03ee788edc0b, type: 3}
+  standHitLow: {fileID: -203655887218126122, guid: b7d745203fa946a40891eb3e9a621b27, type: 3}
+  crouchHit: {fileID: -203655887218126122, guid: fa4da6d9b22c58848acee6e0744ea1fd, type: 3}
+  standBlockHigh: {fileID: -203655887218126122, guid: 0330544f6df426f4baab8f8adf01071b, type: 3}
+  standBlockMid: {fileID: -203655887218126122, guid: 9bc13eea443dd89469557922aca9a200, type: 3}
+  crouchBlock: {fileID: -203655887218126122, guid: 01385d252c3eb14468a4386504e42ad5, type: 3}
   airHit: {fileID: -6894513051456882905, guid: d5a328ab938234e469428eb760a32843, type: 3}
   stunning: {fileID: -203655887218126122, guid: 073349fe1684326458408986f3d3ab94, type: 3}
   groundSmash: {fileID: -203655887218126122, guid: d5a328ab938234e469428eb760a32843, type: 3}

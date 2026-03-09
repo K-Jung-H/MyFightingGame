@@ -156,6 +156,9 @@ public class PlayerRenderer : MonoBehaviour
         bool isStateChanged = previousState != currentState;
 
         bool isHitState = currentState == PlayerState_Type.StandHit || 
+                          currentState == PlayerState_Type.CrouchHit ||
+                          currentState == PlayerState_Type.StandBlock ||
+                          currentState == PlayerState_Type.CrouchBlock ||
                           currentState == PlayerState_Type.AirHit || 
                           currentState == PlayerState_Type.Stunning || 
                           currentState == PlayerState_Type.GroundSmash ||
@@ -182,7 +185,7 @@ public class PlayerRenderer : MonoBehaviour
         EvaluateVfxEvents();
         previousState = currentState;
     }
-
+        
     private void PlayHitAnimation(PlayerState_Type currentState)
     {
         string mappedAnimName = currentState.ToString();
@@ -190,39 +193,33 @@ public class PlayerRenderer : MonoBehaviour
         
         bool isWakeUpState = currentState == PlayerState_Type.WakeUp;
         bool isLayingDownState = currentState == PlayerState_Type.LayingDown;
+        bool isHurtOrBlockState = currentState == PlayerState_Type.StandHit || 
+                                  currentState == PlayerState_Type.CrouchHit ||
+                                  currentState == PlayerState_Type.StandBlock ||
+                                  currentState == PlayerState_Type.CrouchBlock;
 
-        if (isWakeUpState)
+        if (!isStateMapValid)
+        {
+            mappedAnimName = currentState.ToString();
+        }
+        else if (isWakeUpState)
         {
             WakeUpState wakeUpState = controller.GetStateMachine().GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
-            bool isWakeUpStateValid = wakeUpState != null;
-
-            WakeUp_Type currentWakeUpType = isWakeUpStateValid ? wakeUpState.GetScheduledWakeUpType() : WakeUp_Type.InPlace;
-            
-            if (isStateMapValid)
-            {
-                mappedAnimName = stateAnimMap.GetWakeUpAnimationName(currentWakeUpType);
-            }
-            else
-            {
-                mappedAnimName = $"WakeUp_{currentWakeUpType}";
-            }
+            WakeUp_Type currentWakeUpType = wakeUpState != null ? wakeUpState.GetScheduledWakeUpType() : WakeUp_Type.InPlace;
+            mappedAnimName = stateAnimMap.GetWakeUpAnimationName(currentWakeUpType);
         }
         else if (isLayingDownState)
         {
             LayingDownState layState = controller.GetStateMachine().GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
-            bool isLayStateValid = layState != null;
-            bool isFromRoll = isLayStateValid && layState.IsFromRoll();
-
-            if (isStateMapValid)
-            {
-                mappedAnimName = stateAnimMap.GetLayingDownAnimationName(isFromRoll);
-            }
-            else
-            {
-                mappedAnimName = isFromRoll ? "LayingDown_Idle" : "LayingDown_Initial";
-            }
+            bool isFromRoll = layState != null && layState.IsFromRoll();
+            mappedAnimName = stateAnimMap.GetLayingDownAnimationName(isFromRoll);
         }
-        else if (isStateMapValid)
+        else if (isHurtOrBlockState)
+        {
+            HurtInfo hurtInfo = controller.GetCombat().GetCurrentHurtInfo();
+            mappedAnimName = stateAnimMap.GetHurtAnimationName(currentState, hurtInfo.attackHeight);
+        }
+        else
         {
             mappedAnimName = stateAnimMap.GetStateAnimationName(currentState);
         }

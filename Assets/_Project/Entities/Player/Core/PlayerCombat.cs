@@ -6,10 +6,12 @@ public class PlayerCombat
     private int hitstopCounter;
     private HurtInfo currentHurtInfo;
     private HashSet<int> registeredHitGroupIds;
+    private CombatEvaluator evaluator;
 
     public PlayerCombat()
     {
         registeredHitGroupIds = new HashSet<int>();
+        evaluator = new CombatEvaluator();
     }
 
     public bool ProcessHitstopTick()
@@ -45,13 +47,27 @@ public class PlayerCombat
         registeredHitGroupIds.Add(hitGroupID);
     }
 
-    public void ApplyHit(HurtInfo hurtData, PlayerController controller)
+    public void ProcessIncomingHit(HitboxEvent hitEvent, PlayerController controller)
+    {
+        PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
+        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState);
+
+        if (!result.isEvaded)
+        {
+            ApplyHitstop(result.feedbackData.hitstopFrames);
+            
+            ApplyHit(result, controller);
+        }
+    }
+
+    public void ApplyHit(EvaluationResult result, PlayerController controller)
     {
         PlayerStateMachine stateMachine = controller.GetStateMachine();
         PlayerPhysics physics = controller.GetPhysics();
         PlayerActionController actionController = controller.GetActionController();
 
         PlayerState_Type currentStateType = stateMachine.GetCurrentState();
+        HurtInfo hurtData = result.hurtInfo;
         currentHurtInfo = hurtData;
         Vector3 finalPushback = hurtData.pushbackVector;
 
@@ -68,28 +84,15 @@ public class PlayerCombat
 
         physics.SetVelocity(finalPushback);
 
-        PlayerState_Type nextState = PlayerState_Type.StandHit;
+        PlayerState_Type nextState = result.targetState;
 
         if (isAlreadyInAirHit)
         {
             nextState = PlayerState_Type.AirHit;
         }
-        else
+        else if (hurtData.targetHurtState == HurtState_Type.KnockDown || hurtData.targetHurtState == HurtState_Type.GroundHit)
         {
-            switch (hurtData.targetHurtState)
-            {
-                case HurtState_Type.StandHit:
-                case HurtState_Type.GuardHit:
-                    nextState = PlayerState_Type.StandHit;
-                    break;
-                case HurtState_Type.AirHit:
-                    nextState = PlayerState_Type.AirHit;
-                    break;
-                case HurtState_Type.KnockDown:
-                case HurtState_Type.GroundHit:
-                    nextState = PlayerState_Type.Stunning;
-                    break;
-            }
+            nextState = PlayerState_Type.Stunning;
         }
 
         actionController.ClearComboSequence();

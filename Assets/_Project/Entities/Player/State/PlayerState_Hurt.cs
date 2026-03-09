@@ -1,56 +1,86 @@
 using UnityEngine;
 
-public abstract class HitStateBase : PlayerStateBase
+public abstract class HurtStateBase : PlayerStateBase
 {
     protected HurtInfo currentHurtInfo;
+    protected int currentStunFrames;
 
-    public HitStateBase(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+    public HurtStateBase(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override void Enter()
     {
         currentHurtInfo = combat.GetCurrentHurtInfo();
+        currentStunFrames = currentHurtInfo.hurtStunFrames;
         stateMachine.ClearCurrentAction();
-    }
-}
-
-public class StandHitState : HitStateBase
-{
-    private int hitstunDuration;
-
-    public StandHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
-
-    public override PlayerState_Type GetStateType() => PlayerState_Type.StandHit;
-
-    public override void Enter()
-    {
-        base.Enter();
-        hitstunDuration = currentHurtInfo.hurtStunFrames;
     }
 
     public override void UpdateTick(PlayerInput input)
     {
-        int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isHitstunComplete = currentFrame >= hitstunDuration;
-
-        if (isHitstunComplete)
+        if (combat.ProcessHitstopTick())
         {
-            stateMachine.TransitionTo(PlayerState_Type.Idle);
+            return;
+        }
+
+        currentStunFrames--;
+
+        if (currentStunFrames <= 0)
+        {
+            stateMachine.TransitionTo(GetRecoveryState(), true);
         }
     }
+
+    protected abstract PlayerState_Type GetRecoveryState();
 }
 
-public class StunningState : HitStateBase
+public class StandHitState : HurtStateBase
 {
-    private int stunningDuration;
+    public StandHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
+    public override PlayerState_Type GetStateType() => PlayerState_Type.StandHit;
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.Idle;
+}
+
+public class CrouchHitState : HurtStateBase
+{
+    public CrouchHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.CrouchHit;
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.Crouching;
+}
+
+public class StandBlockState : HurtStateBase
+{
+    public StandBlockState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.StandBlock;
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.Idle;
+}
+
+public class CrouchBlockState : HurtStateBase
+{
+    public CrouchBlockState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.CrouchBlock;
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.Crouching;
+}
+
+public class StunningState : HurtStateBase
+{
     public StunningState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.Stunning;
 
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.LayingDown;
+
     public override void Enter()
     {
         base.Enter();
-        stunningDuration = config.GetStunningFrames();
+        
+        currentStunFrames = config.GetStunningFrames();
 
         bool isFromStand = physics.GetPosition().y <= 0f;
         if (isFromStand)
@@ -60,27 +90,20 @@ public class StunningState : HitStateBase
             physics.ApplyPushback(horizontalPushback);
         }
     }
-
-    public override void UpdateTick(PlayerInput input)
-    {
-        int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isStunningComplete = currentFrame >= stunningDuration;
-        
-        if (isStunningComplete)
-        {
-            stateMachine.TransitionTo(PlayerState_Type.LayingDown);
-        }
-    }
 }
 
-public class AirHitState : HitStateBase
+public class AirHitState : HurtStateBase
 {
     public AirHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.AirHit;
 
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
+
     public override void UpdateTick(PlayerInput input)
     {
+        if (combat.ProcessHitstopTick()) return;
+
         bool isFallingAndGrounded = physics.GetIsGrounded() && physics.GetVelocity().y <= 0f;
 
         if (isFallingAndGrounded)
@@ -90,14 +113,15 @@ public class AirHitState : HitStateBase
     }
 }
 
-public class GroundSmashState : HitStateBase
+public class GroundSmashState : HurtStateBase
 {
-    private int smashDuration;
     private bool isBouncing;
 
     public GroundSmashState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.GroundSmash;
+
+    protected override PlayerState_Type GetRecoveryState() => isBouncing ? PlayerState_Type.AirHit : PlayerState_Type.LayingDown;
 
     public override void Enter()
     {
@@ -108,46 +132,30 @@ public class GroundSmashState : HitStateBase
 
         if (isBouncing)
         {
-            smashDuration = config.GetGroundSmashBounceFrames();
+            currentStunFrames = config.GetGroundSmashBounceFrames();
             Vector3 currentVelocity = physics.GetVelocity();
             currentVelocity.y = Mathf.Abs(impactFallSpeed) * config.GetBounceVelocityMultiplier();
             physics.SetVelocity(currentVelocity);
         }
         else
         {
-            smashDuration = config.GetGroundSmashLayFrames();
+            currentStunFrames = config.GetGroundSmashLayFrames();
             Vector3 zeroVelocity = Vector3.zero;
             zeroVelocity.y = physics.GetVelocity().y;
             physics.SetVelocity(zeroVelocity);
         }
     }
-
-    public override void UpdateTick(PlayerInput input)
-    {
-        int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isSmashComplete = currentFrame >= smashDuration;
-
-        if (isSmashComplete)
-        {
-            if (isBouncing)
-            {
-                stateMachine.TransitionTo(PlayerState_Type.AirHit);
-            }
-            else
-            {
-                stateMachine.TransitionTo(PlayerState_Type.LayingDown);
-            }
-        }
-    }
 }
 
-public class LayingDownState : HitStateBase
+public class LayingDownState : HurtStateBase
 {
     private bool isFromRoll;
 
     public LayingDownState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.LayingDown;
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
 
     public void SetFromRoll(bool value)
     {
@@ -175,6 +183,8 @@ public class LayingDownState : HitStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
+        if (combat.ProcessHitstopTick()) return;
+
         bool isDirectionalInputDetected = (input.flags & (InputFlags.Forward | InputFlags.Back | InputFlags.Up | InputFlags.Down)) != 0;
 
         if (isDirectionalInputDetected)
@@ -212,14 +222,15 @@ public class LayingDownState : HitStateBase
     }
 }
 
-public class WakeUpState : HitStateBase
+public class WakeUpState : HurtStateBase
 {
     private WakeUp_Type scheduledWakeUpType;
-    private int wakeUpDuration;
 
     public WakeUpState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.WakeUp;
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
 
     public void SetWakeUpType(WakeUp_Type type)
     {
@@ -234,7 +245,7 @@ public class WakeUpState : HitStateBase
     public override void Enter()
     {
         base.Enter();
-        wakeUpDuration = config.GetWakeUpFrames(scheduledWakeUpType);
+        currentStunFrames = config.GetWakeUpFrames(scheduledWakeUpType);
         
         Vector3 zeroVelocity = Vector3.zero;
         zeroVelocity.y = physics.GetVelocity().y;
@@ -243,10 +254,11 @@ public class WakeUpState : HitStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        int currentFrame = stateMachine.GetStateFrameCounter();
-        bool isActionComplete = currentFrame >= wakeUpDuration;
+        if (combat.ProcessHitstopTick()) return;
 
-        if (isActionComplete)
+        currentStunFrames--;
+
+        if (currentStunFrames <= 0)
         {
             bool isGroundRoll = scheduledWakeUpType == WakeUp_Type.RollLeft || scheduledWakeUpType == WakeUp_Type.RollRight;
             

@@ -32,15 +32,20 @@ public class PlayerStateMachine
             { PlayerState_Type.Running, new RunningState(this, config) },
             { PlayerState_Type.Sprinting, new SprintingState(this, config) },
             { PlayerState_Type.Attacking, new AttackingState(this, config) },
-            { PlayerState_Type.StandHit, new StandHitState(this, config) },
-            { PlayerState_Type.AirHit, new AirHitState(this, config) },
-            { PlayerState_Type.Stunning, new StunningState(this, config) },
-            { PlayerState_Type.WakeUp, new WakeUpState(this, config) },
-            { PlayerState_Type.GroundSmash, new GroundSmashState(this, config) },
-            { PlayerState_Type.LayingDown, new LayingDownState(this, config) },
             { PlayerState_Type.Crouching, new CrouchingState(this, config) },
             { PlayerState_Type.SideStep, new SideStepState(this, config) },
-            { PlayerState_Type.SideWalk, new SideWalkState(this, config) }
+            { PlayerState_Type.SideWalk, new SideWalkState(this, config) },
+
+            { PlayerState_Type.StandHit, new StandHitState(this, config) },
+            { PlayerState_Type.CrouchHit, new CrouchHitState(this, config) },
+            { PlayerState_Type.StandBlock, new StandBlockState(this, config) },
+            { PlayerState_Type.CrouchBlock, new CrouchBlockState(this, config) },
+
+            { PlayerState_Type.AirHit, new AirHitState(this, config) },
+            { PlayerState_Type.Stunning, new StunningState(this, config) },
+            { PlayerState_Type.GroundSmash, new GroundSmashState(this, config) },
+            { PlayerState_Type.LayingDown, new LayingDownState(this, config) },
+            { PlayerState_Type.WakeUp, new WakeUpState(this, config) }
         };
     }
 
