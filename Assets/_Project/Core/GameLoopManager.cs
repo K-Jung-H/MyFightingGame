@@ -240,11 +240,18 @@ public class GameLoopManager : MonoBehaviour
         attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
 
         Vector3 worldPushback = CalculateWorldPushback(attacker.GetPhysics().GetLookDirection(), hitEvent.localPushbackVector);
-        
+
         HitboxEvent worldSpaceHitEvent = hitEvent;
         worldSpaceHitEvent.localPushbackVector = worldPushback;
-        
-        defender.GetCombat().ProcessIncomingHit(worldSpaceHitEvent, defender);
+
+        EvaluationResult hitResult = defender.GetCombat().ProcessIncomingHit(worldSpaceHitEvent, defender);
+
+        bool isHitEvaded = hitResult.isEvaded;
+        if (isHitEvaded) return;
+
+        bool isAttackBlocked = hitResult.targetState == PlayerState_Type.StandBlock || hitResult.targetState == PlayerState_Type.CrouchBlock;
+        if (isAttackBlocked) return;
+
         ApplyGlobalHitFeedback(attackerContext, defenderContext, hitEvent.attackType, hitPoint);
     }
 

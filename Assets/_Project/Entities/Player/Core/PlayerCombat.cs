@@ -8,10 +8,11 @@ public class PlayerCombat
     private HashSet<int> registeredHitGroupIds;
     private CombatEvaluator evaluator;
 
-    public PlayerCombat()
+    public PlayerCombat(PlayerConfigSO config)
     {
         registeredHitGroupIds = new HashSet<int>();
         evaluator = new CombatEvaluator();
+        evaluator.Initialize(config);
     }
 
     public bool ProcessHitstopTick()
@@ -60,7 +61,7 @@ public class PlayerCombat
             isMoving = horizontalVelocity.sqrMagnitude > 0.0001f;
         }
 
-        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState, controller.GetConfig(), isMoving);
+        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState, isMoving);
 
         if (!result.isEvaded)
         {

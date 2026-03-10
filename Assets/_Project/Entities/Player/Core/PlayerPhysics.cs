@@ -22,9 +22,9 @@ public class PlayerPhysics
         config = playerConfig;
     }
 
-    public void UpdateLookDirection(ITargetable targetEntity, PlayerState_Type currentState)
+    public void UpdateLookDirection(ITargetable targetEntity, PlayerState_Type currentState, bool isHoming = false)
     {
-        bool isLookUpdateDisabled = targetEntity == null || currentState == PlayerState_Type.Attacking;
+        bool isLookUpdateDisabled = targetEntity == null || (currentState == PlayerState_Type.Attacking && !isHoming);
         if (isLookUpdateDisabled) return;
 
         Vector3 diff = targetEntity.GetPosition() - position;

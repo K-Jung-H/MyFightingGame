@@ -238,31 +238,26 @@ public class CommandListEditorWindow : EditorWindow
         actionDataField.RegisterValueChangedCallback(evt => 
         { 
             currentSelection.actionData = (ActionDataSO)evt.newValue; 
-            DrawActionHitboxSummary(currentSelection.actionData, summaryContainer);
+            DrawActionSummary(currentSelection.actionData, summaryContainer);
             MarkAssetDirty();
         });
         rightPane.Add(actionDataField);
         rightPane.Add(summaryContainer);
 
-        DrawActionHitboxSummary(currentSelection.actionData, summaryContainer);
+        DrawActionSummary(currentSelection.actionData, summaryContainer);
 
         rightPane.Add(new Label("Command Sequence") { style = { unityFontStyleAndWeight = FontStyle.Bold, marginTop = 15, marginBottom = 5 } });
         DrawSequenceList();
     }
 
-    private void DrawActionHitboxSummary(ActionDataSO actionData, VisualElement container)
+    private void DrawActionSummary(ActionDataSO actionData, VisualElement container)
     {
         container.Clear();
         
-        bool hasValidHitbox = actionData != null && 
-                              actionData.frameData != null && 
-                              actionData.frameData.hitboxEvents != null && 
-                              actionData.frameData.hitboxEvents.Length > 0;
+        bool hasValidFrameData = actionData != null && actionData.frameData != null;
 
-        if (hasValidHitbox)
+        if (hasValidFrameData)
         {
-            HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
-            
             VisualElement box = new VisualElement 
             { 
                 style = 
@@ -280,10 +275,24 @@ public class CommandListEditorWindow : EditorWindow
                 } 
             };
             
-            box.Add(new Label("[Hitbox Summary]") { style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.7f, 0.7f, 1f) } });
-            box.Add(new Label($"Attack Height: {firstHit.attackHeight}"));
-            box.Add(new Label($"Damage: {firstHit.damage}"));
-            box.Add(new Label($"Stun (Hit/Block): {firstHit.hitstunFrames} / {firstHit.blockStunFrames}"));
+            ActionLogicData logic = actionData.frameData.logicData;
+            
+            box.Add(new Label("[Logic Summary]") { style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.8f, 0.6f, 1f) } });
+            box.Add(new Label($"Total Frames: {logic.totalFrames} | Cancel Start: {logic.cancelWindowStartFrame}"));
+            box.Add(new Label($"Use Root Motion: {logic.useRootMotion}"));
+            box.Add(new Label($"Is Homing: {logic.isHoming}"));
+
+            bool hasValidHitbox = actionData.frameData.hitboxEvents != null && actionData.frameData.hitboxEvents.Length > 0;
+
+            if (hasValidHitbox)
+            {
+                HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
+                
+                box.Add(new Label("[Hitbox Summary]") { style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.7f, 0.7f, 1f), marginTop = 5 } });
+                box.Add(new Label($"Attack Height: {firstHit.attackHeight}"));
+                box.Add(new Label($"Damage: {firstHit.damage}"));
+                box.Add(new Label($"Stun (Hit/Block): {firstHit.hitstunFrames} / {firstHit.blockStunFrames}"));
+            }
 
             container.Add(box);
         }

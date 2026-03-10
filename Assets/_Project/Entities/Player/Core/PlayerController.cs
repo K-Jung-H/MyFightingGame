@@ -28,7 +28,7 @@ public class PlayerController : ITargetable
         physics = new PlayerPhysics();
         physics.Initialize(startPosition, config);
 
-        combat = new PlayerCombat();
+        combat = new PlayerCombat(config);
 
         actionController = new PlayerActionController();
         actionController.Initialize(this, cmdList, comboTreeData, config.commandBufferWindow);
@@ -53,9 +53,22 @@ public class PlayerController : ITargetable
         currentKeyDownFlags = inputTracker.currentFlags & ~inputTracker.previousFlags;
         currentFrame++;
 
-        physics.UpdateLookDirection(targetEntity, stateMachine.GetCurrentState());
+        PlayerState_Type currentState = stateMachine.GetCurrentState();
+        bool isHoming = false;
 
-        actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, stateMachine.GetCurrentState());
+        if (currentState == PlayerState_Type.Attacking)
+        {
+            ActionDataSO currentAction = stateMachine.GetCurrentActionData();
+            bool hasValidFrameData = currentAction != null && currentAction.frameData != null;
+            if (hasValidFrameData)
+            {
+                isHoming = currentAction.frameData.logicData.isHoming;
+            }
+        }
+
+        physics.UpdateLookDirection(targetEntity, currentState, isHoming);
+
+        actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, currentState);
         ProcessActionBuffer();
 
         physics.ResetRootMotionFlag();

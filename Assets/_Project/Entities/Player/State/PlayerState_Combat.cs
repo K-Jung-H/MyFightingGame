@@ -21,7 +21,7 @@ public class AttackingState : PlayerStateBase
         int currentFrame = stateMachine.GetStateFrameCounter();
         int totalFrames = currentActionData.frameData.logicData.totalFrames;
 
-        bool isRootMotionUsed = currentActionData.frameData.useRootMotion;
+        bool isRootMotionUsed = currentActionData.frameData.logicData.useRootMotion;
         bool hasRootMotionData = currentActionData.frameData.rootMotionPath != null;
         
         if (isRootMotionUsed && hasRootMotionData)

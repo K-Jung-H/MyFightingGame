@@ -10,7 +10,14 @@ public struct EvaluationResult
 
 public class CombatEvaluator
 {
-    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, PlayerConfigSO config, bool isMoving)
+    private PlayerConfigSO config;
+
+    public void Initialize(PlayerConfigSO playerConfig)
+    {
+        config = playerConfig;
+    }
+
+    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving)
     {
         EvaluationResult result = new EvaluationResult();
         
@@ -105,15 +112,10 @@ public class CombatEvaluator
 
     private int CalculateHitstop(Attack_Type type, bool isBlocked)
     {
-        int baseHitstop = type switch
-        {
-            Attack_Type.LightHit => 3,
-            Attack_Type.HeavyHit => 8,
-            Attack_Type.Crash => 15,
-            _ => 5
-        };
-        
-        return isBlocked ? baseHitstop / 2 : baseHitstop;
+        bool isAttackBlocked = isBlocked;
+        if (isAttackBlocked) return 0;
+
+        return config.GetHitstopFrames(type);
     }
 
     private float CalculateCameraShake(Attack_Type type, bool isBlocked)

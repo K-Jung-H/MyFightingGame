@@ -130,32 +130,28 @@ public class HitboxBakerWindow : EditorWindow
         
         EditorGUI.BeginChangeCheck();
         var logic = targetActionData.frameData.logicData;
-        bool useRoot = targetActionData.frameData.useRootMotion;
-        bool useRootRot = targetActionData.frameData.useRootRotation;
         
         logic.totalFrames = EditorGUILayout.IntField("Total Frames", logic.totalFrames);
         logic.startupFrames = EditorGUILayout.IntField("Startup Frames", logic.startupFrames);
         logic.recoveryFrames = EditorGUILayout.IntField("Recovery Frames", logic.recoveryFrames);
         logic.cancelWindowStartFrame = EditorGUILayout.IntField("Cancel Window Start", logic.cancelWindowStartFrame);
         
-        useRoot = EditorGUILayout.Toggle("Use Root Position", useRoot);
+        logic.useRootMotion = EditorGUILayout.Toggle("Use Root Position", logic.useRootMotion);
         
-        if (useRoot)
+        if (logic.useRootMotion)
         {
             EditorGUI.indentLevel++;
-            useRootRot = EditorGUILayout.Toggle("Use Root Rotation", useRootRot);
+            logic.useRootRotation = EditorGUILayout.Toggle("Use Root Rotation", logic.useRootRotation);
             EditorGUI.indentLevel--;
         }
         else
         {
-            useRootRot = false;
+            logic.useRootRotation = false;
         }
 
         if (EditorGUI.EndChangeCheck())
         {
             targetActionData.frameData.logicData = logic;
-            targetActionData.frameData.useRootMotion = useRoot;
-            targetActionData.frameData.useRootRotation = useRootRot;
             EditorUtility.SetDirty(targetActionData);
         }
     }
@@ -542,7 +538,7 @@ public class HitboxBakerWindow : EditorWindow
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;
         
-        if (!targetActionData.frameData.useRootMotion || targetRootBone == null)
+        if (!targetActionData.frameData.logicData.useRootMotion || targetRootBone == null)
         {
             targetActionData.frameData.rootMotionPath = new RootMotionData[0];
             return;
@@ -560,7 +556,7 @@ public class HitboxBakerWindow : EditorWindow
         Vector3 prevPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
         Quaternion prevRot = Quaternion.Inverse(targetCharacter.transform.rotation) * targetRootBone.rotation;
 
-        bool applyRotation = targetActionData.frameData.useRootRotation;
+        bool applyRotation = targetActionData.frameData.logicData.useRootRotation;
 
         for (int frame = 0; frame <= totalFrames; frame++)
         {
@@ -595,7 +591,7 @@ public class HitboxBakerWindow : EditorWindow
         }
 
         Vector3[] accumulatedRootPos = new Vector3[totalFrames + 1];
-        if (targetActionData.frameData.useRootMotion && targetRootBone != null)
+        if (targetActionData.frameData.logicData.useRootMotion && targetRootBone != null)
         {
             AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, 0f);
             Vector3 startRootPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);

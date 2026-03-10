@@ -46,6 +46,12 @@ public class PlayerConfigSO : ScriptableObject
     [SerializeField] private int defaultHitStunFrames = 15;
     [SerializeField] private int defaultBlockStunFrames = 10;
 
+    [Header("Hitstop Settings")]
+    [SerializeField] private int hitstopLightHit = 3;
+    [SerializeField] private int hitstopHeavyHit = 8;
+    [SerializeField] private int hitstopCrash = 15;
+    [SerializeField] private int hitstopDefault = 5;
+
 
     public float GetBounceVelocityThreshold() => bounceVelocityThreshold;
     public float GetBounceVelocityMultiplier() => bounceVelocityMultiplier;
@@ -84,6 +90,17 @@ public class PlayerConfigSO : ScriptableObject
             WakeUp_Type.RollRight => wakeUpRollRightFrames,
             WakeUp_Type.Attack => wakeUpAttackFrames,
             _ => 50,
+        };
+    }
+
+    public int GetHitstopFrames(Attack_Type type)
+    {
+        return type switch
+        {
+            Attack_Type.LightHit => hitstopLightHit,
+            Attack_Type.HeavyHit => hitstopHeavyHit,
+            Attack_Type.Crash => hitstopCrash,
+            _ => hitstopDefault,
         };
     }
 }

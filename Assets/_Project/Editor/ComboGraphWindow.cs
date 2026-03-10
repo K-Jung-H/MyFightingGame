@@ -15,21 +15,16 @@ public class ComboGraphNode : Node
 
     public EnumFlagsField inputEnumField;
     public ObjectField actionObjectField;
-    public VisualElement hitboxSummaryContainer;
+    public VisualElement actionSummaryContainer;
 
-    public void RefreshHitboxSummary()
+    public void RefreshActionSummary()
     {
-        hitboxSummaryContainer.Clear();
+        actionSummaryContainer.Clear();
         
-        bool hasValidHitbox = actionData != null && 
-                            actionData.frameData != null && 
-                            actionData.frameData.hitboxEvents != null && 
-                            actionData.frameData.hitboxEvents.Length > 0;
+        bool hasValidFrameData = actionData != null && actionData.frameData != null;
 
-        if (hasValidHitbox)
+        if (hasValidFrameData)
         {
-            HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
-            
             VisualElement box = new VisualElement 
             { 
                 style = 
@@ -46,11 +41,24 @@ public class ComboGraphNode : Node
                 } 
             };
             
-            box.Add(new Label("[Hitbox Summary]") { style = { fontSize = 10, color = new Color(0.6f, 0.8f, 1f), unityFontStyleAndWeight = FontStyle.Bold } });
-            box.Add(new Label($"Height: {firstHit.attackHeight}") { style = { fontSize = 10 } });
-            box.Add(new Label($"Dmg: {firstHit.damage} | Stun: {firstHit.hitstunFrames}/{firstHit.blockStunFrames}") { style = { fontSize = 10 } });
+            ActionLogicData logic = actionData.frameData.logicData;
+            
+            box.Add(new Label("[Logic Summary]") { style = { fontSize = 10, color = new Color(0.8f, 0.6f, 1f), unityFontStyleAndWeight = FontStyle.Bold } });
+            box.Add(new Label($"Frames: {logic.totalFrames} | Cancel: {logic.cancelWindowStartFrame}") { style = { fontSize = 10 } });
+            box.Add(new Label($"RootMotion: {logic.useRootMotion} | Homing: {logic.isHoming}") { style = { fontSize = 10 } });
 
-            hitboxSummaryContainer.Add(box);
+            bool hasValidHitbox = actionData.frameData.hitboxEvents != null && actionData.frameData.hitboxEvents.Length > 0;
+
+            if (hasValidHitbox)
+            {
+                HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
+                
+                box.Add(new Label("[Hitbox Summary]") { style = { fontSize = 10, color = new Color(0.6f, 0.8f, 1f), unityFontStyleAndWeight = FontStyle.Bold, marginTop = 5 } });
+                box.Add(new Label($"Height: {firstHit.attackHeight}") { style = { fontSize = 10 } });
+                box.Add(new Label($"Dmg: {firstHit.damage} | Stun: {firstHit.hitstunFrames}/{firstHit.blockStunFrames}") { style = { fontSize = 10 } });
+            }
+
+            actionSummaryContainer.Add(box);
         }
     }
 }
@@ -184,7 +192,7 @@ public class ComboGraphView : GraphView
         comboNode.inputEnumField = inputEnumField;
         comboNode.mainContainer.Add(inputEnumField);
 
-        comboNode.hitboxSummaryContainer = new VisualElement();
+        comboNode.actionSummaryContainer = new VisualElement();
 
         ObjectField actionObjectField = new ObjectField("Action Data");
         actionObjectField.objectType = typeof(ActionDataSO);
@@ -202,12 +210,12 @@ public class ComboGraphView : GraphView
                 comboNode.title = "Empty Node";
             }
 
-            comboNode.RefreshHitboxSummary();
+            comboNode.RefreshActionSummary();
         });
         
         comboNode.actionObjectField = actionObjectField;
         comboNode.mainContainer.Add(actionObjectField);
-        comboNode.mainContainer.Add(comboNode.hitboxSummaryContainer);
+        comboNode.mainContainer.Add(comboNode.actionSummaryContainer);
 
         comboNode.RefreshExpandedState();
         comboNode.RefreshPorts();
@@ -413,7 +421,7 @@ public class GraphSaveUtility
             if (hasObjectField)
             {
                 currentGraphNode.actionObjectField.SetValueWithoutNotify(comboData.actionData);
-                currentGraphNode.RefreshHitboxSummary();
+                currentGraphNode.RefreshActionSummary();
             }
 
             nodeMap.Add(comboData, currentGraphNode);
