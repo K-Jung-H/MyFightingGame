@@ -20,10 +20,6 @@ public class PlayerRenderer : MonoBehaviour
     private float currentSpeed;
     private PlayerState_Type previousState;
 
-    private bool requiresFrameSync;
-    private int syncedAnimHash;
-    private int syncedAnimTotalFrames;
-    
     private static readonly int MoveSpeedHash = Animator.StringToHash("MoveSpeed");
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
@@ -46,29 +42,15 @@ public class PlayerRenderer : MonoBehaviour
         bool isHitstopActive = controller.GetCombat().GetHitstopCounter() > 0;
         bool hasAnimator = characterAnimator != null;
 
-        if (isHitstopActive && hasAnimator)
+        if (hasAnimator)
         {
-            characterAnimator.speed = 0f;
-            return;
+            characterAnimator.speed = isHitstopActive ? 0f : 1f;
         }
+
+        if (isHitstopActive) return;
 
         SyncTransformWithLogic();
         EvaluateAndPlayAnimation();
-
-        if (hasAnimator)
-        {
-            if (requiresFrameSync && syncedAnimTotalFrames > 0)
-            {
-                int currentLogicFrame = controller.GetStateMachine().GetStateFrameCounter();
-                float normalizedTime = Mathf.Clamp01((float)currentLogicFrame / syncedAnimTotalFrames);
-                characterAnimator.Play(syncedAnimHash, 0, normalizedTime);
-                characterAnimator.speed = 0f;
-            }
-            else
-            {
-                characterAnimator.speed = 1f;
-            }
-        }
     }
 
     public void PlayHitSpark(Vector3 hitPosition, EffectType effectType)
@@ -142,7 +124,6 @@ public class PlayerRenderer : MonoBehaviour
         }
         else if (controller.GetStateMachine().CheckAndConsumeCommandAction(out int commandHash))
         {
-            requiresFrameSync = false;
             characterAnimator.CrossFadeInFixedTime(commandHash, commandBlendTime, 0);
         }
         else if (currentState == PlayerState_Type.Attacking && stateFrame == 1)
@@ -200,14 +181,10 @@ public class PlayerRenderer : MonoBehaviour
 
         if (isHurtOrBlockState)
         {
-            requiresFrameSync = true;
-            syncedAnimHash = finalHash;
-            syncedAnimTotalFrames = controller.GetCombat().GetCurrentHurtInfo().hurtStunFrames;
             characterAnimator.Play(finalHash, 0, 0f);
         }
         else
         {
-            requiresFrameSync = false;
             SafeCrossFade(finalHash, hitBlendTime);
         }
     }
@@ -217,7 +194,6 @@ public class PlayerRenderer : MonoBehaviour
         ActionDataSO actionData = controller.GetStateMachine().GetCurrentActionData();
         bool hasValidActionData = actionData != null;
         int finalHash = 0;
-        int totalFrames = 0;
 
         if (hasValidActionData)
         {
@@ -225,30 +201,20 @@ public class PlayerRenderer : MonoBehaviour
             if (hasValidActionName)
             {
                 finalHash = controller.GetStateMachine().GetAnimationHash(actionData.animationStateName);
-                
-                if (actionData.frameData != null)
-                {
-                    totalFrames = actionData.frameData.logicData.totalFrames;
-                }
             }
         }
 
-        bool isInvalidHash = finalHash == 0 || totalFrames <= 0;
+        bool isInvalidHash = finalHash == 0;
         if (isInvalidHash)
         {
-            requiresFrameSync = false;
             return;
         }
 
-        requiresFrameSync = true;
-        syncedAnimHash = finalHash;
-        syncedAnimTotalFrames = totalFrames;
         characterAnimator.Play(finalHash, 0, 0f);
     }
 
     private void EvaluateLocomotionTransition(PlayerState_Type currentState)
     {
-        requiresFrameSync = false;
         bool isCurrentLocomotion = currentState == PlayerState_Type.Idle || 
                                    currentState == PlayerState_Type.Walking || 
                                    currentState == PlayerState_Type.Running || 

@@ -18,6 +18,20 @@ public class InputBuffer
 
     public void AddInput(PlayerInput input)
     {
+        bool hasPreviousInput = buffer.Count > 0;
+        if (hasPreviousInput)
+        {
+            PlayerInput lastInput = buffer.First.Value;
+            bool isSameAsPrevious = lastInput.flags == input.flags;
+
+            if (isSameAsPrevious)
+            {
+                lastInput.frame = input.frame;
+                buffer.First.Value = lastInput;
+                return;
+            }
+        }
+
         buffer.AddFirst(input);
         
         bool isBufferOverflow = buffer.Count > bufferSize;

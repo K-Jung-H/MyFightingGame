@@ -65,7 +65,6 @@ public class PlayerCombat
 
         if (!result.isEvaded)
         {
-            ApplyHitstop(result.feedbackData.hitstopFrames);
             ApplyHit(result, controller);
         }
 

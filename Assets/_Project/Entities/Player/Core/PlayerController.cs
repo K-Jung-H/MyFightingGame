@@ -16,11 +16,13 @@ public class PlayerController : ITargetable
     private int currentFrame;
 
     private InputFlags previousRawFlags = InputFlags.None;
+    private InputFlags accumulatedHitstopFlags = InputFlags.None;
 
     public void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
     {
         config = playerConfig;
         currentFrame = 0;
+        accumulatedHitstopFlags = InputFlags.None;
 
         inputTracker = new InputStateTracker();
         inputTracker.Initialize();
@@ -39,21 +41,34 @@ public class PlayerController : ITargetable
 
     public void UpdateTick(PlayerInput input)
     {
-        bool isHitstopActive = combat.ProcessHitstopTick();
-        if (isHitstopActive)
-        {
-            return;
-        }
-
         PlayerInput sanitizedInput = ApplyReleaseDebounce(input);
-
+        
         inputTracker.UpdateTick(sanitizedInput.flags);
         
         currentInput = sanitizedInput;
         currentKeyDownFlags = inputTracker.currentFlags & ~inputTracker.previousFlags;
+
+        bool isHitstopActive = combat.ProcessHitstopTick();
+        if (isHitstopActive)
+        {
+            accumulatedHitstopFlags |= currentKeyDownFlags;
+            return;
+        }
+
+        if (accumulatedHitstopFlags != InputFlags.None)
+        {
+            currentKeyDownFlags |= accumulatedHitstopFlags;
+            sanitizedInput.flags |= accumulatedHitstopFlags;
+            currentInput = sanitizedInput;
+            
+            accumulatedHitstopFlags = InputFlags.None;
+        }
+
         currentFrame++;
 
         PlayerState_Type currentState = stateMachine.GetCurrentState();
+        actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, currentState);
+
         bool isHoming = false;
 
         if (currentState == PlayerState_Type.Attacking)
@@ -68,7 +83,6 @@ public class PlayerController : ITargetable
 
         physics.UpdateLookDirection(targetEntity, currentState, isHoming);
 
-        actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, currentState);
         ProcessActionBuffer();
 
         physics.ResetRootMotionFlag();

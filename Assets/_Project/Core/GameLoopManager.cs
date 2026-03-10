@@ -32,9 +32,6 @@ public class GameLoopManager : MonoBehaviour
     [SerializeField] private float playerCollisionMinDistance = 1.0f;
     [SerializeField] private float globalGravity = 0.02f;
 
-    [Header("Hit Feedback Settings")]
-    [SerializeField] private List<HitFeedbackData> hitFeedbackTable = new();
-
     [Header("Players")]
     [SerializeField] private PlayerSessionContext playerOne;
     [SerializeField] private PlayerSessionContext playerTwo;
@@ -189,19 +186,6 @@ public class GameLoopManager : MonoBehaviour
 
     }
 
-    private HitFeedbackData GetHitFeedback(Attack_Type type)
-    {
-        foreach (var feedback in hitFeedbackTable)
-        {
-            bool isMatchingType = feedback.attackType == type;
-            if (isMatchingType)
-            {
-                return feedback;
-            }
-        }
-        return new HitFeedbackData { attackType = type, hitstopFrames = 0, cameraShakeIntensity = 0f };
-    }
-
     private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
     {
         if (!IsValidAttackAttempt(attackerContext.controller, out ActionDataSO attackerAction)) return;
@@ -240,42 +224,33 @@ public class GameLoopManager : MonoBehaviour
         attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
 
         Vector3 worldPushback = CalculateWorldPushback(attacker.GetPhysics().GetLookDirection(), hitEvent.localPushbackVector);
-
+        
         HitboxEvent worldSpaceHitEvent = hitEvent;
         worldSpaceHitEvent.localPushbackVector = worldPushback;
-
+        
         EvaluationResult hitResult = defender.GetCombat().ProcessIncomingHit(worldSpaceHitEvent, defender);
 
         bool isHitEvaded = hitResult.isEvaded;
         if (isHitEvaded) return;
 
-        bool isAttackBlocked = hitResult.targetState == PlayerState_Type.StandBlock || hitResult.targetState == PlayerState_Type.CrouchBlock;
-        if (isAttackBlocked) return;
+        int hitstopFrames = hitResult.feedbackData.hitstopFrames;
+        if (hitstopFrames > 0)
+        {
+            attacker.GetCombat().ApplyHitstop(hitstopFrames);
+            defender.GetCombat().ApplyHitstop(hitstopFrames);
+        }
 
-        ApplyGlobalHitFeedback(attackerContext, defenderContext, hitEvent.attackType, hitPoint);
+        bool isAttackBlocked = hitResult.targetState == PlayerState_Type.StandBlock || hitResult.targetState == PlayerState_Type.CrouchBlock;
+        if (!isAttackBlocked && defenderContext.renderer != null)
+        {
+            defenderContext.renderer.PlayHitSpark(hitPoint, EffectType.Hit);
+        }
     }
 
     private Vector3 CalculateWorldPushback(Vector3 lookDirection, Vector3 localPushback)
     {
         Vector3 rightDirection = Vector3.Cross(Vector3.up, lookDirection);
         return (lookDirection * localPushback.z) + (Vector3.up * localPushback.y) + (rightDirection * localPushback.x);
-    }
-
-    private void ApplyGlobalHitFeedback(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext, Attack_Type attackType, Vector3 hitPoint)
-    {
-        HitFeedbackData feedback = GetHitFeedback(attackType);
-        
-        bool hasHitstop = feedback.hitstopFrames > 0;
-        if (hasHitstop)
-        {
-            attackerContext.controller.GetCombat().ApplyHitstop(feedback.hitstopFrames);
-        }
-
-        bool hasDefenderRenderer = defenderContext.renderer != null;
-        if (hasDefenderRenderer)
-        {
-            defenderContext.renderer.PlayHitSpark(hitPoint, EffectType.Hit);
-        }
     }
 
     private float GetPushbackWeight(PlayerState_Type state)
