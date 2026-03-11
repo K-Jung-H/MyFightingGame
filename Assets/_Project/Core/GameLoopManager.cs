@@ -116,12 +116,6 @@ public class GameLoopManager : MonoBehaviour
         bool isUpdateValid = isSimulationRunning && inputProvider != null && cameraManager != null;
         if (isUpdateValid)
         {
-            bool isP1OnRight = cameraManager.IsPlayerOneOnRightSide();
-            bool isP1FacingRight = !isP1OnRight;
-            bool isP2FacingRight = isP1OnRight;
-
-            inputProvider.AccumulateInputFlags(isP1FacingRight, isP2FacingRight);
-
             Vector3 currentDepthAxis = cameraManager.GetDepthAxis();
             
             bool isP1Valid = playerOne.controller != null;
@@ -155,17 +149,21 @@ public class GameLoopManager : MonoBehaviour
     
     private void RunTick()
     {
+        bool isP1OnRight = cameraManager.IsPlayerOneOnRightSide();
+        bool isP1FacingRight = !isP1OnRight;
+        bool isP2FacingRight = isP1OnRight;
+
         bool isPlayerOneValid = playerOne.controller != null;
         if (isPlayerOneValid)
         {
-            PlayerInput p1Input = inputProvider.GetCurrentInput(currentTick, 0);
+            PlayerInput p1Input = inputProvider.GetCurrentInput(currentTick, 0, isP1FacingRight);
             playerOne.controller.UpdateTick(p1Input);
         }
 
         bool isPlayerTwoValid = playerTwo.controller != null;
         if (isPlayerTwoValid)
         {
-            PlayerInput p2Input = inputProvider.GetCurrentInput(currentTick, 1);
+            PlayerInput p2Input = inputProvider.GetCurrentInput(currentTick, 1, isP2FacingRight);
             playerTwo.controller.UpdateTick(p2Input);
         }
 

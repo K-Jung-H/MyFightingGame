@@ -3,8 +3,6 @@ using UnityEngine.InputSystem;
 
 public class LocalInputProvider
 {
-    private InputFlags accumulatedFlagsPlayerOne;
-    private InputFlags accumulatedFlagsPlayerTwo;
     private InputBinding playerOneBinding;
     private InputBinding playerTwoBinding;
 
@@ -14,54 +12,34 @@ public class LocalInputProvider
         playerTwoBinding = secondBinding;
     }
 
-    public void AccumulateInputFlags(bool isPlayerOneFacingRight, bool isPlayerTwoFacingRight)
-    {
-        accumulatedFlagsPlayerOne |= PollInput(playerOneBinding, isPlayerOneFacingRight);
-        accumulatedFlagsPlayerTwo |= PollInput(playerTwoBinding, isPlayerTwoFacingRight);
-    }
-
-    public PlayerInput GetCurrentInput(int currentFrame, int playerIndex)
+    public PlayerInput GetCurrentInput(int currentFrame, int playerIndex, bool isFacingRight)
     {
         PlayerInput input = new PlayerInput();
         input.frame = currentFrame;
 
-        if (playerIndex == 0)
-        {
-            input.flags = accumulatedFlagsPlayerOne;
-            accumulatedFlagsPlayerOne = InputFlags.None;
-        }
-        else
-        {
-            input.flags = accumulatedFlagsPlayerTwo;
-            accumulatedFlagsPlayerTwo = InputFlags.None;
-        }
+        InputBinding binding = playerIndex == 0 ? playerOneBinding : playerTwoBinding;
+        input.flags = PollInput(binding, isFacingRight);
 
         return input;
     }
 
     private InputFlags PollInput(InputBinding binding, bool isFacingRight)
     {
-        bool isUp = false;
-        bool isDown = false;
-        bool isPhysicalLeft = false;
-        bool isPhysicalRight = false;
-        bool isLP = false;
-        bool isRP = false;
-        bool isLK = false;
-        bool isRK = false;
-
-        if (Keyboard.current != null)
+        bool isKeyboardValid = Keyboard.current != null;
+        if (!isKeyboardValid)
         {
-            isUp = Keyboard.current[binding.upKey].isPressed;
-            isDown = Keyboard.current[binding.downKey].isPressed;
-            isPhysicalLeft = Keyboard.current[binding.leftKey].isPressed;
-            isPhysicalRight = Keyboard.current[binding.rightKey].isPressed;
-            
-            isLP = Keyboard.current[binding.lpKey].isPressed;
-            isRP = Keyboard.current[binding.rpKey].isPressed;
-            isLK = Keyboard.current[binding.lkKey].isPressed;
-            isRK = Keyboard.current[binding.rkKey].isPressed;
+            return InputFlags.None;
         }
+
+        bool isUp = Keyboard.current[binding.upKey].isPressed;
+        bool isDown = Keyboard.current[binding.downKey].isPressed;
+        bool isPhysicalLeft = Keyboard.current[binding.leftKey].isPressed;
+        bool isPhysicalRight = Keyboard.current[binding.rightKey].isPressed;
+        
+        bool isLP = Keyboard.current[binding.lpKey].isPressed;
+        bool isRP = Keyboard.current[binding.rpKey].isPressed;
+        bool isLK = Keyboard.current[binding.lkKey].isPressed;
+        bool isRK = Keyboard.current[binding.rkKey].isPressed;
 
         bool isForward = isFacingRight ? isPhysicalRight : isPhysicalLeft;
         bool isBack = isFacingRight ? isPhysicalLeft : isPhysicalRight;
