@@ -52,3 +52,8 @@ MonoBehaviour:
   stunningFrames: 90
   defaultHitStunFrames: 15
   defaultBlockStunFrames: 15
+  hitstopLightHit: 3
+  hitstopHeavyHit: 8
+  hitstopCrash: 15
+  hitstopDefault: 5
+  maxHealth: 100

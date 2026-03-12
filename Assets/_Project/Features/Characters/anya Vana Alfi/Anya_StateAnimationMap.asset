@@ -31,3 +31,5 @@ MonoBehaviour:
   wakeUpRollLeft: {fileID: -203655887218126122, guid: 37994c2afe8a2414e825e5f010576a7c, type: 3}
   wakeUpRollRight: {fileID: 1543986317409604355, guid: 37994c2afe8a2414e825e5f010576a7c, type: 3}
   wakeUpAttack: {fileID: -203655887218126122, guid: 1595baccf543b4d449e46fa5f3796656, type: 3}
+  dead: {fileID: -203655887218126122, guid: 211ae8ea41135814481a4676b6cfea75, type: 3}
+  win: {fileID: -203655887218126122, guid: 46e1b68a405483348a7627d20aebb09a, type: 3}
