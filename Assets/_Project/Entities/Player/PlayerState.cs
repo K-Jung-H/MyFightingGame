@@ -25,7 +25,10 @@ public enum PlayerState_Type
     Stunning = 1 << 14,
 
     LayingDown = 1 << 15,
-    WakeUp = 1 << 16
+    WakeUp = 1 << 16,
+
+    Dead = 1 << 17, 
+    Win = 1 << 18,
 }
 
 public enum WakeUp_Type

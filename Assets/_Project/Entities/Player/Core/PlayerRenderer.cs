@@ -109,18 +109,20 @@ public class PlayerRenderer : MonoBehaviour
         bool isStateChanged = previousState != currentState;
 
         bool isHitState = currentState == PlayerState_Type.StandHit || 
-                          currentState == PlayerState_Type.CrouchHit ||
-                          currentState == PlayerState_Type.StandBlock ||
-                          currentState == PlayerState_Type.CrouchBlock ||
-                          currentState == PlayerState_Type.AirHit || 
-                          currentState == PlayerState_Type.Stunning || 
-                          currentState == PlayerState_Type.GroundSmash ||
-                          currentState == PlayerState_Type.LayingDown ||
-                          currentState == PlayerState_Type.WakeUp;
+                            currentState == PlayerState_Type.CrouchHit ||
+                            currentState == PlayerState_Type.StandBlock ||
+                            currentState == PlayerState_Type.CrouchBlock ||
+                            currentState == PlayerState_Type.AirHit || 
+                            currentState == PlayerState_Type.Stunning || 
+                            currentState == PlayerState_Type.GroundSmash ||
+                            currentState == PlayerState_Type.LayingDown ||
+                            currentState == PlayerState_Type.WakeUp ||
+                            currentState == PlayerState_Type.Dead ||
+                            currentState == PlayerState_Type.Win;
 
         if (isHitState && stateFrame == 1)
         {
-            PlayHitAnimation(currentState);
+            PlayStaticStateAnimation(currentState);
         }
         else if (controller.GetStateMachine().CheckAndConsumeCommandAction(out int commandHash))
         {
@@ -139,7 +141,7 @@ public class PlayerRenderer : MonoBehaviour
         previousState = currentState;
     }
 
-    private void PlayHitAnimation(PlayerState_Type currentState)
+    private void PlayStaticStateAnimation(PlayerState_Type currentState)
     {
         AnimationClip targetClip = null;
         bool isStateMapValid = stateAnimMap != null;

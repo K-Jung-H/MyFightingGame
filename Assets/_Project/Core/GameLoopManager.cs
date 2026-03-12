@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
 
 [System.Serializable]
 public class PlayerSessionContext
@@ -39,9 +38,14 @@ public class GameLoopManager : MonoBehaviour
     [SerializeField] private Vector3 p1SpawnPos = new Vector3(-2, 0, 0);
     [SerializeField] private Vector3 p2SpawnPos = new Vector3(2, 0, 0);
 
+    [Header("UI Managers")]
+    [SerializeField] private HealthBarController p1HealthBar;
+    [SerializeField] private HealthBarController p2HealthBar;
+
     private LocalInputProvider inputProvider;
     private int currentTick;
     private bool isSimulationRunning;
+    private bool isRoundOver;
 
     public int GetCurrentTick() => currentTick;
     public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
@@ -77,10 +81,26 @@ public class GameLoopManager : MonoBehaviour
         {
             playerOne.controller.SetTarget(playerTwo.controller);
             playerTwo.controller.SetTarget(playerOne.controller);
+
+            playerOne.controller.GetCombat().OnDefeated += HandlePlayerDefeated;
+            playerTwo.controller.GetCombat().OnDefeated += HandlePlayerDefeated;
+
+            bool isP1UIValid = p1HealthBar != null;
+            if (isP1UIValid)
+            {
+                p1HealthBar.Initialize(playerOne.controller.GetCombat(), false);
+            }
+
+            bool isP2UIValid = p2HealthBar != null;
+            if (isP2UIValid)
+            {
+                p2HealthBar.Initialize(playerTwo.controller.GetCombat(), true);
+            }
         }
 
         currentTick = 0;
         isSimulationRunning = true;
+        isRoundOver = false;
     }
 
     private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
@@ -111,6 +131,33 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    private void HandlePlayerDefeated(PlayerController defeatedPlayer)
+    {
+        if (isRoundOver) return;
+        
+        isRoundOver = true;
+
+        bool isPlayerOneDefeated = defeatedPlayer == playerOne.controller;
+        
+        if (isPlayerOneDefeated)
+        {
+            TriggerRoundEnd(playerTwo, playerOne);
+        }
+        else
+        {
+            TriggerRoundEnd(playerOne, playerTwo);
+        }
+    }
+
+    private void TriggerRoundEnd(PlayerSessionContext winner, PlayerSessionContext loser)
+    {        
+        bool isWinnerValid = winner != null && winner.controller != null;
+        if (isWinnerValid)
+        {
+            winner.controller.GetStateMachine().TransitionTo(PlayerState_Type.Win, true);
+        }
+    }
+
     private void Update()
     {
         bool isUpdateValid = isSimulationRunning && inputProvider != null && cameraManager != null;
@@ -131,12 +178,6 @@ public class GameLoopManager : MonoBehaviour
             }
         }
 
-        bool hasKeyboard = Keyboard.current != null;
-        bool isDebugAttackPressed = hasKeyboard && Keyboard.current.spaceKey.wasPressedThisFrame;
-        if (isDebugAttackPressed)
-        {
-            DebugDealDamageToBoth();
-        }
     }
 
     private void FixedUpdate()
@@ -177,12 +218,6 @@ public class GameLoopManager : MonoBehaviour
         currentTick++;
     }
 
-    public void DebugDealDamageToBoth()
-    {
-        bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
-        if (isInvalidControllers) return;
-
-    }
 
     private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
     {

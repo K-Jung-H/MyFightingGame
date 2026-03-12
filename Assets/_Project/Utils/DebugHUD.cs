@@ -15,6 +15,14 @@ public class DebugHUD : MonoBehaviour
     private bool isShowP1 = true;
     private bool isShowP2 = true;
 
+    private int p1CurrentHealth;
+    private int p1MaxHealth;
+    private int p2CurrentHealth;
+    private int p2MaxHealth;
+    
+    private bool isP1HealthBound = false;
+    private bool isP2HealthBound = false;
+
     private void Start()
     {
         TryConnectControllers();
@@ -22,9 +30,6 @@ public class DebugHUD : MonoBehaviour
 
     private void TryConnectControllers()
     {
-        bool isAlreadyConnected = p1Controller != null && p2Controller != null;
-        if (isAlreadyConnected) return;
-        
         bool isManagerMissing = gameLoopManager == null;
         if (isManagerMissing) return;
         
@@ -39,6 +44,57 @@ public class DebugHUD : MonoBehaviour
         {
             p2Controller = gameLoopManager.GetPlayerTwoController();
         }
+
+        bool canBindP1 = p1Controller != null && !isP1HealthBound;
+        if (canBindP1)
+        {
+            PlayerCombat p1Combat = p1Controller.GetCombat();
+            p1Combat.OnHealthChanged += UpdateP1Health;
+            
+            UpdateP1Health(p1Combat.GetCurrentHealth(), p1Combat.GetMaxHealth());
+            
+            isP1HealthBound = true;
+        }
+
+        bool canBindP2 = p2Controller != null && !isP2HealthBound;
+        if (canBindP2)
+        {
+            PlayerCombat p2Combat = p2Controller.GetCombat();
+            p2Combat.OnHealthChanged += UpdateP2Health;
+            
+            UpdateP2Health(p2Combat.GetCurrentHealth(), p2Combat.GetMaxHealth());
+            
+            isP2HealthBound = true;
+        }
+    }
+
+    private void UpdateP1Health(int current, int max)
+    {
+        p1CurrentHealth = current;
+        p1MaxHealth = max;
+        Debug.Log($"[Combat] P1 Health Updated: {current} / {max}");
+    }
+
+    private void UpdateP2Health(int current, int max)
+    {
+        p2CurrentHealth = current;
+        p2MaxHealth = max;
+        Debug.Log($"[Combat] P2 Health Updated: {current} / {max}");
+    }
+
+    private void OnDestroy()
+    {
+        bool hasP1Combat = p1Controller != null && p1Controller.GetCombat() != null;
+        if (hasP1Combat)
+        {
+            p1Controller.GetCombat().OnHealthChanged -= UpdateP1Health;
+        }
+
+        bool hasP2Combat = p2Controller != null && p2Controller.GetCombat() != null;
+        if (hasP2Combat)
+        {
+            p2Controller.GetCombat().OnHealthChanged -= UpdateP2Health;
+        }
     }
 
     private void OnGUI()
@@ -52,79 +108,88 @@ public class DebugHUD : MonoBehaviour
             TryConnectControllers();
         }
 
-        float currentY = 10f;
+        float panelWidth = 280f;
+        float topY = 10f;
 
+        float p1StartX = 10f;
+        float serverStartX = (Screen.width - panelWidth) / 2f;
+        float p2StartX = Screen.width - panelWidth - 10f;
+
+        DrawServerStatusPanel(serverStartX, topY, panelWidth);
+        DrawP1DebugPanel(p1StartX, topY, panelWidth);
+        DrawP2DebugPanel(p2StartX, topY, panelWidth);
+    }
+
+    private void DrawServerStatusPanel(float startX, float startY, float width)
+    {
         string serverTitle = isShowServer ? "▼ Server Status" : "▶ Server Status";
-        if (GUI.Button(new Rect(10, currentY, 280, 20), serverTitle))
+        if (GUI.Button(new Rect(startX, startY, width, 20), serverTitle))
         {
             isShowServer = !isShowServer;
         }
-        currentY += 20f;
 
         if (isShowServer)
         {
-            GUI.Box(new Rect(10, currentY, 280, 110), "");
-            GUI.Label(new Rect(20, currentY + 10, 260, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
-            GUI.Label(new Rect(20, currentY + 40, 260, 20), $"P1 State: {gameLoopManager.GetP1State()}");
-            GUI.Label(new Rect(20, currentY + 55, 260, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
-            GUI.Label(new Rect(20, currentY + 75, 260, 20), $"P2 State: {gameLoopManager.GetP2State()}");
-            GUI.Label(new Rect(20, currentY + 90, 260, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
-            currentY += 120f;
-        }
-        else
-        {
-            currentY += 5f;
-        }
-
-        bool hasP1Controller = p1Controller != null;
-        if (hasP1Controller)
-        {
-            string p1Title = isShowP1 ? "▼ P1 Input & Action Debug" : "▶ P1 Input & Action Debug";
-            if (GUI.Button(new Rect(10, currentY, 280, 20), p1Title))
-            {
-                isShowP1 = !isShowP1;
-            }
-            currentY += 20f;
-
-            if (isShowP1)
-            {
-                currentY = DrawInputDebugContent(p1Controller, p1InputLogQueue, currentY);
-            }
-            else
-            {
-                currentY += 5f;
-            }
-        }
-
-        bool hasP2Controller = p2Controller != null;
-        if (hasP2Controller)
-        {
-            string p2Title = isShowP2 ? "▼ P2 Input & Action Debug" : "▶ P2 Input & Action Debug";
-            if (GUI.Button(new Rect(10, currentY, 280, 20), p2Title))
-            {
-                isShowP2 = !isShowP2;
-            }
-            currentY += 20f;
-
-            if (isShowP2)
-            {
-                currentY = DrawInputDebugContent(p2Controller, p2InputLogQueue, currentY);
-            }
+            float contentY = startY + 20f;
+            GUI.Box(new Rect(startX, contentY, width, 140), "");
+            GUI.Label(new Rect(startX + 10, contentY + 10, width - 20, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
+            
+            GUI.Label(new Rect(startX + 10, contentY + 40, width - 20, 20), $"P1 State: {gameLoopManager.GetP1State()}");
+            GUI.Label(new Rect(startX + 10, contentY + 55, width - 20, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
+            GUI.Label(new Rect(startX + 10, contentY + 70, width - 20, 20), $"P1 HP: {p1CurrentHealth} / {p1MaxHealth}");
+            
+            GUI.Label(new Rect(startX + 10, contentY + 95, width - 20, 20), $"P2 State: {gameLoopManager.GetP2State()}");
+            GUI.Label(new Rect(startX + 10, contentY + 110, width - 20, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
+            GUI.Label(new Rect(startX + 10, contentY + 125, width - 20, 20), $"P2 HP: {p2CurrentHealth} / {p2MaxHealth}");
         }
     }
 
-    private float DrawInputDebugContent(PlayerController controller, Queue<string> logQueue, float startY)
+    private void DrawP1DebugPanel(float startX, float startY, float width)
+    {
+        bool hasP1Controller = p1Controller != null;
+        if (!hasP1Controller) return;
+
+        string p1Title = isShowP1 ? "▼ P1 Input & Action Debug" : "▶ P1 Input & Action Debug";
+        if (GUI.Button(new Rect(startX, startY, width, 20), p1Title))
+        {
+            isShowP1 = !isShowP1;
+        }
+
+        if (isShowP1)
+        {
+            DrawInputDebugContent(p1Controller, p1InputLogQueue, startX, startY + 20f, width);
+        }
+    }
+
+    private void DrawP2DebugPanel(float startX, float startY, float width)
+    {
+        bool hasP2Controller = p2Controller != null;
+        if (!hasP2Controller) return;
+
+        string p2Title = isShowP2 ? "▼ P2 Input & Action Debug" : "▶ P2 Input & Action Debug";
+        if (GUI.Button(new Rect(startX, startY, width, 20), p2Title))
+        {
+            isShowP2 = !isShowP2;
+        }
+
+        if (isShowP2)
+        {
+            DrawInputDebugContent(p2Controller, p2InputLogQueue, startX, startY + 20f, width);
+        }
+    }
+
+    private void DrawInputDebugContent(PlayerController controller, Queue<string> logQueue, float startX, float startY, float width)
     {
         float panelHeight = 350f;
-        GUI.Box(new Rect(10, startY, 280, panelHeight), "");
+        GUI.Box(new Rect(startX, startY, width, panelHeight), "");
 
         InputFlags currentHold = controller.currentInput.flags;
-        GUI.Label(new Rect(20, startY + 10, 260, 20), $"[Current Hold]: {InputFlagsToString(currentHold)}");
+        GUI.Label(new Rect(startX + 10, startY + 10, width - 20, 20), $"[Current Hold]: {InputFlagsToString(currentHold)}");
 
         ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
         bool hasCurrentAction = currentAction != null;
         string actionName = hasCurrentAction ? currentAction.animationStateName : "None";
-        GUI.Label(new Rect(20, startY + 35, 260, 20), $"[Current Action]: {actionName}");
+        GUI.Label(new Rect(startX + 10, startY + 35, width - 20, 20), $"[Current Action]: {actionName}");
 
         InputFlags keyDown = controller.currentKeyDownFlags;
         bool hasNewInput = keyDown != InputFlags.None;
@@ -140,17 +205,17 @@ public class DebugHUD : MonoBehaviour
             }
         }
 
-        GUI.Label(new Rect(20, startY + 65, 260, 20), "--- Input Key Log ---");
+        GUI.Label(new Rect(startX + 10, startY + 65, width - 20, 20), "--- Input Key Log ---");
 
         float yOffset = startY + 85;
         foreach (string log in logQueue)
         {
-            GUI.Label(new Rect(20, yOffset, 260, 20), log);
+            GUI.Label(new Rect(startX + 10, yOffset, width - 20, 20), log);
             yOffset += 15;
         }
 
         yOffset = startY + 245;
-        GUI.Label(new Rect(20, yOffset, 260, 20), "--- Active Combo Sequence ---");
+        GUI.Label(new Rect(startX + 10, yOffset, width - 20, 20), "--- Active Combo Sequence ---");
         yOffset += 20;
 
         List<InputFlags> comboSeq = controller.GetActionController().GetComboSequence();
@@ -169,9 +234,7 @@ public class DebugHUD : MonoBehaviour
 
         GUIStyle multilineStyle = new GUIStyle(GUI.skin.label);
         multilineStyle.wordWrap = true;
-        GUI.Label(new Rect(20, yOffset, 260, 60), comboString, multilineStyle);
-
-        return startY + panelHeight + 10f;
+        GUI.Label(new Rect(startX + 10, yOffset, width - 20, 60), comboString, multilineStyle);
     }
 
     private string InputFlagsToString(InputFlags flags)

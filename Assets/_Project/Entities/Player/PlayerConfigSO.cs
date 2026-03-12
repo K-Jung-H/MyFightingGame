@@ -52,6 +52,10 @@ public class PlayerConfigSO : ScriptableObject
     [SerializeField] private int hitstopCrash = 15;
     [SerializeField] private int hitstopDefault = 5;
 
+    [Header("Status Settings")]
+    [SerializeField] private int maxHealth = 1000;
+
+
 
     public float GetBounceVelocityThreshold() => bounceVelocityThreshold;
     public float GetBounceVelocityMultiplier() => bounceVelocityMultiplier;
@@ -103,4 +107,6 @@ public class PlayerConfigSO : ScriptableObject
             _ => hitstopDefault,
         };
     }
+
+    public int GetMaxHealth() => maxHealth;
 }

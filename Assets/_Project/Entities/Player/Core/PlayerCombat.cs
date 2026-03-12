@@ -1,18 +1,39 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerCombat
 {
+    PlayerConfigSO config;
+
     private int hitstopCounter;
     private HurtInfo currentHurtInfo;
     private HashSet<int> registeredHitGroupIds;
     private CombatEvaluator evaluator;
 
-    public PlayerCombat(PlayerConfigSO config)
+    public event System.Action<int, int> OnHealthChanged;
+    public event System.Action<PlayerController> OnDefeated;
+
+    private int maxHealth;
+    private int currentHealth;
+
+
+    public PlayerCombat(PlayerConfigSO playerconfig)
     {
+        config = playerconfig;
         registeredHitGroupIds = new HashSet<int>();
+
+        InitializeHealth();
+
         evaluator = new CombatEvaluator();
         evaluator.Initialize(config);
+    }
+
+    public void InitializeHealth()
+    {
+        maxHealth = config.GetMaxHealth();
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
     public bool ProcessHitstopTick()
@@ -74,6 +95,24 @@ public class PlayerCombat
     public void ApplyHit(EvaluationResult result, PlayerController controller)
     {
         PlayerStateMachine stateMachine = controller.GetStateMachine();
+
+        int damage = result.hurtInfo.damage;
+        bool isDamageValid = damage > 0;
+        
+        if (isDamageValid)
+        {
+            currentHealth = Mathf.Max(0, currentHealth - damage);
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        }
+
+        bool isDead = currentHealth <= 0;
+        if (isDead)
+        {
+            OnDefeated?.Invoke(controller);
+            stateMachine.TransitionTo(PlayerState_Type.Dead, true);
+            return;
+        }
+
         PlayerPhysics physics = controller.GetPhysics();
         PlayerActionController actionController = controller.GetActionController();
 
@@ -108,4 +147,6 @@ public class PlayerCombat
     }
 
     public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;
+    public int GetCurrentHealth() => currentHealth;
+    public int GetMaxHealth() => maxHealth;
 }

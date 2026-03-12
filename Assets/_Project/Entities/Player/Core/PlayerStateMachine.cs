@@ -45,7 +45,12 @@ public class PlayerStateMachine
             { PlayerState_Type.Stunning, new StunningState(this, config) },
             { PlayerState_Type.GroundSmash, new GroundSmashState(this, config) },
             { PlayerState_Type.LayingDown, new LayingDownState(this, config) },
-            { PlayerState_Type.WakeUp, new WakeUpState(this, config) }
+            { PlayerState_Type.WakeUp, new WakeUpState(this, config) },
+
+            { PlayerState_Type.Dead, new DeadState(this, config) },
+            { PlayerState_Type.Win, new WinState(this, config) }
+
+
         };
     }
 
@@ -104,11 +109,13 @@ public class PlayerStateMachine
         TransitionTo(request.targetState, true);
     }
 
+
     public bool CanTransitionToAttack()
     {
         bool isHit = cachedCurrentState == PlayerState_Type.StandHit || cachedCurrentState == PlayerState_Type.AirHit;
         bool isDown = cachedCurrentState == PlayerState_Type.LayingDown || cachedCurrentState == PlayerState_Type.WakeUp || cachedCurrentState == PlayerState_Type.GroundSmash;
         bool isStunned = cachedCurrentState == PlayerState_Type.Stunning;
+        bool isMatchEnd = cachedCurrentState == PlayerState_Type.Dead || cachedCurrentState == PlayerState_Type.Win;
 
         bool isAttacking = cachedCurrentState == PlayerState_Type.Attacking;
         bool isCancelable = true;
@@ -118,7 +125,7 @@ public class PlayerStateMachine
             isCancelable = stateFrameCounter >= currentStateObject.GetCancelWindow();
         }
 
-        return !(isHit || isDown || isStunned) && isCancelable;
+        return !(isHit || isDown || isStunned || isMatchEnd) && isCancelable;
     }
 
     public bool CheckAndConsumeCommandAction(out int actionHash)

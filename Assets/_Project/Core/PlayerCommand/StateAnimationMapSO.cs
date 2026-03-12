@@ -30,6 +30,10 @@ public class StateAnimationMapSO : ScriptableObject
     public AnimationClip wakeUpRollRight;
     public AnimationClip wakeUpAttack;
 
+    [Header("Match End States")]
+    public AnimationClip dead;
+    public AnimationClip win;
+
     public AnimationClip GetHurtAnimationClip(PlayerState_Type state, Attack_Height attackHeight)
     {
         switch (state)
@@ -56,6 +60,8 @@ public class StateAnimationMapSO : ScriptableObject
             case PlayerState_Type.Stunning: return stunning;
             case PlayerState_Type.GroundSmash: return groundSmash;
             case PlayerState_Type.WakeUp: return wakeUp;
+            case PlayerState_Type.Dead: return dead;
+            case PlayerState_Type.Win: return win;
         }
         return null;
     }
