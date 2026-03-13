@@ -16,9 +16,9 @@ public class PlayerRenderer : MonoBehaviour
     private Vector3 targetLookDirection;
     private float targetSpeed;
     
-    private Vector3 currentDirection;
     private float currentSpeed;
     private PlayerState_Type previousState;
+    private ActionDataSO previousActionData;
 
     private static readonly int MoveSpeedHash = Animator.StringToHash("MoveSpeed");
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
@@ -32,6 +32,7 @@ public class PlayerRenderer : MonoBehaviour
         stateAnimMap = stateMap;
         effectTable = fxTable;
         previousState = (PlayerState_Type)(-1);
+        previousActionData = null;
     }
 
     public void UpdateRenderer()
@@ -105,8 +106,10 @@ public class PlayerRenderer : MonoBehaviour
     {
         PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
         int stateFrame = controller.GetStateMachine().GetStateFrameCounter();
+        ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
         
         bool isStateChanged = previousState != currentState;
+        bool isActionChanged = previousActionData != currentAction;
 
         bool isHitState = currentState == PlayerState_Type.StandHit || 
                             currentState == PlayerState_Type.CrouchHit ||
@@ -116,21 +119,41 @@ public class PlayerRenderer : MonoBehaviour
                             currentState == PlayerState_Type.Stunning || 
                             currentState == PlayerState_Type.GroundSmash ||
                             currentState == PlayerState_Type.LayingDown ||
-                            currentState == PlayerState_Type.WakeUp ||
-                            currentState == PlayerState_Type.Dead ||
-                            currentState == PlayerState_Type.Win;
+                            currentState == PlayerState_Type.WakeUp;
 
-        if (isHitState && stateFrame == 1)
+        bool isEndState = currentState == PlayerState_Type.Dead || currentState == PlayerState_Type.Win;
+
+        if (currentState == PlayerState_Type.Attacking)
         {
-            PlayStaticStateAnimation(currentState);
+            if (isStateChanged || isActionChanged)
+            {
+                int hash = 0;
+                bool hasActionName = currentAction != null && !string.IsNullOrEmpty(currentAction.animationStateName);
+                if (hasActionName)
+                {
+                    hash = controller.GetStateMachine().GetAnimationHash(currentAction.animationStateName);
+                }
+                
+                bool isHashValid = hash != 0;
+                if (isHashValid)
+                {
+                    float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
+                    characterAnimator.PlayInFixedTime(hash, 0, exactTime);
+                }
+            }
         }
-        else if (controller.GetStateMachine().CheckAndConsumeCommandAction(out int commandHash))
+        else if (isHitState || isEndState)
         {
-            characterAnimator.CrossFadeInFixedTime(commandHash, commandBlendTime, 0);
-        }
-        else if (currentState == PlayerState_Type.Attacking && stateFrame == 1)
-        {
-            PlayAttackAnimation();
+            if (isStateChanged)
+            {
+                int hash = GetStaticStateHash(currentState);
+                bool isHashValid = hash != 0;
+                if (isHashValid)
+                {
+                    float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
+                    characterAnimator.PlayInFixedTime(hash, 0, exactTime);
+                }
+            }
         }
         else if (isStateChanged)
         {
@@ -138,10 +161,12 @@ public class PlayerRenderer : MonoBehaviour
         }
 
         EvaluateVfxEvents();
+        
         previousState = currentState;
+        previousActionData = currentAction;
     }
 
-    private void PlayStaticStateAnimation(PlayerState_Type currentState)
+    private int GetStaticStateHash(PlayerState_Type currentState)
     {
         AnimationClip targetClip = null;
         bool isStateMapValid = stateAnimMap != null;
@@ -179,40 +204,7 @@ public class PlayerRenderer : MonoBehaviour
         }
 
         string animName = targetClip != null ? targetClip.name : currentState.ToString();
-        int finalHash = controller.GetStateMachine().GetAnimationHash(animName);
-
-        if (isHurtOrBlockState)
-        {
-            characterAnimator.Play(finalHash, 0, 0f);
-        }
-        else
-        {
-            SafeCrossFade(finalHash, hitBlendTime);
-        }
-    }
-
-    private void PlayAttackAnimation()
-    {
-        ActionDataSO actionData = controller.GetStateMachine().GetCurrentActionData();
-        bool hasValidActionData = actionData != null;
-        int finalHash = 0;
-
-        if (hasValidActionData)
-        {
-            bool hasValidActionName = !string.IsNullOrEmpty(actionData.animationStateName);
-            if (hasValidActionName)
-            {
-                finalHash = controller.GetStateMachine().GetAnimationHash(actionData.animationStateName);
-            }
-        }
-
-        bool isInvalidHash = finalHash == 0;
-        if (isInvalidHash)
-        {
-            return;
-        }
-
-        characterAnimator.Play(finalHash, 0, 0f);
+        return controller.GetStateMachine().GetAnimationHash(animName);
     }
 
     private void EvaluateLocomotionTransition(PlayerState_Type currentState)
@@ -312,16 +304,6 @@ public class PlayerRenderer : MonoBehaviour
                     );
                 }
             }
-        }
-    }
-
-    private void SafeCrossFade(int hash, float blendTime)
-    {
-        bool hasState = characterAnimator.HasState(0, hash);
-
-        if (hasState)
-        {
-            characterAnimator.CrossFadeInFixedTime(hash, blendTime, 0);
         }
     }
 

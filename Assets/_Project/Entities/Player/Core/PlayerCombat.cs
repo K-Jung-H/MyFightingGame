@@ -29,6 +29,20 @@ public class PlayerCombat
         evaluator.Initialize(config);
     }
 
+    public void ExportState(ref PlayerSnapshot snapshot)
+    {
+        snapshot.currentHealth = this.currentHealth;
+        snapshot.hitstopCounter = this.hitstopCounter;
+        snapshot.currentHurtInfo = this.currentHurtInfo;
+    }
+
+    public void ImportState(PlayerSnapshot snapshot)
+    {
+        this.currentHealth = snapshot.currentHealth;
+        this.hitstopCounter = snapshot.hitstopCounter;
+        this.currentHurtInfo = snapshot.currentHurtInfo;
+    }
+
     public void InitializeHealth()
     {
         maxHealth = config.GetMaxHealth();

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerController : ITargetable
+public class PlayerController : ITargetable, ISnapshotSync
 {
     private PlayerConfigSO config;
     private PlayerActionController actionController;
@@ -8,6 +8,7 @@ public class PlayerController : ITargetable
     private PlayerCombat combat;
     private PlayerStateMachine stateMachine;
     private ITargetable targetEntity;
+    private ActionRegistry actionRegistry;
 
     private InputStateTracker inputTracker;
 
@@ -18,14 +19,17 @@ public class PlayerController : ITargetable
     private InputFlags previousRawFlags = InputFlags.None;
     private InputFlags accumulatedHitstopFlags = InputFlags.None;
 
-    public void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig, CommandListSO cmdList, ComboTreeSO comboTreeData)
+    public void Initialize(Vector3 startPosition, CharacterDataSO characterData)
     {
-        config = playerConfig;
+        config = characterData.config;
         currentFrame = 0;
         accumulatedHitstopFlags = InputFlags.None;
 
         inputTracker = new InputStateTracker();
         inputTracker.Initialize();
+
+        actionRegistry = new ActionRegistry();
+        actionRegistry.Initialize(characterData.GetAllRegisteredActions());
 
         physics = new PlayerPhysics();
         physics.Initialize(startPosition, config);
@@ -33,12 +37,38 @@ public class PlayerController : ITargetable
         combat = new PlayerCombat(config);
 
         actionController = new PlayerActionController();
-        actionController.Initialize(this, cmdList, comboTreeData, config.commandBufferWindow);
+        actionController.Initialize(this, characterData.commandList, characterData.comboTree, config.commandBufferWindow);
 
         stateMachine = new PlayerStateMachine();
         stateMachine.Initialize(this, config);
     }
 
+    public void ExportState(ref PlayerSnapshot snapshot)
+    {
+        physics.ExportState(ref snapshot);
+        combat.ExportState(ref snapshot);
+        stateMachine.ExportState(ref snapshot);
+        actionController.ExportState(ref snapshot);
+        
+        snapshot.inputTrackerState = inputTracker;
+        snapshot.controllerFrame = currentFrame;
+        snapshot.previousRawFlags = previousRawFlags;
+        snapshot.accumulatedHitstopFlags = accumulatedHitstopFlags;
+    }
+
+    public void ImportState(PlayerSnapshot snapshot)
+    {
+        physics.ImportState(snapshot);
+        combat.ImportState(snapshot);
+        stateMachine.ImportState(snapshot);
+        actionController.ImportState(snapshot);
+        
+        inputTracker = snapshot.inputTrackerState;
+        currentFrame = snapshot.controllerFrame;
+        previousRawFlags = snapshot.previousRawFlags;
+        accumulatedHitstopFlags = snapshot.accumulatedHitstopFlags;
+    }
+    
     public void UpdateTick(PlayerInput input)
     {
         PlayerInput sanitizedInput = ApplyReleaseDebounce(input);
@@ -65,6 +95,7 @@ public class PlayerController : ITargetable
         }
 
         currentFrame++;
+        sanitizedInput.frame = currentFrame;
 
         PlayerState_Type currentState = stateMachine.GetCurrentState();
         actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, currentState);
@@ -123,6 +154,7 @@ public class PlayerController : ITargetable
     public PlayerCombat GetCombat() => combat;
     public PlayerStateMachine GetStateMachine() => stateMachine;
     public PlayerActionController GetActionController() => actionController;
+    public ActionRegistry GetActionRegistry() => actionRegistry;
     public PlayerConfigSO GetConfig() => config;
     public int GetCurrentFrame() => currentFrame;
     public InputStateTracker GetTracker() => inputTracker;

@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class PlayerStateMachine
+public class PlayerStateMachine : ISnapshotSync
 {
     private PlayerController controller;
     private PlayerConfigSO config;
@@ -12,6 +12,54 @@ public class PlayerStateMachine
     private ActionDataSO currentActionData;
     private bool isCommandActionTriggered;
     private Dictionary<string, int> animationHashCache = new Dictionary<string, int>();
+
+    public void ExportState(ref PlayerSnapshot snapshot)
+    {
+        snapshot.cachedCurrentState = cachedCurrentState;
+        snapshot.stateFrameCounter = stateFrameCounter;
+        snapshot.isCommandActionTriggered = isCommandActionTriggered;
+        
+        snapshot.currentActionID = controller.GetActionRegistry().GetActionID(currentActionData);
+        
+        WakeUpState wakeUpState = GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+        bool isWakeUpStateValid = wakeUpState != null;
+        if (isWakeUpStateValid)
+        {
+            snapshot.scheduledWakeUpType = wakeUpState.GetScheduledWakeUpType();
+        }
+
+        LayingDownState layState = GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
+        bool isLayStateValid = layState != null;
+        if (isLayStateValid)
+        {
+            snapshot.isFromRoll = layState.IsFromRoll();
+        }
+    }
+
+    public void ImportState(PlayerSnapshot snapshot)
+    {
+        cachedCurrentState = snapshot.cachedCurrentState;
+        stateFrameCounter = snapshot.stateFrameCounter;
+        isCommandActionTriggered = snapshot.isCommandActionTriggered;
+
+        currentActionData = controller.GetActionRegistry().GetAction(snapshot.currentActionID);
+        
+        currentStateObject = GetStateObject(cachedCurrentState);
+
+        WakeUpState wakeUpState = GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+        bool isWakeUpStateValid = wakeUpState != null;
+        if (isWakeUpStateValid)
+        {
+            wakeUpState.SetWakeUpType(snapshot.scheduledWakeUpType);
+        }
+
+        LayingDownState layState = GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
+        bool isLayStateValid = layState != null;
+        if (isLayStateValid)
+        {
+            layState.SetFromRoll(snapshot.isFromRoll);
+        }
+    }
 
     public void Initialize(PlayerController playerController, PlayerConfigSO playerConfig)
     {

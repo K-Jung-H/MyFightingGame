@@ -128,7 +128,7 @@ public class GroundSmashState : HurtStateBase
     {
         base.Enter();
         
-        float impactFallSpeed = physics.GetVelocity().y;
+        float impactFallSpeed = physics.GetLastImpactFallSpeed();
         isBouncing = impactFallSpeed <= config.GetBounceVelocityThreshold();
 
         if (isBouncing)

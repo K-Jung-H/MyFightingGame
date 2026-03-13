@@ -1,14 +1,19 @@
-using System.Collections.Generic;
+using System;
 
-public class InputBuffer
+public class InputBuffer : ISnapshotSync
 {
     private PlayerController controller;
-    private LinkedList<PlayerInput> buffer = new LinkedList<PlayerInput>();
+    private PlayerInput[] buffer;
+    private int head;
+    private int count;
     private int bufferSize;
 
     public InputBuffer(int size = 60)
     {
         bufferSize = size;
+        buffer = new PlayerInput[bufferSize];
+        head = 0;
+        count = 0;
     }
 
     public void Initialize(PlayerController playerController)
@@ -16,34 +21,60 @@ public class InputBuffer
         controller = playerController;
     }
 
+    public void ExportState(ref PlayerSnapshot snapshot)
+    {
+        bool isArrayMissing = snapshot.inputBufferState.inputs == null || snapshot.inputBufferState.inputs.Length != bufferSize;
+        if (isArrayMissing)
+        {
+            snapshot.inputBufferState.inputs = new PlayerInput[bufferSize];
+        }
+
+        Array.Copy(buffer, snapshot.inputBufferState.inputs, bufferSize);
+        snapshot.inputBufferState.head = head;
+        snapshot.inputBufferState.count = count;
+    }
+
+    public void ImportState(PlayerSnapshot snapshot)
+    {
+        bool isStateValid = snapshot.inputBufferState.inputs != null;
+        if (isStateValid)
+        {
+            Array.Copy(snapshot.inputBufferState.inputs, buffer, bufferSize);
+        }
+        head = snapshot.inputBufferState.head;
+        count = snapshot.inputBufferState.count;
+    }
+
     public void AddInput(PlayerInput input)
     {
-        bool hasPreviousInput = buffer.Count > 0;
+        bool hasPreviousInput = count > 0;
         if (hasPreviousInput)
         {
-            PlayerInput lastInput = buffer.First.Value;
+            PlayerInput lastInput = buffer[head];
             bool isSameAsPrevious = lastInput.flags == input.flags;
 
             if (isSameAsPrevious)
             {
                 lastInput.frame = input.frame;
-                buffer.First.Value = lastInput;
+                buffer[head] = lastInput;
                 return;
             }
         }
 
-        buffer.AddFirst(input);
+        head = (head - 1 + bufferSize) % bufferSize;
+        buffer[head] = input;
         
-        bool isBufferOverflow = buffer.Count > bufferSize;
-        if (isBufferOverflow)
+        bool isBufferNotFull = count < bufferSize;
+        if (isBufferNotFull)
         {
-            buffer.RemoveLast();
+            count++;
         }
     }
 
     public void Clear()
     {
-        buffer.Clear();
+        head = 0;
+        count = 0;
     }
 
     public CommandDefinition CheckCommands(CommandListSO commandList, int currentFrame, PlayerState_Type currentState)
@@ -56,39 +87,33 @@ public class InputBuffer
             bool hasStateRestriction = command.validStates != 0;
             bool isStateValid = (command.validStates & currentState) != 0;
 
-            if (hasStateRestriction && !isStateValid)
-            {
-                continue;
-            }
+            if (hasStateRestriction && !isStateValid) continue;
 
             bool isSequenceMatched = CheckSequence(command, currentFrame);
-            if (isSequenceMatched)
-            {
-                return command;
-            }
+            if (isSequenceMatched) return command;
         }
         return null;
     }
 
     private bool CheckSequence(CommandDefinition command, int currentFrame)
     {
-        bool isSequenceInvalid = command.sequence == null || command.sequence.Count == 0;
+        bool isSequenceInvalid = command.sequence == null || command.sequence.Count == 0 || count == 0;
         if (isSequenceInvalid) return false;
 
         int stepIndex = command.sequence.Count - 1;
         int frameLimit = currentFrame - command.timeWindowFrames;
-
         InputStateTracker tracker = controller.GetTracker();
 
-        var latestInput = buffer.First.Value;
+        PlayerInput latestInput = buffer[head];
         bool isLatestMatched = CheckStepMatch(command.sequence[stepIndex], tracker, latestInput.flags);
         if (!isLatestMatched) return false;
 
         stepIndex--; 
 
-        var currentNode = buffer.First.Next;
+        int currentIndex = (head + 1) % bufferSize;
+        int checkedCount = 1;
         
-        while (currentNode != null)
+        while (checkedCount < count)
         {
             if (stepIndex < 0) break;
 
@@ -109,7 +134,7 @@ public class InputBuffer
                 continue; 
             }
 
-            var buffered = currentNode.Value;
+            PlayerInput buffered = buffer[currentIndex];
             bool isTooOld = buffered.frame < frameLimit;
             if (isTooOld) break;
 
@@ -119,7 +144,8 @@ public class InputBuffer
                 stepIndex--;
             }
 
-            currentNode = currentNode.Next;
+            currentIndex = (currentIndex + 1) % bufferSize;
+            checkedCount++;
         }
 
         while (stepIndex >= 0 && command.sequence[stepIndex].executeType == InputExecuteType.Hold)
@@ -143,26 +169,13 @@ public class InputBuffer
     private bool CheckStepMatch(CommandStep step, InputStateTracker tracker, InputFlags flags)
     {
         bool isHoldType = step.executeType == InputExecuteType.Hold;
-        if (isHoldType)
-        {
-            return tracker.GetHoldDuration(step.requiredFlags) >= step.requiredHoldFrames;
-        }
+        if (isHoldType) return tracker.GetHoldDuration(step.requiredFlags) >= step.requiredHoldFrames;
 
-        if (step.isExactMatchRequired)
-        {
-            return flags == step.requiredFlags;
-        }
-        else
-        {
-            bool isNoneRequired = step.requiredFlags == InputFlags.None;
-            if (isNoneRequired)
-            {
-                return flags == InputFlags.None;
-            }
-            else
-            {
-                return (flags & step.requiredFlags) == step.requiredFlags;
-            }
-        }
+        if (step.isExactMatchRequired) return flags == step.requiredFlags;
+        
+        bool isNoneRequired = step.requiredFlags == InputFlags.None;
+        if (isNoneRequired) return flags == InputFlags.None;
+        
+        return (flags & step.requiredFlags) == step.requiredFlags;
     }
 }

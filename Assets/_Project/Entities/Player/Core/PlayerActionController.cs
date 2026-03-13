@@ -140,10 +140,10 @@ public class ActionBufferManager
         pendingAction = null;
     }
 
-    public bool IsBufferEmpty()
-    {
-        return !pendingAction.HasValue;
-    }
+    public bool IsBufferEmpty() => !pendingAction.HasValue;
+
+    public BufferedAction? GetPendingAction() => pendingAction;
+    public void SetPendingAction(BufferedAction? action) => pendingAction = action;
 }
 
 public class PlayerActionController
@@ -170,6 +170,45 @@ public class PlayerActionController
 
         actionBuffer = new ActionBufferManager();
         actionBuffer.InitializeBuffer();
+    }
+
+    public void ExportState(ref PlayerSnapshot snapshot)
+    {
+        inputBuffer.ExportState(ref snapshot);
+
+        bool isComboArrayMissing = snapshot.actionControllerState.comboSequence == null || snapshot.actionControllerState.comboSequence.Length != 10;
+        if (isComboArrayMissing)
+        {
+            snapshot.actionControllerState.comboSequence = new InputFlags[10];
+        }
+
+        int currentComboCount = comboSequence.Count;
+        for (int i = 0; i < currentComboCount; i++)
+        {
+            snapshot.actionControllerState.comboSequence[i] = comboSequence[i];
+        }
+
+        snapshot.actionControllerState.comboCount = currentComboCount;
+        snapshot.actionControllerState.pendingAction = actionBuffer.GetPendingAction();
+    }
+
+    public void ImportState(PlayerSnapshot snapshot)
+    {
+        inputBuffer.ImportState(snapshot);
+
+        comboSequence.Clear();
+        int savedComboCount = snapshot.actionControllerState.comboCount;
+        bool hasValidComboArray = snapshot.actionControllerState.comboSequence != null;
+        
+        if (hasValidComboArray)
+        {
+            for (int i = 0; i < savedComboCount; i++)
+            {
+                comboSequence.Add(snapshot.actionControllerState.comboSequence[i]);
+            }
+        }
+
+        actionBuffer.SetPendingAction(snapshot.actionControllerState.pendingAction);
     }
 
     public void ProcessInput(PlayerInput currentInput, InputFlags currentKeyDownFlags, int currentFrame, PlayerState_Type currentState)

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerPhysics
+public class PlayerPhysics : ISnapshotSync
 {
     private Vector3 position;
     private Vector3 velocity;
@@ -11,6 +11,31 @@ public class PlayerPhysics
     private bool isGrounded;
     private bool isRootMotionActiveThisFrame;
     private PlayerConfigSO config;
+    private float lastImpactFallSpeed;
+
+    public void ExportState(ref PlayerSnapshot snapshot)
+    {
+        snapshot.position = this.position;
+        snapshot.velocity = this.velocity;
+        snapshot.depthAxis = this.depthAxis;
+        snapshot.currentDirection = this.currentDirection;
+        snapshot.lookDirection = this.lookDirection;
+        snapshot.isGrounded = this.isGrounded;
+        snapshot.isRootMotionActiveThisFrame = this.isRootMotionActiveThisFrame;
+        snapshot.lastImpactFallSpeed = this.lastImpactFallSpeed;
+    }
+
+    public void ImportState(PlayerSnapshot snapshot)
+    {
+        this.position = snapshot.position;
+        this.velocity = snapshot.velocity;
+        this.depthAxis = snapshot.depthAxis;
+        this.currentDirection = snapshot.currentDirection;
+        this.lookDirection = snapshot.lookDirection;
+        this.isGrounded = snapshot.isGrounded;
+        this.isRootMotionActiveThisFrame = snapshot.isRootMotionActiveThisFrame;
+        this.lastImpactFallSpeed = snapshot.lastImpactFallSpeed;
+    }
 
     public void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig)
     {
@@ -20,6 +45,7 @@ public class PlayerPhysics
         currentDirection = Vector3.forward;
         lookDirection = Vector3.forward;
         config = playerConfig;
+        lastImpactFallSpeed = 0f;
     }
 
     public void UpdateLookDirection(ITargetable targetEntity, PlayerState_Type currentState, bool isHoming = false)
@@ -57,6 +83,7 @@ public class PlayerPhysics
             bool isFalling = velocity.y < 0f;
             if (isFalling)
             {
+                lastImpactFallSpeed = velocity.y;
                 velocity.y = 0f;
             }
             position.y = 0f;
@@ -89,4 +116,5 @@ public class PlayerPhysics
     public Vector3 GetLookDirection() => lookDirection;
     public Vector3 GetCurrentDirection() => currentDirection;
     public void SetCurrentDirection(Vector3 dir) => currentDirection = dir;
+    public float GetLastImpactFallSpeed() => lastImpactFallSpeed;
 }
