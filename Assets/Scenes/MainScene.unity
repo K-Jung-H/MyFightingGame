@@ -629,7 +629,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraManager
   playerOne: {fileID: 0}
   playerTwo: {fileID: 0}
-  isReverseView: 0
+  isReverseView: 1
   heightOffset: 2
   distanceOffset: 5
   zoomSensitivity: 1

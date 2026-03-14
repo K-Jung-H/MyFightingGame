@@ -27,66 +27,43 @@ public struct GameStateSnapshot
     public int tick;
     public PlayerSnapshot p1Snapshot;
     public PlayerSnapshot p2Snapshot;
+    public FPVector3 sharedDepthAxis;
 }
 
 public class GameLoopManager : MonoBehaviour
 {
-    [Header("Camera Manager")]
     [SerializeField] private CameraManager cameraManager;
-
-    [Header("Global Settings")]
     [SerializeField] private float playerCollisionMinDistance = 1.0f;
     [SerializeField] private float globalGravity = 0.02f;
-
-    [Header("Players")]
     [SerializeField] private PlayerSessionContext playerOne;
     [SerializeField] private PlayerSessionContext playerTwo;
-
     [SerializeField] private Vector3 p1SpawnPos = new Vector3(-2, 0, 0);
     [SerializeField] private Vector3 p2SpawnPos = new Vector3(2, 0, 0);
-
-    [Header("UI Managers")]
     [SerializeField] private HealthBarController p1HealthBar;
     [SerializeField] private HealthBarController p2HealthBar;
-
-    [Header("Network")]
     [SerializeField] private NetworkSessionManager networkSession;
-
-    [Header("Rollback Debug")]
     [SerializeField] private bool isDebugRollbackEnabled = false;
     [SerializeField] private int debugRollbackFrames = 5;
     [SerializeField] private int debugRollbackInterval = 30;
 
     private const int ROLLBACK_WINDOW = 60;
-    
+
     private GameStateSnapshot[] stateBuffer;
     private InputFlags[] p1InputBuffer;
     private InputFlags[] p2InputBuffer;
-    
     private LocalInputProvider inputProvider;
     private int currentTick;
     private int latestConfirmedTick;
-    
     private bool isSimulationRunning;
     private bool isRoundOver;
     private bool isResimulating;
-
-    public int GetCurrentTick() => currentTick;
-    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
-    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
-    public PlayerController GetPlayerOneController() => playerOne.controller;
-    public PlayerController GetPlayerTwoController() => playerTwo.controller;
-    private void TriggerDebugRollback()
-    {
-        int rollbackTargetTick = currentTick - debugRollbackFrames;
-        
-        Resimulate(rollbackTargetTick, currentTick);
-    }
+    private FPVector3 sharedDepthAxis;
 
     private void Awake()
     {
+        Time.fixedDeltaTime = 1f / 60f;
+        Application.targetFrameRate = 120;
+
         InitializeMatch(false);
 
         bool hasNetworkSession = networkSession != null;
@@ -96,14 +73,55 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+    }
+
+    private void FixedUpdate()
+    {
+        if (!isSimulationRunning) return;
+
+        bool hasNetworkSession = networkSession != null;
+        bool isNetworkActive = hasNetworkSession && networkSession.GetIsInitialized();
+
+        if (hasNetworkSession)
+        {
+            networkSession.UpdateNetwork();
+        }
+
+        bool isOfflineMode = !isNetworkActive || !networkSession.GetIsConnected();
+        if (isOfflineMode)
+        {
+            ProcessOfflineTick();
+            return;
+        }
+
+        ProcessOnlineTick();
+    }
+
+    public int GetCurrentTick() => currentTick;
+    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
+    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
+    public PlayerController GetPlayerOneController() => playerOne.controller;
+    public PlayerController GetPlayerTwoController() => playerTwo.controller;
+
+    private void TriggerDebugRollback()
+    {
+        int rollbackTargetTick = currentTick - debugRollbackFrames;
+        Resimulate(rollbackTargetTick, currentTick);
+    }
+
     private void InitializeRollbackBuffers()
     {
         stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
         p1InputBuffer = new InputFlags[ROLLBACK_WINDOW];
         p2InputBuffer = new InputFlags[ROLLBACK_WINDOW];
-        
+
         latestConfirmedTick = 0;
         isResimulating = false;
+        sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64.FromFloat(1f));
     }
 
     private void InitializeMatch(bool isNetworkReset)
@@ -160,7 +178,7 @@ public class GameLoopManager : MonoBehaviour
         }
 
         isSimulationRunning = true;
-        
+
         SaveGameState(currentTick);
     }
 
@@ -180,8 +198,8 @@ public class GameLoopManager : MonoBehaviour
         if (hasRenderer)
         {
             context.renderer.InitializeRenderer(
-                context.controller, 
-                context.characterData.animationMap.stateMap, 
+                context.controller,
+                context.characterData.animationMap.stateMap,
                 context.characterData.effectTable
             );
         }
@@ -190,11 +208,11 @@ public class GameLoopManager : MonoBehaviour
     private void HandlePlayerDefeated(PlayerController defeatedPlayer)
     {
         if (isRoundOver) return;
-        
+
         isRoundOver = true;
 
         bool isPlayerOneDefeated = defeatedPlayer == playerOne.controller;
-        
+
         if (isPlayerOneDefeated)
         {
             TriggerRoundEnd(playerTwo, playerOne);
@@ -206,7 +224,7 @@ public class GameLoopManager : MonoBehaviour
     }
 
     private void TriggerRoundEnd(PlayerSessionContext winner, PlayerSessionContext loser)
-    {        
+    {
         bool isWinnerValid = winner != null && winner.controller != null;
         if (isWinnerValid)
         {
@@ -214,61 +232,18 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        bool isUpdateValid = isSimulationRunning && inputProvider != null && cameraManager != null;
-        if (isUpdateValid)
-        {
-            Vector3 currentDepthAxis = cameraManager.GetDepthAxis();
-            
-            bool isP1Valid = playerOne.controller != null;
-            if (isP1Valid)
-            {
-                playerOne.controller.GetPhysics().SetDepthAxis(currentDepthAxis);
-            }
-            
-            bool isP2Valid = playerTwo.controller != null;
-            if (isP2Valid)
-            {
-                playerTwo.controller.GetPhysics().SetDepthAxis(currentDepthAxis);
-            }
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!isSimulationRunning) return;
-
-        bool hasNetworkSession = networkSession != null;
-        bool isNetworkActive = hasNetworkSession && networkSession.GetIsInitialized();
-
-        if (hasNetworkSession)
-        {
-            networkSession.UpdateNetwork();
-        }
-
-        bool isOfflineMode = !isNetworkActive || !networkSession.GetIsConnected();
-        if (isOfflineMode)
-        {
-            ProcessOfflineTick();
-            return;
-        }
-
-        ProcessOnlineTick();
-    }
-
     private void ProcessOfflineTick()
     {
         PlayerInput p1Local = inputProvider.GetCurrentInput(currentTick, 0, !cameraManager.IsPlayerOneOnRightSide());
         PlayerInput p2Local = inputProvider.GetCurrentInput(currentTick, 1, cameraManager.IsPlayerOneOnRightSide());
-        
+
         int bufferIndex = currentTick % ROLLBACK_WINDOW;
         p1InputBuffer[bufferIndex] = p1Local.flags;
         p2InputBuffer[bufferIndex] = p2Local.flags;
 
         RunTick(p1Local, p2Local);
         SaveGameState(currentTick);
-        
+
         currentTick++;
 
         bool shouldForceRollback = isDebugRollbackEnabled && (currentTick % debugRollbackInterval == 0) && currentTick > debugRollbackFrames;
@@ -290,7 +265,7 @@ public class GameLoopManager : MonoBehaviour
 
         int bufferIndex = currentTick % ROLLBACK_WINDOW;
         if (isServer) p1InputBuffer[bufferIndex] = localInput.flags;
-        else          p2InputBuffer[bufferIndex] = localInput.flags;
+        else p2InputBuffer[bufferIndex] = localInput.flags;
 
         InputFlags predictedRemote = InputFlags.None;
         bool hasPreviousTick = currentTick > 0;
@@ -301,10 +276,10 @@ public class GameLoopManager : MonoBehaviour
         }
 
         if (isServer) p2InputBuffer[bufferIndex] = predictedRemote;
-        else          p1InputBuffer[bufferIndex] = predictedRemote;
+        else p1InputBuffer[bufferIndex] = predictedRemote;
 
         int rollbackTick = -1;
-        
+
         for (int t = latestConfirmedTick; t <= currentTick; t++)
         {
             bool hasRealInput = networkSession.TryGetRemoteInput(t, out InputFlags actualRemote);
@@ -312,12 +287,12 @@ public class GameLoopManager : MonoBehaviour
             {
                 int idx = t % ROLLBACK_WINDOW;
                 InputFlags predicted = isServer ? p2InputBuffer[idx] : p1InputBuffer[idx];
-                
+
                 bool isMismatch = predicted != actualRemote;
                 if (isMismatch)
                 {
                     if (isServer) p2InputBuffer[idx] = actualRemote;
-                    else          p1InputBuffer[idx] = actualRemote;
+                    else p1InputBuffer[idx] = actualRemote;
 
                     bool isFirstMismatch = rollbackTick == -1 || t < rollbackTick;
                     if (isFirstMismatch)
@@ -341,10 +316,10 @@ public class GameLoopManager : MonoBehaviour
 
         PlayerInput p1Final = new PlayerInput { flags = p1InputBuffer[bufferIndex] };
         PlayerInput p2Final = new PlayerInput { flags = p2InputBuffer[bufferIndex] };
-        
+
         RunTick(p1Final, p2Final);
         SaveGameState(currentTick);
-        
+
         currentTick++;
     }
 
@@ -352,10 +327,11 @@ public class GameLoopManager : MonoBehaviour
     {
         int index = tick % ROLLBACK_WINDOW;
         stateBuffer[index].tick = tick;
-        
+        stateBuffer[index].sharedDepthAxis = sharedDepthAxis;
+
         bool isP1Valid = playerOne.controller != null;
         if (isP1Valid) playerOne.controller.ExportState(ref stateBuffer[index].p1Snapshot);
-        
+
         bool isP2Valid = playerTwo.controller != null;
         if (isP2Valid) playerTwo.controller.ExportState(ref stateBuffer[index].p2Snapshot);
     }
@@ -364,10 +340,11 @@ public class GameLoopManager : MonoBehaviour
     {
         int index = tick % ROLLBACK_WINDOW;
         GameStateSnapshot snapshot = stateBuffer[index];
+        sharedDepthAxis = snapshot.sharedDepthAxis;
 
         bool isP1Valid = playerOne.controller != null;
         if (isP1Valid) playerOne.controller.ImportState(snapshot.p1Snapshot);
-        
+
         bool isP2Valid = playerTwo.controller != null;
         if (isP2Valid) playerTwo.controller.ImportState(snapshot.p2Snapshot);
     }
@@ -375,22 +352,22 @@ public class GameLoopManager : MonoBehaviour
     private void Resimulate(int fromTick, int toTick)
     {
         isResimulating = true;
-        
+
         int loadTick = Mathf.Max(0, fromTick - 1);
         LoadGameState(loadTick);
-        
+
         int simulatedTick = loadTick + 1;
         while (simulatedTick < toTick)
         {
             int index = simulatedTick % ROLLBACK_WINDOW;
             PlayerInput p1Input = new PlayerInput { flags = p1InputBuffer[index] };
             PlayerInput p2Input = new PlayerInput { flags = p2InputBuffer[index] };
-            
+
             RunTick(p1Input, p2Input);
             SaveGameState(simulatedTick);
             simulatedTick++;
         }
-        
+
         isResimulating = false;
     }
 
@@ -402,14 +379,50 @@ public class GameLoopManager : MonoBehaviour
             p1Input.flags = InputFlags.None;
             p2Input.flags = InputFlags.None;
         }
-        
+
+        bool isBothControllersValid = playerOne.controller != null && playerTwo.controller != null;
+        if (isBothControllersValid)
+        {
+            FPVector3 p1LogicalPos = playerOne.controller.GetFPPosition();
+            FPVector3 p2LogicalPos = playerTwo.controller.GetFPPosition();
+
+            FPVector3 diffPos = p2LogicalPos - p1LogicalPos;
+            diffPos.y = new FP64(0);
+
+            bool isOverlapping = diffPos.x.rawValue == 0 && diffPos.z.rawValue == 0;
+            if (isOverlapping)
+            {
+                diffPos.x = FP64.FromFloat(1f);
+            }
+
+            FPVector3 up = FPVector3.FromVector3(Vector3.up);
+            FPVector3 normal1 = FPVector3.Cross(up, diffPos).Normalized();
+            FPVector3 normal2 = FPVector3.Cross(diffPos, up).Normalized();
+
+            FP64 dot1 = FPVector3.Dot(normal1, sharedDepthAxis);
+            FP64 dot2 = FPVector3.Dot(normal2, sharedDepthAxis);
+
+            bool isNormal1Closer = dot1.rawValue > dot2.rawValue;
+            if (isNormal1Closer)
+            {
+                sharedDepthAxis = normal1;
+            }
+            else
+            {
+                sharedDepthAxis = normal2;
+            }
+
+            playerOne.controller.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
+            playerTwo.controller.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
+        }
+
         if (playerOne.controller != null) playerOne.controller.UpdateTick(p1Input);
         if (playerTwo.controller != null) playerTwo.controller.UpdateTick(p2Input);
 
         ResolveAttacks(playerOne, playerTwo);
         ResolveAttacks(playerTwo, playerOne);
         ResolvePlayerCollision();
-        
+
         if (!isResimulating)
         {
             SyncVisuals();
@@ -423,13 +436,21 @@ public class GameLoopManager : MonoBehaviour
         CollisionBox[] defenderBoxes = defenderContext.controller.GetConfig().GetHurtboxBoxes(Hurtbox_Type.Standing);
 
         bool isHit = HitboxManager.EvaluateHit(
-            attackerContext.controller.GetPosition(), attackerContext.controller.GetPhysics().GetLookDirection(), attackerAction.frameData.hitboxEvents, attackerContext.controller.GetStateMachine().GetStateFrameCounter(),
-            defenderContext.controller.GetPosition(), defenderContext.controller.GetPhysics().GetLookDirection(), defenderBoxes,
-            out HitboxEvent hitEvent, out Vector3 hitPoint, out string debugReason
+            attackerContext.controller.GetFPPosition(),
+            attackerContext.controller.GetFPLookDirection(),
+            attackerAction.frameData.hitboxEvents,
+            attackerContext.controller.GetStateMachine().GetStateFrameCounter(),
+            defenderContext.controller.GetFPPosition(),
+            defenderContext.controller.GetFPLookDirection(),
+            defenderBoxes,
+            out HitboxEvent hitEvent,
+            out FPVector3 fpHitPoint,
+            out string debugReason
         );
 
         if (isHit)
         {
+            Vector3 hitPoint = fpHitPoint.ToVector3();
             ProcessSuccessfulHit(attackerContext, defenderContext, hitEvent, hitPoint);
         }
     }
@@ -439,7 +460,7 @@ public class GameLoopManager : MonoBehaviour
         actionData = attacker.GetStateMachine().GetCurrentActionData();
         bool isAttacking = attacker.GetStateMachine().GetCurrentState() == PlayerState_Type.Attacking;
         bool hasValidData = actionData != null && actionData.frameData.hitboxEvents != null;
-        
+
         return isAttacking && hasValidData;
     }
 
@@ -454,10 +475,10 @@ public class GameLoopManager : MonoBehaviour
         attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
 
         Vector3 worldPushback = CalculateWorldPushback(attacker.GetPhysics().GetLookDirection(), hitEvent.localPushbackVector);
-        
+
         HitboxEvent worldSpaceHitEvent = hitEvent;
         worldSpaceHitEvent.localPushbackVector = worldPushback;
-        
+
         EvaluationResult hitResult = defender.GetCombat().ProcessIncomingHit(worldSpaceHitEvent, defender);
 
         bool isHitEvaded = hitResult.isEvaded;
@@ -502,7 +523,7 @@ public class GameLoopManager : MonoBehaviour
 
         Vector3 p1Pos = playerOne.controller.GetPosition();
         Vector3 p2Pos = playerTwo.controller.GetPosition();
-        
+
         Vector3 diff = p1Pos - p2Pos;
         diff.y = 0;
         float distanceSqr = diff.sqrMagnitude;

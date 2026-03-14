@@ -9,7 +9,6 @@ public abstract class HurtStateBase : PlayerStateBase
 
     public override void Enter()
     {
-        Debug.Log($"[HurtState] Entered State: {GetStateType()}");
         currentHurtInfo = combat.GetCurrentHurtInfo();
         currentStunFrames = currentHurtInfo.hurtStunFrames;
         stateMachine.ClearCurrentAction();
@@ -75,22 +74,22 @@ public class StunningState : HurtStateBase
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.Stunning;
 
-    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.LayingDown;
-
     public override void Enter()
     {
         base.Enter();
-        
+
         currentStunFrames = config.GetStunningFrames();
 
         bool isFromStand = physics.GetPosition().y <= 0f;
         if (isFromStand)
         {
-            Vector3 horizontalPushback = currentHurtInfo.pushbackVector;
+            Vector3 horizontalPushback = currentHurtInfo.pushbackVector.ToVector3();
             horizontalPushback.y = 0f;
             physics.ApplyPushback(horizontalPushback);
         }
     }
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.LayingDown;
 }
 
 public class AirHitState : HurtStateBase
@@ -98,8 +97,6 @@ public class AirHitState : HurtStateBase
     public AirHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.AirHit;
-
-    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
 
     public override void UpdateTick(PlayerInput input)
     {
@@ -112,6 +109,8 @@ public class AirHitState : HurtStateBase
             stateMachine.TransitionTo(PlayerState_Type.GroundSmash);
         }
     }
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
 }
 
 public class GroundSmashState : HurtStateBase
@@ -122,12 +121,10 @@ public class GroundSmashState : HurtStateBase
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.GroundSmash;
 
-    protected override PlayerState_Type GetRecoveryState() => isBouncing ? PlayerState_Type.AirHit : PlayerState_Type.LayingDown;
-
     public override void Enter()
     {
         base.Enter();
-        
+
         float impactFallSpeed = physics.GetLastImpactFallSpeed();
         isBouncing = impactFallSpeed <= config.GetBounceVelocityThreshold();
 
@@ -146,6 +143,8 @@ public class GroundSmashState : HurtStateBase
             physics.SetVelocity(zeroVelocity);
         }
     }
+
+    protected override PlayerState_Type GetRecoveryState() => isBouncing ? PlayerState_Type.AirHit : PlayerState_Type.LayingDown;
 }
 
 public class LayingDownState : HurtStateBase
@@ -155,18 +154,6 @@ public class LayingDownState : HurtStateBase
     public LayingDownState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.LayingDown;
-
-    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
-
-    public void SetFromRoll(bool value)
-    {
-        isFromRoll = value;
-    }
-
-    public bool IsFromRoll()
-    {
-        return isFromRoll;
-    }
 
     public override void Enter()
     {
@@ -194,16 +181,28 @@ public class LayingDownState : HurtStateBase
 
             WakeUp_Type selectedType = EvaluateWakeUpInput(input);
             WakeUpState wakeUpState = stateMachine.GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
-            
+
             bool isWakeUpStateValid = wakeUpState != null;
             if (isWakeUpStateValid)
             {
                 wakeUpState.SetWakeUpType(selectedType);
             }
-            
+
             stateMachine.TransitionTo(PlayerState_Type.WakeUp);
         }
     }
+
+    public void SetFromRoll(bool value)
+    {
+        isFromRoll = value;
+    }
+
+    public bool IsFromRoll()
+    {
+        return isFromRoll;
+    }
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
 
     private WakeUp_Type EvaluateWakeUpInput(PlayerInput input)
     {
@@ -231,23 +230,11 @@ public class WakeUpState : HurtStateBase
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.WakeUp;
 
-    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
-
-    public void SetWakeUpType(WakeUp_Type type)
-    {
-        scheduledWakeUpType = type;
-    }
-
-    public WakeUp_Type GetScheduledWakeUpType()
-    {
-        return scheduledWakeUpType;
-    }
-
     public override void Enter()
     {
         base.Enter();
         currentStunFrames = config.GetWakeUpFrames(scheduledWakeUpType);
-        
+
         Vector3 zeroVelocity = Vector3.zero;
         zeroVelocity.y = physics.GetVelocity().y;
         physics.SetVelocity(zeroVelocity);
@@ -262,7 +249,7 @@ public class WakeUpState : HurtStateBase
         if (currentStunFrames <= 0)
         {
             bool isGroundRoll = scheduledWakeUpType == WakeUp_Type.RollLeft || scheduledWakeUpType == WakeUp_Type.RollRight;
-            
+
             if (isGroundRoll)
             {
                 LayingDownState layState = stateMachine.GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
@@ -271,7 +258,7 @@ public class WakeUpState : HurtStateBase
                 {
                     layState.SetFromRoll(true);
                 }
-                
+
                 stateMachine.TransitionTo(PlayerState_Type.LayingDown);
             }
             else
@@ -280,4 +267,16 @@ public class WakeUpState : HurtStateBase
             }
         }
     }
+
+    public void SetWakeUpType(WakeUp_Type type)
+    {
+        scheduledWakeUpType = type;
+    }
+
+    public WakeUp_Type GetScheduledWakeUpType()
+    {
+        return scheduledWakeUpType;
+    }
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
 }

@@ -158,4 +158,9 @@ public class PlayerController : ITargetable, ISnapshotSync
     public PlayerConfigSO GetConfig() => config;
     public int GetCurrentFrame() => currentFrame;
     public InputStateTracker GetTracker() => inputTracker;
+
+    public FPVector3 GetFPPosition() => physics.GetFPPosition(); 
+    public FPVector3 GetFPLookDirection() => physics.GetFPLookDirection(); 
+
+
 }

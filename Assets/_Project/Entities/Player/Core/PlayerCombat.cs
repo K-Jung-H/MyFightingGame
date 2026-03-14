@@ -1,30 +1,24 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerCombat
 {
-    PlayerConfigSO config;
-
+    private PlayerConfigSO config;
     private int hitstopCounter;
     private HurtInfo currentHurtInfo;
     private HashSet<int> registeredHitGroupIds;
     private CombatEvaluator evaluator;
-
-    public event System.Action<int, int> OnHealthChanged;
-    public event System.Action<PlayerController> OnDefeated;
-
     private int maxHealth;
     private int currentHealth;
 
+    public event System.Action<int, int> OnHealthChanged;
+    public event System.Action<PlayerController> OnDefeated;
 
     public PlayerCombat(PlayerConfigSO playerconfig)
     {
         config = playerconfig;
         registeredHitGroupIds = new HashSet<int>();
-
         InitializeHealth();
-
         evaluator = new CombatEvaluator();
         evaluator.Initialize(config);
     }
@@ -86,9 +80,8 @@ public class PlayerCombat
     public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController controller)
     {
         PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
-        
         bool isMoving = currentState != PlayerState_Type.Idle && currentState != PlayerState_Type.Crouching;
-        
+
         if (currentState == PlayerState_Type.Crouching)
         {
             Vector3 horizontalVelocity = controller.GetPhysics().GetVelocity();
@@ -109,10 +102,9 @@ public class PlayerCombat
     public void ApplyHit(EvaluationResult result, PlayerController controller)
     {
         PlayerStateMachine stateMachine = controller.GetStateMachine();
-
         int damage = result.hurtInfo.damage;
         bool isDamageValid = damage > 0;
-        
+
         if (isDamageValid)
         {
             currentHealth = Mathf.Max(0, currentHealth - damage);
@@ -129,24 +121,23 @@ public class PlayerCombat
 
         PlayerPhysics physics = controller.GetPhysics();
         PlayerActionController actionController = controller.GetActionController();
-
         PlayerState_Type currentStateType = stateMachine.GetCurrentState();
         HurtInfo hurtData = result.hurtInfo;
         currentHurtInfo = hurtData;
-        Vector3 finalPushback = hurtData.pushbackVector;
+        FPVector3 finalPushback = hurtData.pushbackVector;
 
-        bool isAlreadyInAirHit = currentStateType == PlayerState_Type.AirHit || 
+        bool isAlreadyInAirHit = currentStateType == PlayerState_Type.AirHit ||
                                  currentStateType == PlayerState_Type.GroundSmash ||
                                  currentStateType == PlayerState_Type.LayingDown ||
                                  currentStateType == PlayerState_Type.WakeUp;
 
-        bool isJuggleBumpNeeded = (!physics.GetIsGrounded() || isAlreadyInAirHit) && finalPushback.y < 0.25f;
+        bool isJuggleBumpNeeded = (!physics.GetIsGrounded() || isAlreadyInAirHit) && finalPushback.y.rawValue < 16384;
         if (isJuggleBumpNeeded)
         {
-            finalPushback.y = 0.25f; 
+            finalPushback.y = FP64.FromFloat(0.25f);
         }
 
-        physics.SetVelocity(finalPushback);
+        physics.SetVelocity(finalPushback.ToVector3());
 
         PlayerState_Type nextState = result.targetState;
 

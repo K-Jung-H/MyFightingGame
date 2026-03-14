@@ -50,12 +50,9 @@ public abstract class PlayerStateBase
         return inputVector.normalized;
     }
 
-
     protected void ProcessMovementLogic(PlayerInput input)
     {
         Vector3 inputDir = GetRawInputVector(input.flags);
-        inputDir.x = 0f; 
-
         Vector3 lookDir = physics.GetLookDirection();
         Vector3 depthAxis = physics.GetDepthAxis();
 
@@ -68,7 +65,7 @@ public abstract class PlayerStateBase
         if (isRunning) currentMoveSpeed = config.runSpeed;
         else if (isSprinting) currentMoveSpeed = config.sprintSpeed;
 
-        Vector3 lateralMove = depthAxis * -inputDir.x;
+        Vector3 lateralMove = depthAxis * inputDir.x;
         Vector3 forwardMove = lookDir * inputDir.z;
 
         Vector3 moveVelocity = (forwardMove + lateralMove).normalized * currentMoveSpeed;
@@ -82,6 +79,7 @@ public abstract class PlayerStateBase
             physics.SetCurrentDirection(new Vector3(moveVelocity.x, 0f, moveVelocity.z).normalized);
         }
     }
+
     protected void ProcessCrouchMovementLogic(PlayerInput input)
     {
         Vector3 inputDir = GetRawInputVector(input.flags);

@@ -3,12 +3,8 @@ using UnityEngine;
 public class CombatDebugVisualizer : MonoBehaviour
 {
     [SerializeField] private GameLoopManager gameLoopManager;
-    
-    [Header("Display Target")]
     [SerializeField] private bool isShowingInSceneView = true;
     [SerializeField] private bool isShowingInGameView = true;
-
-    [Header("Display Options")]
     [SerializeField] private bool isShowingHurtboxes = true;
     [SerializeField] private bool isShowingHitboxes = true;
     [SerializeField] private bool isShowingLookDirection = true;
@@ -18,17 +14,6 @@ public class CombatDebugVisualizer : MonoBehaviour
     private void Awake()
     {
         CreateDebugMaterial();
-    }
-
-    private void CreateDebugMaterial()
-    {
-        Shader shader = Shader.Find("Hidden/Internal-Colored");
-        debugMaterial = new Material(shader);
-        debugMaterial.hideFlags = HideFlags.HideAndDontSave;
-        debugMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        debugMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        debugMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
-        debugMaterial.SetInt("_ZWrite", 0);
     }
 
     private void OnDrawGizmos()
@@ -43,7 +28,7 @@ public class CombatDebugVisualizer : MonoBehaviour
 
         bool hasPlayerOne = playerOne != null;
         if (hasPlayerOne) DrawGizmosForPlayer(playerOne);
-        
+
         bool hasPlayerTwo = playerTwo != null;
         if (hasPlayerTwo) DrawGizmosForPlayer(playerTwo);
     }
@@ -63,11 +48,22 @@ public class CombatDebugVisualizer : MonoBehaviour
 
         bool hasPlayerOne = playerOne != null;
         if (hasPlayerOne) DrawGLForPlayer(playerOne);
-        
+
         bool hasPlayerTwo = playerTwo != null;
         if (hasPlayerTwo) DrawGLForPlayer(playerTwo);
 
         GL.PopMatrix();
+    }
+
+    private void CreateDebugMaterial()
+    {
+        Shader shader = Shader.Find("Hidden/Internal-Colored");
+        debugMaterial = new Material(shader);
+        debugMaterial.hideFlags = HideFlags.HideAndDontSave;
+        debugMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        debugMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        debugMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+        debugMaterial.SetInt("_ZWrite", 0);
     }
 
     private void DrawGizmosForPlayer(PlayerController controller)
@@ -92,9 +88,9 @@ public class CombatDebugVisualizer : MonoBehaviour
 
     private void DrawGizmoHurtboxes(PlayerController controller)
     {
-        Hurtbox_Type currentType = Hurtbox_Type.Standing; 
+        Hurtbox_Type currentType = Hurtbox_Type.Standing;
         PlayerConfigSO config = controller.GetConfig();
-        
+
         bool hasConfig = config != null;
         if (!hasConfig) return;
 
@@ -114,7 +110,7 @@ public class CombatDebugVisualizer : MonoBehaviour
         {
             Gizmos.color = new Color(hurtboxColor.r, hurtboxColor.g, hurtboxColor.b, 0.4f);
             Gizmos.DrawCube(box.localPosition, box.extents * 2f);
-            
+
             Gizmos.color = hurtboxColor;
             Gizmos.DrawWireCube(box.localPosition, box.extents * 2f);
         }
@@ -151,7 +147,7 @@ public class CombatDebugVisualizer : MonoBehaviour
 
                 Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
                 Gizmos.DrawCube(activeBox.localPosition, activeBox.extents * 2f);
-                
+
                 Gizmos.color = Color.red;
                 Gizmos.DrawWireCube(activeBox.localPosition, activeBox.extents * 2f);
             }

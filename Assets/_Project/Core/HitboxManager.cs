@@ -3,60 +3,63 @@ using UnityEngine;
 public static class HitboxManager
 {
     public static bool EvaluateHit(
-        Vector3 attackerPos, Vector3 attackerDir, HitboxEvent[] hitboxEvents, int attackerFrame,
-        Vector3 defenderPos, Vector3 defenderDir, CollisionBox[] defenderHurtboxes,
-        out HitboxEvent successfulHit, out Vector3 hitPoint, out string debugReason)
+        FPVector3 attackerPos, FPVector3 attackerDir, HitboxEvent[] hitboxEvents, int attackerFrame,
+        FPVector3 defenderPos, FPVector3 defenderDir, CollisionBox[] defenderHurtboxes,
+        out HitboxEvent successfulHit, out FPVector3 hitPoint, out string debugReason)
     {
         successfulHit = default;
-        hitPoint = Vector3.zero;
+        hitPoint = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
         debugReason = string.Empty;
 
         if (defenderHurtboxes == null || defenderHurtboxes.Length == 0)
         {
-            debugReason = "디펜더의 피격박스(Hurtbox) 데이터가 없거나 배열이 비어있습니다.";
+            debugReason = "HurtboxMissing";
             return false;
         }
 
         if (hitboxEvents == null || hitboxEvents.Length == 0)
         {
-            debugReason = "공격자의 타격박스(Hitbox) 데이터가 없습니다.";
+            debugReason = "HitboxMissing";
             return false;
         }
 
-        Quaternion rotA = attackerDir != Vector3.zero ? Quaternion.LookRotation(attackerDir) : Quaternion.identity;
-        Quaternion rotB = defenderDir != Vector3.zero ? Quaternion.LookRotation(defenderDir) : Quaternion.identity;
+        FPVector3[] axesA = GetAxesFromDirection(attackerDir);
+        FPVector3[] axesB = GetAxesFromDirection(defenderDir);
 
         bool hasActiveBoxThisFrame = false;
-        bool intersectionFailed = false;
+        bool isIntersectionFailed = false;
 
         foreach (var evt in hitboxEvents)
         {
             if (TryGetActiveAttackBox(evt, attackerFrame, out CollisionBox attackBox))
             {
                 hasActiveBoxThisFrame = true;
-                Vector3 worldCenterA = attackerPos + (rotA * attackBox.localPosition);
+
+                FPVector3 fpAttackLocal = FPVector3.FromVector3(attackBox.localPosition);
+                FPVector3 fpAttackExtents = FPVector3.FromVector3(attackBox.extents);
+                FPVector3 worldCenterA = attackerPos + TransformLocalToWorld(fpAttackLocal, axesA);
 
                 for (int i = 0; i < defenderHurtboxes.Length; i++)
                 {
-                    Vector3 worldCenterB = defenderPos + (rotB * defenderHurtboxes[i].localPosition);
+                    FPVector3 fpHurtLocal = FPVector3.FromVector3(defenderHurtboxes[i].localPosition);
+                    FPVector3 fpHurtExtents = FPVector3.FromVector3(defenderHurtboxes[i].extents);
+                    FPVector3 worldCenterB = defenderPos + TransformLocalToWorld(fpHurtLocal, axesB);
 
-                    if (attackBox.extents == Vector3.zero || defenderHurtboxes[i].extents == Vector3.zero)
+                    if (fpAttackExtents.x.rawValue == 0 && fpAttackExtents.y.rawValue == 0 && fpAttackExtents.z.rawValue == 0)
                     {
-                        debugReason = "박스의 Extents(크기)가 Vector3.zero로 설정되어 판정할 수 없습니다.";
+                        debugReason = "ZeroExtents";
                         continue;
                     }
 
-                    if (CheckOBBIntersection(worldCenterA, attackBox.extents, rotA, worldCenterB, defenderHurtboxes[i].extents, rotB))
+                    if (CheckOBBIntersection(worldCenterA, fpAttackExtents, axesA, worldCenterB, fpHurtExtents, axesB))
                     {
                         successfulHit = evt;
-                        Bounds boundsA = new Bounds(worldCenterA, attackBox.extents * 2f);
-                        Bounds boundsB = new Bounds(worldCenterB, defenderHurtboxes[i].extents * 2f);
-                        hitPoint = CalculateIntersectionCenter(boundsA, boundsB);
+                        hitPoint = CalculateIntersectionCenter(worldCenterA, fpAttackExtents, worldCenterB, fpHurtExtents);
                         return true;
                     }
                     else
                     {
-                        intersectionFailed = true;
+                        isIntersectionFailed = true;
                     }
                 }
             }
@@ -64,21 +67,54 @@ public static class HitboxManager
 
         if (!hasActiveBoxThisFrame)
         {
-            debugReason = $"현재 프레임({attackerFrame})에 매칭되는 공격 박스(boxPath)를 찾지 못했습니다.";
+            debugReason = "NoActiveBox";
         }
-        else if (intersectionFailed && string.IsNullOrEmpty(debugReason))
+        else if (isIntersectionFailed && string.IsNullOrEmpty(debugReason))
         {
-            debugReason = "OBB 물리적 교차 판정에서 거리/크기 문제로 빗나갔습니다.";
+            debugReason = "OBBMiss";
         }
 
         return false;
     }
 
-    private static Vector3 CalculateIntersectionCenter(Bounds boxA, Bounds boxB)
+    private static FPVector3[] GetAxesFromDirection(FPVector3 dir)
     {
-        Vector3 minIntersection = Vector3.Max(boxA.min, boxB.min);
-        Vector3 maxIntersection = Vector3.Min(boxA.max, boxB.max);
-        return (minIntersection + maxIntersection) * 0.5f;
+        FPVector3 up = FPVector3.FromVector3(Vector3.up);
+        bool isZeroDir = dir.x.rawValue == 0 && dir.y.rawValue == 0 && dir.z.rawValue == 0;
+        FPVector3 forward = isZeroDir ? FPVector3.FromVector3(Vector3.forward) : dir;
+        FPVector3 right = FPVector3.Cross(up, forward);
+        return new FPVector3[] { right, up, forward };
+    }
+
+    private static FPVector3 TransformLocalToWorld(FPVector3 localPos, FPVector3[] axes)
+    {
+        FPVector3 rightPart = axes[0] * localPos.x;
+        FPVector3 upPart = axes[1] * localPos.y;
+        FPVector3 forwardPart = axes[2] * localPos.z;
+        return rightPart + upPart + forwardPart;
+    }
+
+    private static FPVector3 CalculateIntersectionCenter(FPVector3 centerA, FPVector3 extentsA, FPVector3 centerB, FPVector3 extentsB)
+    {
+        FPVector3 minA = centerA - extentsA;
+        FPVector3 maxA = centerA + extentsA;
+        FPVector3 minB = centerB - extentsB;
+        FPVector3 maxB = centerB + extentsB;
+
+        FPVector3 minIntersection = new FPVector3(
+            FP64.Max(minA.x, minB.x),
+            FP64.Max(minA.y, minB.y),
+            FP64.Max(minA.z, minB.z)
+        );
+
+        FPVector3 maxIntersection = new FPVector3(
+            FP64.Min(maxA.x, maxB.x),
+            FP64.Min(maxA.y, maxB.y),
+            FP64.Min(maxA.z, maxB.z)
+        );
+
+        FP64 half = FP64.FromFloat(0.5f);
+        return (minIntersection + maxIntersection) * half;
     }
 
     private static bool TryGetActiveAttackBox(HitboxEvent hitboxEvent, int currentActionFrame, out CollisionBox activeBox)
@@ -98,32 +134,29 @@ public static class HitboxManager
         return false;
     }
 
-    private static bool CheckOBBIntersection(Vector3 centerA, Vector3 extentsA, Quaternion rotA, Vector3 centerB, Vector3 extentsB, Quaternion rotB)
+    private static bool CheckOBBIntersection(FPVector3 centerA, FPVector3 extentsA, FPVector3[] axesA, FPVector3 centerB, FPVector3 extentsB, FPVector3[] axesB)
     {
-        Vector3[] axesA = new Vector3[] { rotA * Vector3.right, rotA * Vector3.up, rotA * Vector3.forward };
-        Vector3[] axesB = new Vector3[] { rotB * Vector3.right, rotB * Vector3.up, rotB * Vector3.forward };
-
-        Vector3 v = centerB - centerA;
+        FPVector3 v = centerB - centerA;
 
         for (int i = 0; i < 3; i++)
         {
-            float projectionA = extentsA[i];
-            float projectionB = extentsB.x * Mathf.Abs(Vector3.Dot(axesB[0], axesA[i])) +
-                                extentsB.y * Mathf.Abs(Vector3.Dot(axesB[1], axesA[i])) +
-                                extentsB.z * Mathf.Abs(Vector3.Dot(axesB[2], axesA[i]));
+            FP64 projectionA = GetExtentsComponent(extentsA, i);
+            FP64 projectionB = extentsB.x * FP64.Abs(FPVector3.Dot(axesB[0], axesA[i])) +
+                               extentsB.y * FP64.Abs(FPVector3.Dot(axesB[1], axesA[i])) +
+                               extentsB.z * FP64.Abs(FPVector3.Dot(axesB[2], axesA[i]));
 
-            if (Mathf.Abs(Vector3.Dot(v, axesA[i])) > projectionA + projectionB)
+            if (FP64.Abs(FPVector3.Dot(v, axesA[i])).rawValue > (projectionA + projectionB).rawValue)
                 return false;
         }
 
         for (int i = 0; i < 3; i++)
         {
-            float projectionA = extentsA.x * Mathf.Abs(Vector3.Dot(axesA[0], axesB[i])) +
-                                extentsA.y * Mathf.Abs(Vector3.Dot(axesA[1], axesB[i])) +
-                                extentsA.z * Mathf.Abs(Vector3.Dot(axesA[2], axesB[i]));
-            float projectionB = extentsB[i];
+            FP64 projectionA = extentsA.x * FP64.Abs(FPVector3.Dot(axesA[0], axesB[i])) +
+                               extentsA.y * FP64.Abs(FPVector3.Dot(axesA[1], axesB[i])) +
+                               extentsA.z * FP64.Abs(FPVector3.Dot(axesA[2], axesB[i]));
+            FP64 projectionB = GetExtentsComponent(extentsB, i);
 
-            if (Mathf.Abs(Vector3.Dot(v, axesB[i])) > projectionA + projectionB)
+            if (FP64.Abs(FPVector3.Dot(v, axesB[i])).rawValue > (projectionA + projectionB).rawValue)
                 return false;
         }
 
@@ -131,23 +164,30 @@ public static class HitboxManager
         {
             for (int j = 0; j < 3; j++)
             {
-                Vector3 cross = Vector3.Cross(axesA[i], axesB[j]);
-                
-                if (cross.sqrMagnitude < 0.0001f) continue;
+                FPVector3 cross = FPVector3.Cross(axesA[i], axesB[j]);
 
-                float projectionA = extentsA.x * Mathf.Abs(Vector3.Dot(axesA[0], cross)) +
-                                    extentsA.y * Mathf.Abs(Vector3.Dot(axesA[1], cross)) +
-                                    extentsA.z * Mathf.Abs(Vector3.Dot(axesA[2], cross));
-                                    
-                float projectionB = extentsB.x * Mathf.Abs(Vector3.Dot(axesB[0], cross)) +
-                                    extentsB.y * Mathf.Abs(Vector3.Dot(axesB[1], cross)) +
-                                    extentsB.z * Mathf.Abs(Vector3.Dot(axesB[2], cross));
+                if (cross.x.rawValue == 0 && cross.y.rawValue == 0 && cross.z.rawValue == 0) continue;
 
-                if (Mathf.Abs(Vector3.Dot(v, cross)) > projectionA + projectionB)
+                FP64 projectionA = extentsA.x * FP64.Abs(FPVector3.Dot(axesA[0], cross)) +
+                                   extentsA.y * FP64.Abs(FPVector3.Dot(axesA[1], cross)) +
+                                   extentsA.z * FP64.Abs(FPVector3.Dot(axesA[2], cross));
+
+                FP64 projectionB = extentsB.x * FP64.Abs(FPVector3.Dot(axesB[0], cross)) +
+                                   extentsB.y * FP64.Abs(FPVector3.Dot(axesB[1], cross)) +
+                                   extentsB.z * FP64.Abs(FPVector3.Dot(axesB[2], cross));
+
+                if (FP64.Abs(FPVector3.Dot(v, cross)).rawValue > (projectionA + projectionB).rawValue)
                     return false;
             }
         }
 
         return true;
+    }
+
+    private static FP64 GetExtentsComponent(FPVector3 extents, int index)
+    {
+        if (index == 0) return extents.x;
+        if (index == 1) return extents.y;
+        return extents.z;
     }
 }

@@ -165,11 +165,11 @@ public class SideStepState : PlayerStateBase
         bool isUpTriggered = tracker.IsHeld(InputFlags.Up);
         bool isDownTriggered = tracker.IsHeld(InputFlags.Down);
 
-        if (isUpTriggered) stepDirection = 1f;
-        else if (isDownTriggered) stepDirection = -1f;
+        if (isUpTriggered) stepDirection = -1f;
+        else if (isDownTriggered) stepDirection = 1f;
 
         bool isFallbackNeeded = stepDirection == 0f;
-        if (isFallbackNeeded) stepDirection = 1f; 
+        if (isFallbackNeeded) stepDirection = 1f;
     }
 
     public override void UpdateTick(PlayerInput input)
@@ -179,12 +179,12 @@ public class SideStepState : PlayerStateBase
         physics.SetVelocity(moveVelocity);
 
         InputStateTracker tracker = controller.GetTracker();
-        bool isHoldingUp = stepDirection > 0 && tracker.IsHeld(InputFlags.Up);
-        bool isHoldingDown = stepDirection < 0 && tracker.IsHeld(InputFlags.Down);
+        bool isHoldingUp = stepDirection < 0 && tracker.IsHeld(InputFlags.Up);
+        bool isHoldingDown = stepDirection > 0 && tracker.IsHeld(InputFlags.Down);
 
         int cancelFrame = config.sideStepFrames > 2 ? config.sideStepFrames / 2 : 1;
         bool isPastCancelWindow = stateMachine.GetStateFrameCounter() >= cancelFrame;
-        
+
         if (isPastCancelWindow && (isHoldingUp || isHoldingDown))
         {
             stateMachine.TransitionTo(PlayerState_Type.SideWalk);
@@ -218,7 +218,7 @@ public class SideWalkState : PlayerStateBase
             return;
         }
 
-        float currentDirection = isHoldingUp ? 1f : -1f;
+        float currentDirection = isHoldingDown ? 1f : -1f;
         Vector3 moveVelocity = physics.GetDepthAxis() * (currentDirection * config.sideWalkSpeed);
         moveVelocity.y = physics.GetVelocity().y;
         physics.SetVelocity(moveVelocity);

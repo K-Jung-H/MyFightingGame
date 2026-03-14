@@ -2,16 +2,16 @@ using UnityEngine;
 
 public class PlayerPhysics : ISnapshotSync
 {
-    private Vector3 position;
-    private Vector3 velocity;
-    private Vector3 depthAxis;
-    private Vector3 currentDirection;
-    private Vector3 lookDirection;
-    private float globalGravity;
+    private FPVector3 position;
+    private FPVector3 velocity;
+    private FPVector3 depthAxis;
+    private FPVector3 currentDirection;
+    private FPVector3 lookDirection;
+    private FP64 globalGravity;
     private bool isGrounded;
     private bool isRootMotionActiveThisFrame;
     private PlayerConfigSO config;
-    private float lastImpactFallSpeed;
+    private FP64 lastImpactFallSpeed;
 
     public void ExportState(ref PlayerSnapshot snapshot)
     {
@@ -39,13 +39,13 @@ public class PlayerPhysics : ISnapshotSync
 
     public void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig)
     {
-        position = startPosition;
-        velocity = Vector3.zero;
-        depthAxis = Vector3.forward;
-        currentDirection = Vector3.forward;
-        lookDirection = Vector3.forward;
+        position = FPVector3.FromVector3(startPosition);
+        velocity = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        depthAxis = FPVector3.FromVector3(Vector3.forward);
+        currentDirection = FPVector3.FromVector3(Vector3.forward);
+        lookDirection = FPVector3.FromVector3(Vector3.forward);
         config = playerConfig;
-        lastImpactFallSpeed = 0f;
+        lastImpactFallSpeed = new FP64(0);
     }
 
     public void UpdateLookDirection(ITargetable targetEntity, PlayerState_Type currentState, bool isHoming = false)
@@ -53,40 +53,43 @@ public class PlayerPhysics : ISnapshotSync
         bool isLookUpdateDisabled = targetEntity == null || (currentState == PlayerState_Type.Attacking && !isHoming);
         if (isLookUpdateDisabled) return;
 
-        Vector3 diff = targetEntity.GetPosition() - position;
-        diff.y = 0;
+        FPVector3 targetPos = FPVector3.FromVector3(targetEntity.GetPosition());
+        FPVector3 diff = targetPos - position;
+        diff.y = new FP64(0);
 
-        bool isTargetValid = diff.sqrMagnitude > 0.0001f;
+        bool isTargetValid = (diff.x.rawValue != 0) || (diff.z.rawValue != 0);
         if (isTargetValid)
         {
-            lookDirection = diff.normalized;
+            Vector3 floatDiff = diff.ToVector3().normalized;
+            lookDirection = FPVector3.FromVector3(floatDiff);
         }
     }
 
+
     public void ProcessPhysicsTick()
     {
-        float deceleration = globalGravity * config.gravityScale;
+        FP64 deceleration = globalGravity * FP64.FromFloat(config.gravityScale);
 
-        velocity.x = Mathf.MoveTowards(velocity.x, 0f, deceleration);
-        velocity.z = Mathf.MoveTowards(velocity.z, 0f, deceleration);
+        velocity.x = MoveTowards(velocity.x, new FP64(0), deceleration);
+        velocity.z = MoveTowards(velocity.z, new FP64(0), deceleration);
 
         if (!isRootMotionActiveThisFrame)
         {
-            velocity.y -= deceleration;
+            velocity.y = velocity.y - deceleration;
         }
 
-        position += velocity;
-        isGrounded = position.y <= 0f;
+        position = position + velocity;
+        isGrounded = position.y.rawValue <= 0;
 
         if (isGrounded)
         {
-            bool isFalling = velocity.y < 0f;
+            bool isFalling = velocity.y.rawValue < 0;
             if (isFalling)
             {
                 lastImpactFallSpeed = velocity.y;
-                velocity.y = 0f;
+                velocity.y = new FP64(0);
             }
-            position.y = 0f;
+            position.y = new FP64(0);
         }
     }
 
@@ -97,24 +100,46 @@ public class PlayerPhysics : ISnapshotSync
 
     public void ApplyRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
     {
-        Vector3 worldDeltaPos = Quaternion.LookRotation(lookDirection) * deltaPosition;
-        position += worldDeltaPos;
-        lookDirection = deltaRotation * lookDirection;
+        Vector3 worldDeltaPos = Quaternion.LookRotation(lookDirection.ToVector3()) * deltaPosition;
+        position = position + FPVector3.FromVector3(worldDeltaPos);
+        lookDirection = FPVector3.FromVector3(deltaRotation * lookDirection.ToVector3());
         isRootMotionActiveThisFrame = true;
-        velocity.y = 0f;
+        velocity.y = new FP64(0);
     }
 
-    public Vector3 GetPosition() => position;
-    public void SetPosition(Vector3 newPos) => position = newPos;
-    public Vector3 GetVelocity() => velocity;
-    public void SetVelocity(Vector3 newVelocity) => velocity = newVelocity;
-    public void ApplyPushback(Vector3 pushVector) => position += pushVector;
+    public Vector3 GetPosition() => position.ToVector3();
+    public void SetPosition(Vector3 newPos) => position = FPVector3.FromVector3(newPos);
+    public Vector3 GetVelocity() => velocity.ToVector3();
+    public void SetVelocity(Vector3 newVelocity) => velocity = FPVector3.FromVector3(newVelocity);
+    public void ApplyPushback(Vector3 pushVector) => position = position + FPVector3.FromVector3(pushVector);
     public bool GetIsGrounded() => isGrounded;
-    public void SetGlobalGravity(float gravity) => globalGravity = gravity;
-    public void SetDepthAxis(Vector3 axis) => depthAxis = axis;
-    public Vector3 GetDepthAxis() => depthAxis;
-    public Vector3 GetLookDirection() => lookDirection;
-    public Vector3 GetCurrentDirection() => currentDirection;
-    public void SetCurrentDirection(Vector3 dir) => currentDirection = dir;
-    public float GetLastImpactFallSpeed() => lastImpactFallSpeed;
+    public void SetGlobalGravity(float gravity) => globalGravity = FP64.FromFloat(gravity);
+    public void SetDepthAxis(Vector3 axis) => depthAxis = FPVector3.FromVector3(axis);
+    public Vector3 GetDepthAxis() => depthAxis.ToVector3();
+    public Vector3 GetLookDirection() => lookDirection.ToVector3();
+    public Vector3 GetCurrentDirection() => currentDirection.ToVector3();
+    public void SetCurrentDirection(Vector3 dir) => currentDirection = FPVector3.FromVector3(dir);
+    public float GetLastImpactFallSpeed() => lastImpactFallSpeed.ToFloat();
+
+    public FPVector3 GetFPPosition() => position;
+    public FPVector3 GetFPVelocity() => velocity;
+    public void SetFPDepthAxis(FPVector3 axis) => depthAxis = axis;
+    public FPVector3 GetFPDepthAxis() => depthAxis;
+    public FPVector3 GetFPLookDirection() => lookDirection;
+    public FPVector3 GetFPCurrentDirection() => currentDirection;
+
+
+    private FP64 MoveTowards(FP64 current, FP64 target, FP64 maxDelta)
+    {
+        if (target.rawValue > current.rawValue)
+        {
+            FP64 result = current + maxDelta;
+            return result.rawValue > target.rawValue ? target : result;
+        }
+        else
+        {
+            FP64 result = current - maxDelta;
+            return result.rawValue < target.rawValue ? target : result;
+        }
+    }
 }

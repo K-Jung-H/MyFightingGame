@@ -20,10 +20,10 @@ public class CombatEvaluator
     public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving)
     {
         EvaluationResult result = new EvaluationResult();
-        
+
         PlayerState_Type? determinedState = DetermineTargetState(hitEvent, defenderState, isMoving);
         result.isEvaded = determinedState == null;
-        
+
         if (result.isEvaded)
         {
             return result;
@@ -58,7 +58,7 @@ public class CombatEvaluator
         {
             damage = isBlocked ? 0 : hitEvent.damage,
             hurtStunFrames = isBlocked ? actualBlockStun : actualHitStun,
-            pushbackVector = isBlocked ? Vector3.zero : hitEvent.localPushbackVector,
+            pushbackVector = isBlocked ? new FPVector3(new FP64(0), new FP64(0), new FP64(0)) : FPVector3.FromVector3(hitEvent.localPushbackVector),
             targetHurtState = isBlocked ? HurtState_Type.Hit : hitEvent.targetHurtState,
             isHardKnockdown = isBlocked ? false : hitEvent.isHardKnockdown,
             attackHeight = hitEvent.attackHeight
@@ -89,21 +89,21 @@ public class CombatEvaluator
                            defenderState == PlayerState_Type.CrouchBlock ||
                            defenderState == PlayerState_Type.CrouchHit;
 
-        bool canBlock = defenderState == PlayerState_Type.Idle || 
-                        (defenderState == PlayerState_Type.Crouching && !isMoving) || 
-                        defenderState == PlayerState_Type.StandBlock || 
-                        defenderState == PlayerState_Type.CrouchBlock;
+        bool isAbleToBlock = defenderState == PlayerState_Type.Idle ||
+                             (defenderState == PlayerState_Type.Crouching && !isMoving) ||
+                             defenderState == PlayerState_Type.StandBlock ||
+                             defenderState == PlayerState_Type.CrouchBlock;
 
         if (isStanding)
         {
             if (hitEvent.attackHeight == Attack_Height.Low) return PlayerState_Type.StandHit;
-            return canBlock ? PlayerState_Type.StandBlock : PlayerState_Type.StandHit;
+            return isAbleToBlock ? PlayerState_Type.StandBlock : PlayerState_Type.StandHit;
         }
 
         if (isCrouching)
         {
             if (hitEvent.attackHeight == Attack_Height.High) return null;
-            if (hitEvent.attackHeight == Attack_Height.Low) return canBlock ? PlayerState_Type.CrouchBlock : PlayerState_Type.CrouchHit;
+            if (hitEvent.attackHeight == Attack_Height.Low) return isAbleToBlock ? PlayerState_Type.CrouchBlock : PlayerState_Type.CrouchHit;
             if (hitEvent.attackHeight == Attack_Height.Mid) return PlayerState_Type.CrouchHit;
         }
 
@@ -121,7 +121,7 @@ public class CombatEvaluator
     private float CalculateCameraShake(Attack_Type type, bool isBlocked)
     {
         if (isBlocked) return 0f;
-        
+
         return type switch
         {
             Attack_Type.HeavyHit => 2.0f,

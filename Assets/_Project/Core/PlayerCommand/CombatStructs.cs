@@ -33,7 +33,7 @@ public struct HurtInfo
 {
     public int damage;
     public int hurtStunFrames;
-    public UnityEngine.Vector3 pushbackVector;
+    public FPVector3 pushbackVector;
     public HurtState_Type targetHurtState;
     public bool isHardKnockdown;
     public Attack_Height attackHeight;

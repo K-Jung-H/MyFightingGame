@@ -16,11 +16,11 @@ public struct InputBufferSnapshot
 
 public struct PlayerSnapshot
 {
-    public Vector3 position;
-    public Vector3 velocity;
-    public Vector3 depthAxis;
-    public Vector3 currentDirection;
-    public Vector3 lookDirection;
+    public FPVector3 position;
+    public FPVector3 velocity;
+    public FPVector3 depthAxis;
+    public FPVector3 currentDirection;
+    public FPVector3 lookDirection;
     public bool isGrounded;
     public bool isRootMotionActiveThisFrame;
 
@@ -44,7 +44,7 @@ public struct PlayerSnapshot
     public InputFlags previousRawFlags;
     public InputFlags accumulatedHitstopFlags;
 
-    public float lastImpactFallSpeed;
+    public FP64 lastImpactFallSpeed;
 }
 
 public interface ISnapshotSync

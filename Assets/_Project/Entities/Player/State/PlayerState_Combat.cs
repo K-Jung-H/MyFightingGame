@@ -23,7 +23,7 @@ public class AttackingState : PlayerStateBase
 
         bool isRootMotionUsed = currentActionData.frameData.logicData.useRootMotion;
         bool hasRootMotionData = currentActionData.frameData.rootMotionPath != null;
-        
+
         if (isRootMotionUsed && hasRootMotionData)
         {
             bool isFrameWithinBounds = currentFrame < currentActionData.frameData.rootMotionPath.Length;
@@ -33,7 +33,7 @@ public class AttackingState : PlayerStateBase
                 physics.ApplyRootMotion(rootData.deltaPosition, rootData.deltaRotation);
             }
         }
-        
+
         bool isActionCompleted = currentFrame >= totalFrames;
         if (isActionCompleted)
         {

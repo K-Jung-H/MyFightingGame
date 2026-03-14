@@ -1,5 +1,8 @@
 public struct InputStateTracker
 {
+    public InputFlags currentFlags;
+    public InputFlags previousFlags;
+
     private int holdUp;
     private int holdDown;
     private int holdForward;
@@ -8,9 +11,6 @@ public struct InputStateTracker
     private int holdRP;
     private int holdLK;
     private int holdRK;
-
-    public InputFlags currentFlags;
-    public InputFlags previousFlags;
 
     public void Initialize()
     {
@@ -50,6 +50,29 @@ public struct InputStateTracker
         holdRK = isRKPressed ? holdRK + 1 : 0;
     }
 
+    public bool IsHeld(InputFlags flag)
+    {
+        return (currentFlags & flag) != 0;
+    }
+
+    public bool IsJustPressed(InputFlags flag)
+    {
+        return (currentFlags & flag) != 0 && (previousFlags & flag) == 0;
+    }
+
+    public int GetHoldDuration(InputFlags flag)
+    {
+        if ((flag & InputFlags.Up) != 0) return holdUp;
+        if ((flag & InputFlags.Down) != 0) return holdDown;
+        if ((flag & InputFlags.Forward) != 0) return holdForward;
+        if ((flag & InputFlags.Back) != 0) return holdBack;
+        if ((flag & InputFlags.LP) != 0) return holdLP;
+        if ((flag & InputFlags.RP) != 0) return holdRP;
+        if ((flag & InputFlags.LK) != 0) return holdLK;
+        if ((flag & InputFlags.RK) != 0) return holdRK;
+        return 0;
+    }
+
     private InputFlags ResolveSOCD(InputFlags flags)
     {
         bool isUpPressed = (flags & InputFlags.Up) != 0;
@@ -72,28 +95,5 @@ public struct InputStateTracker
         }
 
         return flags;
-    }
-
-    public bool IsHeld(InputFlags flag)
-    {
-        return (currentFlags & flag) != 0;
-    }
-
-    public bool IsJustPressed(InputFlags flag)
-    {
-        return (currentFlags & flag) != 0 && (previousFlags & flag) == 0;
-    }
-
-    public int GetHoldDuration(InputFlags flag)
-    {
-        if ((flag & InputFlags.Up) != 0) return holdUp;
-        if ((flag & InputFlags.Down) != 0) return holdDown;
-        if ((flag & InputFlags.Forward) != 0) return holdForward;
-        if ((flag & InputFlags.Back) != 0) return holdBack;
-        if ((flag & InputFlags.LP) != 0) return holdLP;
-        if ((flag & InputFlags.RP) != 0) return holdRP;
-        if ((flag & InputFlags.LK) != 0) return holdLK;
-        if ((flag & InputFlags.RK) != 0) return holdRK;
-        return 0;
     }
 }

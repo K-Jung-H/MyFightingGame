@@ -3,8 +3,6 @@ using UnityEngine;
 public class PlayerRenderer : MonoBehaviour
 {
     [SerializeField] private Animator characterAnimator;
-    [SerializeField] private float hitBlendTime = 0f;
-    [SerializeField] private float commandBlendTime = 0.1f;
     [SerializeField] private float locomotionBlendTime = 0.1f;
     
     private EffectTableSO effectTable;
@@ -87,18 +85,21 @@ public class PlayerRenderer : MonoBehaviour
 
     private void UpdateTransformInterpolation()
     {
-        transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 20f);
-        
+        float interpolationFactor = Time.deltaTime * 30f;
+
+        transform.position = Vector3.Lerp(transform.position, targetPosition, interpolationFactor);
+
         bool isPositionCloseEnough = Vector3.SqrMagnitude(transform.position - targetPosition) < 0.0001f;
         if (isPositionCloseEnough)
         {
             transform.position = targetPosition;
         }
-        
+
         bool hasValidLookDirection = targetLookDirection != Vector3.zero;
         if (hasValidLookDirection)
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(targetLookDirection), Time.deltaTime * 15f);
+            Quaternion targetRot = Quaternion.LookRotation(targetLookDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, interpolationFactor);
         }
     }
 
