@@ -131,16 +131,30 @@ public class DebugHUD : MonoBehaviour
         if (isShowServer)
         {
             float contentY = startY + 20f;
-            GUI.Box(new Rect(startX, contentY, width, 140), "");
+            GUI.Box(new Rect(startX, contentY, width, 165), "");
             GUI.Label(new Rect(startX + 10, contentY + 10, width - 20, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
             
-            GUI.Label(new Rect(startX + 10, contentY + 40, width - 20, 20), $"P1 State: {gameLoopManager.GetP1State()}");
-            GUI.Label(new Rect(startX + 10, contentY + 55, width - 20, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
-            GUI.Label(new Rect(startX + 10, contentY + 70, width - 20, 20), $"P1 HP: {p1CurrentHealth} / {p1MaxHealth}");
+            bool isDesync = gameLoopManager.GetIsDesyncDetected();
+            if (isDesync)
+            {
+                GUI.color = Color.red;
+                GUI.Label(new Rect(startX + 10, contentY + 25, width - 20, 20), "STATUS: DESYNC DETECTED");
+                GUI.color = Color.white;
+            }
+            else
+            {
+                GUI.color = Color.green;
+                GUI.Label(new Rect(startX + 10, contentY + 25, width - 20, 20), "STATUS: SYNCED");
+                GUI.color = Color.white;
+            }
             
-            GUI.Label(new Rect(startX + 10, contentY + 95, width - 20, 20), $"P2 State: {gameLoopManager.GetP2State()}");
-            GUI.Label(new Rect(startX + 10, contentY + 110, width - 20, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
-            GUI.Label(new Rect(startX + 10, contentY + 125, width - 20, 20), $"P2 HP: {p2CurrentHealth} / {p2MaxHealth}");
+            GUI.Label(new Rect(startX + 10, contentY + 50, width - 20, 20), $"P1 State: {gameLoopManager.GetP1State()}");
+            GUI.Label(new Rect(startX + 10, contentY + 65, width - 20, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
+            GUI.Label(new Rect(startX + 10, contentY + 80, width - 20, 20), $"P1 HP: {p1CurrentHealth} / {p1MaxHealth}");
+            
+            GUI.Label(new Rect(startX + 10, contentY + 105, width - 20, 20), $"P2 State: {gameLoopManager.GetP2State()}");
+            GUI.Label(new Rect(startX + 10, contentY + 120, width - 20, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
+            GUI.Label(new Rect(startX + 10, contentY + 135, width - 20, 20), $"P2 HP: {p2CurrentHealth} / {p2MaxHealth}");
         }
     }
 

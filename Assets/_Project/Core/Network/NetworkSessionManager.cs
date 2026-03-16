@@ -9,10 +9,14 @@ public class NetworkSessionManager : MonoBehaviour
     private NativeList<NetworkConnection> connections;
     private Dictionary<int, ushort> remoteInputBuffer;
     private Dictionary<int, ushort> localInputHistory;
+    private Dictionary<int, ulong> remoteHashBuffer;
     private bool isServer;
     private bool isInitialized;
     private bool isConnected;
     private const int REDUNDANCY_COUNT = 15;
+
+    private const byte PACKET_TYPE_INPUT = 0;
+    private const byte PACKET_TYPE_HASH = 1;
 
     public event System.Action OnConnectionEstablished;
 
@@ -22,6 +26,7 @@ public class NetworkSessionManager : MonoBehaviour
         Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
         remoteInputBuffer = new Dictionary<int, ushort>();
         localInputHistory = new Dictionary<int, ushort>();
+        remoteHashBuffer = new Dictionary<int, ulong>();
     }
 
     private void OnGUI()
@@ -89,6 +94,7 @@ public class NetworkSessionManager : MonoBehaviour
             if (connections[i].IsCreated)
             {
                 driver.BeginSend(NetworkPipeline.Null, connections[i], out DataStreamWriter writer);
+                writer.WriteByte(PACKET_TYPE_INPUT);
                 writer.WriteInt(startTick);
                 writer.WriteByte(count);
 
@@ -115,6 +121,23 @@ public class NetworkSessionManager : MonoBehaviour
         }
     }
 
+    public void BroadcastSyncHash(int tick, ulong hash)
+    {
+        if (connections.Length == 0) return;
+
+        for (int i = 0; i < connections.Length; i++)
+        {
+            if (connections[i].IsCreated)
+            {
+                driver.BeginSend(NetworkPipeline.Null, connections[i], out DataStreamWriter writer);
+                writer.WriteByte(PACKET_TYPE_HASH);
+                writer.WriteInt(tick);
+                writer.WriteULong(hash);
+                driver.EndSend(writer);
+            }
+        }
+    }
+
     public bool TryGetRemoteInput(int targetTick, out InputFlags remoteInput)
     {
         bool hasInput = remoteInputBuffer.TryGetValue(targetTick, out ushort rawInput);
@@ -122,10 +145,16 @@ public class NetworkSessionManager : MonoBehaviour
         return hasInput;
     }
 
+    public bool TryGetRemoteHash(int targetTick, out ulong hash)
+    {
+        return remoteHashBuffer.TryGetValue(targetTick, out hash);
+    }
+
     public void ClearBuffer()
     {
         remoteInputBuffer.Clear();
         localInputHistory.Clear();
+        remoteHashBuffer.Clear();
     }
 
     public bool GetIsConnected() => isConnected;
@@ -196,18 +225,29 @@ public class NetworkSessionManager : MonoBehaviour
                 }
                 else if (cmd == NetworkEvent.Type.Data)
                 {
-                    int startTick = stream.ReadInt();
-                    byte count = stream.ReadByte();
+                    byte packetType = stream.ReadByte();
 
-                    for (int j = 0; j < count; j++)
+                    if (packetType == PACKET_TYPE_INPUT)
                     {
-                        ushort receivedFlags = stream.ReadUShort();
-                        int tick = startTick + j;
-                        
-                        if (!remoteInputBuffer.ContainsKey(tick))
+                        int startTick = stream.ReadInt();
+                        byte count = stream.ReadByte();
+
+                        for (int j = 0; j < count; j++)
                         {
-                            remoteInputBuffer[tick] = receivedFlags;
+                            ushort receivedFlags = stream.ReadUShort();
+                            int tick = startTick + j;
+                            
+                            if (!remoteInputBuffer.ContainsKey(tick))
+                            {
+                                remoteInputBuffer[tick] = receivedFlags;
+                            }
                         }
+                    }
+                    else if (packetType == PACKET_TYPE_HASH)
+                    {
+                        int tick = stream.ReadInt();
+                        ulong hash = stream.ReadULong();
+                        remoteHashBuffer[tick] = hash;
                     }
                 }
                 else if (cmd == NetworkEvent.Type.Disconnect)

@@ -181,8 +181,8 @@ MonoBehaviour:
       rkKey: 0
     instance: {fileID: 0}
     renderer: {fileID: 0}
-  p1SpawnPos: {x: -2, y: 0, z: 0}
-  p2SpawnPos: {x: 2, y: 0, z: 0}
+  p1SpawnPos: {x: 2, y: 0, z: 0}
+  p2SpawnPos: {x: -2, y: 0, z: 0}
   p1HealthBar: {fileID: 147935802}
   p2HealthBar: {fileID: 1930355440}
   networkSession: {fileID: 22342372}

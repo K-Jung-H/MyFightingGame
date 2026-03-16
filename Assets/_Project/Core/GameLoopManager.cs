@@ -61,6 +61,20 @@ public class GameLoopManager : MonoBehaviour
     private bool isResimulating;
     private FPVector3 sharedDepthAxis;
 
+    private Dictionary<int, ulong> localHashBuffer;
+    private int lastHashedTick;
+    private const int SYNC_VERIFY_INTERVAL = 60;
+    private bool isDesyncDetected;
+    public bool GetIsDesyncDetected() => isDesyncDetected;
+    public int GetCurrentTick() => currentTick;
+    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
+    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
+    public PlayerController GetPlayerOneController() => playerOne.controller;
+    public PlayerController GetPlayerTwoController() => playerTwo.controller;
+
+
     private void Awake()
     {
         Time.fixedDeltaTime = 1f / 60f;
@@ -98,15 +112,9 @@ public class GameLoopManager : MonoBehaviour
         }
 
         ProcessOnlineTick();
+        VerifySyncState();
     }
 
-    public int GetCurrentTick() => currentTick;
-    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
-    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
-    public PlayerController GetPlayerOneController() => playerOne.controller;
-    public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
     private void TriggerDebugRollback()
     {
@@ -119,9 +127,12 @@ public class GameLoopManager : MonoBehaviour
         stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
         p1InputBuffer = new InputFlags[ROLLBACK_WINDOW];
         p2InputBuffer = new InputFlags[ROLLBACK_WINDOW];
+        localHashBuffer = new Dictionary<int, ulong>();
 
         latestConfirmedTick = 0;
+        lastHashedTick = -1;
         isResimulating = false;
+        isDesyncDetected = false;
         sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64.FromFloat(1f));
     }
 
@@ -303,6 +314,19 @@ public class GameLoopManager : MonoBehaviour
             }
         }
 
+        for (int t = lastHashedTick + 1; t < latestConfirmedTick; t++)
+        {
+            bool isVerifyTick = t % SYNC_VERIFY_INTERVAL == 0;
+            if (isVerifyTick)
+            {
+                int idx = t % ROLLBACK_WINDOW;
+                ulong stateHash = StateHashUtility.ComputeHash(stateBuffer[idx]);
+                localHashBuffer[t] = stateHash;
+                networkSession.BroadcastSyncHash(t, stateHash);
+                lastHashedTick = t;
+            }
+        }
+
         bool isRollbackNeeded = rollbackTick != -1;
         if (isRollbackNeeded)
         {
@@ -325,23 +349,6 @@ public class GameLoopManager : MonoBehaviour
         SaveGameState(currentTick);
 
         currentTick++;
-    }
-
-    private bool EvaluateIsPlayerOneOnLeft()
-    {
-        bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
-        if (isInvalidControllers) return true;
-
-        FPVector3 p1Pos = playerOne.controller.GetFPPosition();
-        FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
-        
-        FPVector3 diff = p2Pos - p1Pos;
-        diff.y = new FP64(0);
-
-        FPVector3 up = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
-        FPVector3 right = FPVector3.Cross(up, sharedDepthAxis);
-
-        return FPVector3.Dot(diff, right).rawValue >= 0;
     }
 
     private void SaveGameState(int tick)
@@ -390,6 +397,38 @@ public class GameLoopManager : MonoBehaviour
         }
 
         isResimulating = false;
+    }
+    private void VerifySyncState()
+    {
+        List<int> verifiedTicks = new List<int>();
+
+        foreach (var kvp in localHashBuffer)
+        {
+            int targetTick = kvp.Key;
+            ulong localHash = kvp.Value;
+
+            bool hasRemoteHash = networkSession.TryGetRemoteHash(targetTick, out ulong remoteHash);
+            if (hasRemoteHash)
+            {
+                bool isDesynced = localHash != remoteHash;
+                if (isDesynced)
+                {
+                    TriggerDesyncError(targetTick, localHash, remoteHash);
+                }
+                verifiedTicks.Add(targetTick);
+            }
+        }
+
+        foreach (int tick in verifiedTicks)
+        {
+            localHashBuffer.Remove(tick);
+        }
+    }
+
+    private void TriggerDesyncError(int tick, ulong localHash, ulong remoteHash)
+    {
+        isDesyncDetected = true;
+        Debug.LogError($"[DESYNC DETECTED] Tick: {tick} | Local Hash: {localHash} | Remote Hash: {remoteHash}");
     }
 
     private void RunTick(PlayerInput p1Input, PlayerInput p2Input)
