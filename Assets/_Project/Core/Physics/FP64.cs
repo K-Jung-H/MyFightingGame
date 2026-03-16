@@ -37,6 +37,36 @@ public struct FP64
         return a.rawValue < b.rawValue ? a : b;
     }
 
+    public static FP64 Sqrt(FP64 a)
+    {
+        if (a.rawValue <= 0) return new FP64(0);
+        
+        ulong num = (ulong)a.rawValue;
+        ulong res = 0;
+        ulong bit = 1UL << 62;
+        
+        while (bit > num)
+        {
+            bit >>= 2;
+        }
+        
+        while (bit != 0)
+        {
+            if (num >= res + bit)
+            {
+                num -= res + bit;
+                res = (res >> 1) + bit;
+            }
+            else
+            {
+                res >>= 1;
+            }
+            bit >>= 2;
+        }
+        
+        return new FP64((long)res << (fractionalBits / 2));
+    }
+
     public static FP64 operator +(FP64 a, FP64 b)
     {
         return new FP64(a.rawValue + b.rawValue);
@@ -50,5 +80,12 @@ public struct FP64
     public static FP64 operator *(FP64 a, FP64 b)
     {
         return new FP64((a.rawValue * b.rawValue) >> fractionalBits);
+    }
+
+    public static FP64 operator /(FP64 a, FP64 b)
+    {
+        if (b.rawValue == 0) return new FP64(0);
+        long temp = a.rawValue << fractionalBits;
+        return new FP64(temp / b.rawValue);
     }
 }

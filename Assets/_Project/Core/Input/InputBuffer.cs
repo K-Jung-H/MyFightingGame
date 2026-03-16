@@ -89,6 +89,9 @@ public class InputBuffer : ISnapshotSync
 
             if (hasStateRestriction && !isStateValid) continue;
 
+            bool isSelfInterruption = command.targetState == currentState && currentState != PlayerState_Type.Attacking;
+            if (isSelfInterruption) continue;
+
             bool isSequenceMatched = CheckSequence(command, currentFrame);
             if (isSequenceMatched) return command;
         }

@@ -3,20 +3,16 @@ using Unity.Networking.Transport;
 using Unity.Collections;
 using System.Collections.Generic;
 
-public struct InputPacket
-{
-    public int tick;
-    public ushort inputFlags;
-}
-
 public class NetworkSessionManager : MonoBehaviour
 {
     private NetworkDriver driver;
     private NativeList<NetworkConnection> connections;
     private Dictionary<int, ushort> remoteInputBuffer;
+    private Dictionary<int, ushort> localInputHistory;
     private bool isServer;
     private bool isInitialized;
     private bool isConnected;
+    private const int REDUNDANCY_COUNT = 15;
 
     public event System.Action OnConnectionEstablished;
 
@@ -25,6 +21,7 @@ public class NetworkSessionManager : MonoBehaviour
         Application.runInBackground = true;
         Screen.SetResolution(1024, 768, FullScreenMode.Windowed);
         remoteInputBuffer = new Dictionary<int, ushort>();
+        localInputHistory = new Dictionary<int, ushort>();
     }
 
     private void OnGUI()
@@ -82,15 +79,39 @@ public class NetworkSessionManager : MonoBehaviour
     {
         if (connections.Length == 0) return;
 
+        localInputHistory[currentTick] = (ushort)localInput;
+
+        int startTick = Mathf.Max(0, currentTick - REDUNDANCY_COUNT + 1);
+        byte count = (byte)(currentTick - startTick + 1);
+
         for (int i = 0; i < connections.Length; i++)
         {
             if (connections[i].IsCreated)
             {
                 driver.BeginSend(NetworkPipeline.Null, connections[i], out DataStreamWriter writer);
-                writer.WriteInt(currentTick);
-                writer.WriteUShort((ushort)localInput);
+                writer.WriteInt(startTick);
+                writer.WriteByte(count);
+
+                for (int t = startTick; t <= currentTick; t++)
+                {
+                    if (localInputHistory.TryGetValue(t, out ushort savedInput))
+                    {
+                        writer.WriteUShort(savedInput);
+                    }
+                    else
+                    {
+                        writer.WriteUShort(0);
+                    }
+                }
+
                 driver.EndSend(writer);
             }
+        }
+
+        int obsoleteTick = currentTick - REDUNDANCY_COUNT;
+        if (localInputHistory.ContainsKey(obsoleteTick))
+        {
+            localInputHistory.Remove(obsoleteTick);
         }
     }
 
@@ -104,6 +125,7 @@ public class NetworkSessionManager : MonoBehaviour
     public void ClearBuffer()
     {
         remoteInputBuffer.Clear();
+        localInputHistory.Clear();
     }
 
     public bool GetIsConnected() => isConnected;
@@ -174,9 +196,19 @@ public class NetworkSessionManager : MonoBehaviour
                 }
                 else if (cmd == NetworkEvent.Type.Data)
                 {
-                    int receivedTick = stream.ReadInt();
-                    ushort receivedFlags = stream.ReadUShort();
-                    remoteInputBuffer[receivedTick] = receivedFlags;
+                    int startTick = stream.ReadInt();
+                    byte count = stream.ReadByte();
+
+                    for (int j = 0; j < count; j++)
+                    {
+                        ushort receivedFlags = stream.ReadUShort();
+                        int tick = startTick + j;
+                        
+                        if (!remoteInputBuffer.ContainsKey(tick))
+                        {
+                            remoteInputBuffer[tick] = receivedFlags;
+                        }
+                    }
                 }
                 else if (cmd == NetworkEvent.Type.Disconnect)
                 {

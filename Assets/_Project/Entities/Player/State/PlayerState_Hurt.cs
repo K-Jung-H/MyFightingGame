@@ -7,6 +7,9 @@ public abstract class HurtStateBase : PlayerStateBase
 
     public HurtStateBase(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
+    public int GetCurrentStunFrames() => currentStunFrames;
+    public void SetCurrentStunFrames(int frames) => currentStunFrames = frames;
+
     public override void Enter()
     {
         currentHurtInfo = combat.GetCurrentHurtInfo();
@@ -80,12 +83,12 @@ public class StunningState : HurtStateBase
 
         currentStunFrames = config.GetStunningFrames();
 
-        bool isFromStand = physics.GetPosition().y <= 0f;
+        bool isFromStand = physics.GetFPPosition().y.rawValue <= 0;
         if (isFromStand)
         {
-            Vector3 horizontalPushback = currentHurtInfo.pushbackVector.ToVector3();
-            horizontalPushback.y = 0f;
-            physics.ApplyPushback(horizontalPushback);
+            FPVector3 horizontalPushback = currentHurtInfo.pushbackVector;
+            horizontalPushback.y = new FP64(0);
+            physics.ApplyFPPushback(horizontalPushback);
         }
     }
 
@@ -102,7 +105,7 @@ public class AirHitState : HurtStateBase
     {
         if (combat.ProcessHitstopTick()) return;
 
-        bool isFallingAndGrounded = physics.GetIsGrounded() && physics.GetVelocity().y <= 0f;
+        bool isFallingAndGrounded = physics.GetIsGrounded() && physics.GetFPVelocity().y.rawValue <= 0;
 
         if (isFallingAndGrounded)
         {
@@ -121,26 +124,36 @@ public class GroundSmashState : HurtStateBase
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.GroundSmash;
 
+    public bool GetIsBouncing() => isBouncing;
+    public void SetIsBouncing(bool bounce) => isBouncing = bounce;
+
     public override void Enter()
     {
         base.Enter();
 
-        float impactFallSpeed = physics.GetLastImpactFallSpeed();
-        isBouncing = impactFallSpeed <= config.GetBounceVelocityThreshold();
+        FP64 impactFallSpeed = physics.GetFPLastImpactFallSpeed();
+        FP64 thresholdFP = FP64.FromFloat(config.GetBounceVelocityThreshold());
+        
+        isBouncing = impactFallSpeed.rawValue <= thresholdFP.rawValue;
 
         if (isBouncing)
         {
             currentStunFrames = config.GetGroundSmashBounceFrames();
-            Vector3 currentVelocity = physics.GetVelocity();
-            currentVelocity.y = Mathf.Abs(impactFallSpeed) * config.GetBounceVelocityMultiplier();
-            physics.SetVelocity(currentVelocity);
+            FPVector3 currentVelocity = physics.GetFPVelocity();
+            
+            FP64 absImpactSpeed = FP64.Abs(impactFallSpeed);
+            FP64 bounceMultiplier = FP64.FromFloat(config.GetBounceVelocityMultiplier());
+            
+            currentVelocity.y = absImpactSpeed * bounceMultiplier;
+            physics.SetFPVelocity(currentVelocity);
         }
         else
         {
             currentStunFrames = config.GetGroundSmashLayFrames();
-            Vector3 zeroVelocity = Vector3.zero;
-            zeroVelocity.y = physics.GetVelocity().y;
-            physics.SetVelocity(zeroVelocity);
+            FPVector3 currentVelocity = physics.GetFPVelocity();
+            currentVelocity.x = new FP64(0);
+            currentVelocity.z = new FP64(0);
+            physics.SetFPVelocity(currentVelocity);
         }
     }
 
@@ -158,9 +171,10 @@ public class LayingDownState : HurtStateBase
     public override void Enter()
     {
         base.Enter();
-        Vector3 zeroVelocity = Vector3.zero;
-        zeroVelocity.y = physics.GetVelocity().y;
-        physics.SetVelocity(zeroVelocity);
+        FPVector3 currentVelocity = physics.GetFPVelocity();
+        currentVelocity.x = new FP64(0);
+        currentVelocity.z = new FP64(0);
+        physics.SetFPVelocity(currentVelocity);
     }
 
     public override void Exit()
@@ -235,9 +249,10 @@ public class WakeUpState : HurtStateBase
         base.Enter();
         currentStunFrames = config.GetWakeUpFrames(scheduledWakeUpType);
 
-        Vector3 zeroVelocity = Vector3.zero;
-        zeroVelocity.y = physics.GetVelocity().y;
-        physics.SetVelocity(zeroVelocity);
+        FPVector3 currentVelocity = physics.GetFPVelocity();
+        currentVelocity.x = new FP64(0);
+        currentVelocity.z = new FP64(0);
+        physics.SetFPVelocity(currentVelocity);
     }
 
     public override void UpdateTick(PlayerInput input)

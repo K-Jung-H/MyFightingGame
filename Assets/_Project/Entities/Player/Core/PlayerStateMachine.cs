@@ -34,6 +34,27 @@ public class PlayerStateMachine : ISnapshotSync
         {
             snapshot.isFromRoll = layState.IsFromRoll();
         }
+
+        SideStepState sideStep = GetStateObject(PlayerState_Type.SideStep) as SideStepState;
+        bool isSideStepValid = sideStep != null;
+        if (isSideStepValid)
+        {
+            snapshot.sideStepDirection = sideStep.GetStepDirection();
+        }
+
+        HurtStateBase currentHurt = currentStateObject as HurtStateBase;
+        bool isHurtValid = currentHurt != null;
+        if (isHurtValid)
+        {
+            snapshot.currentStunFrames = currentHurt.GetCurrentStunFrames();
+        }
+
+        GroundSmashState smashState = GetStateObject(PlayerState_Type.GroundSmash) as GroundSmashState;
+        bool isSmashStateValid = smashState != null;
+        if (isSmashStateValid)
+        {
+            snapshot.isGroundBouncing = smashState.GetIsBouncing();
+        }
     }
 
     public void ImportState(PlayerSnapshot snapshot)
@@ -58,6 +79,27 @@ public class PlayerStateMachine : ISnapshotSync
         if (isLayStateValid)
         {
             layState.SetFromRoll(snapshot.isFromRoll);
+        }
+
+        SideStepState sideStep = GetStateObject(PlayerState_Type.SideStep) as SideStepState;
+        bool isSideStepValid = sideStep != null;
+        if (isSideStepValid)
+        {
+            sideStep.SetStepDirection(snapshot.sideStepDirection);
+        }
+
+        HurtStateBase currentHurt = currentStateObject as HurtStateBase;
+        bool isHurtValid = currentHurt != null;
+        if (isHurtValid)
+        {
+            currentHurt.SetCurrentStunFrames(snapshot.currentStunFrames);
+        }
+
+        GroundSmashState smashState = GetStateObject(PlayerState_Type.GroundSmash) as GroundSmashState;
+        bool isSmashStateValid = smashState != null;
+        if (isSmashStateValid)
+        {
+            smashState.SetIsBouncing(snapshot.isGroundBouncing);
         }
     }
 

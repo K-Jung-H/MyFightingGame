@@ -3,11 +3,8 @@ using System.Collections;
 
 public class CameraManager : MonoBehaviour
 {
-    [Header("Target Settings")]
     [SerializeField] private Transform playerOne;
     [SerializeField] private Transform playerTwo;
-
-    [Header("Camera Control Settings")]
     [SerializeField] private bool isReverseView;
     [SerializeField] private float heightOffset = 1.5f;
     [SerializeField] private float distanceOffset = 5.0f;
@@ -16,76 +13,16 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private float maxDistance = 12.0f;
     [SerializeField] private float movementSmoothTime = 0.15f;
     [SerializeField] private float rotationSmoothTime = 0.1f;
-
-    [Header("Event Zoom Settings")]
     [SerializeField] private float zoomLerpSpeed = 5.0f;
-
-    [Header("Shake Settings")]
     [SerializeField] private float defaultShakeMagnitude = 0.1f;
     [SerializeField] private float defaultShakeDuration = 0.2f;
 
     private float targetZoomMultiplier = 1.0f;
     private float currentZoomMultiplier = 1.0f;
+    private float currentOrbitAngle;
+    private float orbitAngleVelocity;
     private Vector3 currentVelocity;
     private Vector3 shakeOffset;
-
-    public void SetTargetPlayers(GameObject playerOne, GameObject playerTwo)
-    {
-        this.playerOne = playerOne.transform;
-        this.playerTwo = playerTwo.transform;
-    }
-
-    public void TriggerEventZoom(float multiplier, float duration)
-    {
-        StopAllCoroutines();
-        StartCoroutine(HandleZoomDuration(multiplier, duration));
-    }
-
-    private IEnumerator HandleZoomDuration(float multiplier, float duration)
-    {
-        targetZoomMultiplier = multiplier;
-        yield return new WaitForSeconds(duration);
-        targetZoomMultiplier = 1.0f;
-    }
-
-    public void TriggerShake(float magnitude = -1f, float duration = -1f)
-    {
-        float shakeMagnitude = magnitude < 0 ? defaultShakeMagnitude : magnitude;
-        float shakeDuration = duration < 0 ? defaultShakeDuration : duration;
-        StartCoroutine(ProcessShake(shakeMagnitude, shakeDuration));
-    }
-
-    private IEnumerator ProcessShake(float magnitude, float duration)
-    {
-        float elapsedTimer = 0f;
-        while (elapsedTimer < duration)
-        {
-            float randomX = Random.Range(-1f, 1f) * magnitude;
-            float randomY = Random.Range(-1f, 1f) * magnitude;
-            shakeOffset = new Vector3(randomX, randomY, 0f);
-            elapsedTimer += Time.deltaTime;
-            yield return null;
-        }
-        shakeOffset = Vector3.zero;
-    }
-
-    public bool IsPlayerOneOnRightSide()
-    {
-        bool isTargetMissing = playerOne == null || playerTwo == null;
-        if (isTargetMissing) return true;
-
-        Vector3 cameraRight = transform.right;
-        cameraRight.y = 0f;
-        cameraRight.Normalize();
-
-        Vector3 playerOneToTwo = playerTwo.position - playerOne.position;
-        playerOneToTwo.y = 0f;
-
-        float dotResult = Vector3.Dot(playerOneToTwo, cameraRight);
-        bool isPlayerOneOnLeftSide = dotResult > 0f;
-
-        return !isPlayerOneOnLeftSide;
-    }
 
     private void LateUpdate()
     {
@@ -96,9 +33,42 @@ public class CameraManager : MonoBehaviour
         UpdateCameraTransform();
     }
 
+    public void SetTargetPlayers(GameObject p1, GameObject p2)
+    {
+        playerOne = p1.transform;
+        playerTwo = p2.transform;
+    }
+
+    public void TriggerEventZoom(float multiplier, float duration)
+    {
+        StopAllCoroutines();
+        StartCoroutine(HandleZoomDuration(multiplier, duration));
+    }
+
+    public void TriggerShake(float magnitude = -1f, float duration = -1f)
+    {
+        float shakeMagnitude = magnitude < 0 ? defaultShakeMagnitude : magnitude;
+        float shakeDuration = duration < 0 ? defaultShakeDuration : duration;
+        StartCoroutine(ProcessShake(shakeMagnitude, shakeDuration));
+    }
+
     private void UpdateZoomMultiplier()
     {
         currentZoomMultiplier = Mathf.Lerp(currentZoomMultiplier, targetZoomMultiplier, Time.deltaTime * zoomLerpSpeed);
+    }
+
+    public bool IsPlayerOneOnRightSide()
+    {
+        bool isTargetMissing = playerOne == null || playerTwo == null;
+        if (isTargetMissing) return false;
+
+        Vector3 toP1 = playerOne.position - transform.position;
+        Vector3 toP2 = playerTwo.position - transform.position;
+
+        float dotP1 = Vector3.Dot(transform.right, toP1);
+        float dotP2 = Vector3.Dot(transform.right, toP2);
+
+        return dotP1 > dotP2;
     }
 
     private void UpdateCameraTransform()
@@ -110,29 +80,11 @@ public class CameraManager : MonoBehaviour
         Vector3 directionP1ToP2 = positionP2 - positionP1;
         directionP1ToP2.y = 0f;
 
-        bool isOverlapping = directionP1ToP2.sqrMagnitude < 0.001f;
-        if (isOverlapping)
-        {
-            directionP1ToP2 = transform.right;
-        }
-        else
-        {
-            directionP1ToP2.Normalize();
-        }
+        float targetAngle = Mathf.Atan2(directionP1ToP2.x, directionP1ToP2.z) * Mathf.Rad2Deg;
+        targetAngle += isReverseView ? -90f : 90f;
 
-        Vector3 normal1 = Vector3.Cross(Vector3.up, directionP1ToP2).normalized;
-        Vector3 normal2 = -normal1;
-
-        Vector3 currentCameraDirection = transform.position - centerPosition;
-        currentCameraDirection.y = 0f;
-        currentCameraDirection.Normalize();
-
-        Vector3 cameraOffsetDirection = Vector3.Dot(normal1, currentCameraDirection) > 0f ? normal1 : normal2;
-        
-        if (isReverseView)
-        {
-            cameraOffsetDirection = -cameraOffsetDirection;
-        }
+        currentOrbitAngle = Mathf.SmoothDampAngle(currentOrbitAngle, targetAngle, ref orbitAngleVelocity, rotationSmoothTime);
+        Vector3 cameraOffsetDirection = Quaternion.Euler(0, currentOrbitAngle, 0) * Vector3.forward;
 
         float distance3D = Vector3.Distance(positionP1, positionP2);
         float desiredDistance = ((distance3D * zoomSensitivity) + distanceOffset) * currentZoomMultiplier;
@@ -151,10 +103,24 @@ public class CameraManager : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime / rotationSmoothTime);
     }
 
-    public Vector3 GetDepthAxis()
+    private IEnumerator HandleZoomDuration(float multiplier, float duration)
     {
-        Vector3 depthAxis = transform.forward;
-        depthAxis.y = 0f;
-        return depthAxis.normalized;
+        targetZoomMultiplier = multiplier;
+        yield return new WaitForSeconds(duration);
+        targetZoomMultiplier = 1.0f;
+    }
+
+    private IEnumerator ProcessShake(float magnitude, float duration)
+    {
+        float elapsedTimer = 0f;
+        while (elapsedTimer < duration)
+        {
+            float randomX = Random.Range(-1f, 1f) * magnitude;
+            float randomY = Random.Range(-1f, 1f) * magnitude;
+            shakeOffset = new Vector3(randomX, randomY, 0f);
+            elapsedTimer += Time.deltaTime;
+            yield return null;
+        }
+        shakeOffset = Vector3.zero;
     }
 }

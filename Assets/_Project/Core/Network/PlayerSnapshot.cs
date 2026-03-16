@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public struct ActionControllerSnapshot
 {
     public InputFlags[] comboSequence;
@@ -32,6 +30,10 @@ public struct PlayerSnapshot
     public HurtInfo currentHurtInfo;
     public WakeUp_Type scheduledWakeUpType;
     public bool isFromRoll;
+    
+    public FP64 sideStepDirection;
+    public int currentStunFrames;
+    public bool isGroundBouncing;
 
     public int currentHealth;
     public int hitstopCounter;

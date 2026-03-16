@@ -52,6 +52,8 @@ public class GameLoopManager : MonoBehaviour
     private InputFlags[] p1InputBuffer;
     private InputFlags[] p2InputBuffer;
     private LocalInputProvider inputProvider;
+    private GameSimulationCore simulationCore;
+    
     private int currentTick;
     private int latestConfirmedTick;
     private bool isSimulationRunning;
@@ -64,6 +66,9 @@ public class GameLoopManager : MonoBehaviour
         Time.fixedDeltaTime = 1f / 60f;
         Application.targetFrameRate = 120;
 
+        simulationCore = new GameSimulationCore();
+        simulationCore.Initialize(playerCollisionMinDistance);
+
         InitializeMatch(false);
 
         bool hasNetworkSession = networkSession != null;
@@ -71,10 +76,6 @@ public class GameLoopManager : MonoBehaviour
         {
             networkSession.OnConnectionEstablished += () => InitializeMatch(true);
         }
-    }
-
-    private void Update()
-    {
     }
 
     private void FixedUpdate()
@@ -215,15 +216,15 @@ public class GameLoopManager : MonoBehaviour
 
         if (isPlayerOneDefeated)
         {
-            TriggerRoundEnd(playerTwo, playerOne);
+            TriggerRoundEnd(playerTwo);
         }
         else
         {
-            TriggerRoundEnd(playerOne, playerTwo);
+            TriggerRoundEnd(playerOne);
         }
     }
 
-    private void TriggerRoundEnd(PlayerSessionContext winner, PlayerSessionContext loser)
+    private void TriggerRoundEnd(PlayerSessionContext winner)
     {
         bool isWinnerValid = winner != null && winner.controller != null;
         if (isWinnerValid)
@@ -234,17 +235,11 @@ public class GameLoopManager : MonoBehaviour
 
     private void ProcessOfflineTick()
     {
-        PlayerInput p1Local = inputProvider.GetCurrentInput(currentTick, 0, !cameraManager.IsPlayerOneOnRightSide());
-        PlayerInput p2Local = inputProvider.GetCurrentInput(currentTick, 1, cameraManager.IsPlayerOneOnRightSide());
+        bool isP1OnRight = cameraManager.IsPlayerOneOnRightSide();
+        PlayerInput p1Local = inputProvider.GetCurrentInput(currentTick, 0, !isP1OnRight);
+        PlayerInput p2Local = inputProvider.GetCurrentInput(currentTick, 1, isP1OnRight);
 
-        int bufferIndex = currentTick % ROLLBACK_WINDOW;
-        p1InputBuffer[bufferIndex] = p1Local.flags;
-        p2InputBuffer[bufferIndex] = p2Local.flags;
-
-        RunTick(p1Local, p2Local);
-        SaveGameState(currentTick);
-
-        currentTick++;
+        ProcessTick(p1Local, p2Local);
 
         bool shouldForceRollback = isDebugRollbackEnabled && (currentTick % debugRollbackInterval == 0) && currentTick > debugRollbackFrames;
         if (shouldForceRollback)
@@ -317,10 +312,36 @@ public class GameLoopManager : MonoBehaviour
         PlayerInput p1Final = new PlayerInput { flags = p1InputBuffer[bufferIndex] };
         PlayerInput p2Final = new PlayerInput { flags = p2InputBuffer[bufferIndex] };
 
-        RunTick(p1Final, p2Final);
+        ProcessTick(p1Final, p2Final);
+    }
+
+    private void ProcessTick(PlayerInput p1Input, PlayerInput p2Input)
+    {
+        int bufferIndex = currentTick % ROLLBACK_WINDOW;
+        p1InputBuffer[bufferIndex] = p1Input.flags;
+        p2InputBuffer[bufferIndex] = p2Input.flags;
+
+        RunTick(p1Input, p2Input);
         SaveGameState(currentTick);
 
         currentTick++;
+    }
+
+    private bool EvaluateIsPlayerOneOnLeft()
+    {
+        bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
+        if (isInvalidControllers) return true;
+
+        FPVector3 p1Pos = playerOne.controller.GetFPPosition();
+        FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
+        
+        FPVector3 diff = p2Pos - p1Pos;
+        diff.y = new FP64(0);
+
+        FPVector3 up = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+        FPVector3 right = FPVector3.Cross(up, sharedDepthAxis);
+
+        return FPVector3.Dot(diff, right).rawValue >= 0;
     }
 
     private void SaveGameState(int tick)
@@ -380,48 +401,7 @@ public class GameLoopManager : MonoBehaviour
             p2Input.flags = InputFlags.None;
         }
 
-        bool isBothControllersValid = playerOne.controller != null && playerTwo.controller != null;
-        if (isBothControllersValid)
-        {
-            FPVector3 p1LogicalPos = playerOne.controller.GetFPPosition();
-            FPVector3 p2LogicalPos = playerTwo.controller.GetFPPosition();
-
-            FPVector3 diffPos = p2LogicalPos - p1LogicalPos;
-            diffPos.y = new FP64(0);
-
-            bool isOverlapping = diffPos.x.rawValue == 0 && diffPos.z.rawValue == 0;
-            if (isOverlapping)
-            {
-                diffPos.x = FP64.FromFloat(1f);
-            }
-
-            FPVector3 up = FPVector3.FromVector3(Vector3.up);
-            FPVector3 normal1 = FPVector3.Cross(up, diffPos).Normalized();
-            FPVector3 normal2 = FPVector3.Cross(diffPos, up).Normalized();
-
-            FP64 dot1 = FPVector3.Dot(normal1, sharedDepthAxis);
-            FP64 dot2 = FPVector3.Dot(normal2, sharedDepthAxis);
-
-            bool isNormal1Closer = dot1.rawValue > dot2.rawValue;
-            if (isNormal1Closer)
-            {
-                sharedDepthAxis = normal1;
-            }
-            else
-            {
-                sharedDepthAxis = normal2;
-            }
-
-            playerOne.controller.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
-            playerTwo.controller.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
-        }
-
-        if (playerOne.controller != null) playerOne.controller.UpdateTick(p1Input);
-        if (playerTwo.controller != null) playerTwo.controller.UpdateTick(p2Input);
-
-        ResolveAttacks(playerOne, playerTwo);
-        ResolveAttacks(playerTwo, playerOne);
-        ResolvePlayerCollision();
+        simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1Input, p2Input, ref sharedDepthAxis, HandleHitSpark);
 
         if (!isResimulating)
         {
@@ -429,132 +409,17 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-    private void ResolveAttacks(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext)
+    private void HandleHitSpark(PlayerController targetController, Vector3 hitPoint, EffectType effectType)
     {
-        if (!IsValidAttackAttempt(attackerContext.controller, out ActionDataSO attackerAction)) return;
+        if (isResimulating) return;
 
-        CollisionBox[] defenderBoxes = defenderContext.controller.GetConfig().GetHurtboxBoxes(Hurtbox_Type.Standing);
+        bool isP1Target = targetController == playerOne.controller;
+        PlayerSessionContext targetContext = isP1Target ? playerOne : playerTwo;
 
-        bool isHit = HitboxManager.EvaluateHit(
-            attackerContext.controller.GetFPPosition(),
-            attackerContext.controller.GetFPLookDirection(),
-            attackerAction.frameData.hitboxEvents,
-            attackerContext.controller.GetStateMachine().GetStateFrameCounter(),
-            defenderContext.controller.GetFPPosition(),
-            defenderContext.controller.GetFPLookDirection(),
-            defenderBoxes,
-            out HitboxEvent hitEvent,
-            out FPVector3 fpHitPoint,
-            out string debugReason
-        );
-
-        if (isHit)
+        bool hasRenderer = targetContext.renderer != null;
+        if (hasRenderer)
         {
-            Vector3 hitPoint = fpHitPoint.ToVector3();
-            ProcessSuccessfulHit(attackerContext, defenderContext, hitEvent, hitPoint);
-        }
-    }
-
-    private bool IsValidAttackAttempt(PlayerController attacker, out ActionDataSO actionData)
-    {
-        actionData = attacker.GetStateMachine().GetCurrentActionData();
-        bool isAttacking = attacker.GetStateMachine().GetCurrentState() == PlayerState_Type.Attacking;
-        bool hasValidData = actionData != null && actionData.frameData.hitboxEvents != null;
-
-        return isAttacking && hasValidData;
-    }
-
-    private void ProcessSuccessfulHit(PlayerSessionContext attackerContext, PlayerSessionContext defenderContext, HitboxEvent hitEvent, Vector3 hitPoint)
-    {
-        PlayerController attacker = attackerContext.controller;
-        PlayerController defender = defenderContext.controller;
-
-        bool isAlreadyHit = attacker.GetCombat().HasAlreadyHit(hitEvent.hitGroupID);
-        if (isAlreadyHit) return;
-
-        attacker.GetCombat().RegisterHitGroup(hitEvent.hitGroupID);
-
-        Vector3 worldPushback = CalculateWorldPushback(attacker.GetPhysics().GetLookDirection(), hitEvent.localPushbackVector);
-
-        HitboxEvent worldSpaceHitEvent = hitEvent;
-        worldSpaceHitEvent.localPushbackVector = worldPushback;
-
-        EvaluationResult hitResult = defender.GetCombat().ProcessIncomingHit(worldSpaceHitEvent, defender);
-
-        bool isHitEvaded = hitResult.isEvaded;
-        if (isHitEvaded) return;
-
-        int hitstopFrames = hitResult.feedbackData.hitstopFrames;
-        if (hitstopFrames > 0)
-        {
-            attacker.GetCombat().ApplyHitstop(hitstopFrames);
-            defender.GetCombat().ApplyHitstop(hitstopFrames);
-        }
-
-        bool isAttackBlocked = hitResult.targetState == PlayerState_Type.StandBlock || hitResult.targetState == PlayerState_Type.CrouchBlock;
-        if (!isAttackBlocked && defenderContext.renderer != null && !isResimulating)
-        {
-            defenderContext.renderer.PlayHitSpark(hitPoint, EffectType.Hit);
-        }
-    }
-
-    private Vector3 CalculateWorldPushback(Vector3 lookDirection, Vector3 localPushback)
-    {
-        Vector3 rightDirection = Vector3.Cross(Vector3.up, lookDirection);
-        return (lookDirection * localPushback.z) + (Vector3.up * localPushback.y) + (rightDirection * localPushback.x);
-    }
-
-    private float GetPushbackWeight(PlayerState_Type state)
-    {
-        bool isSprinting = state == PlayerState_Type.Sprinting;
-        bool isRunning = state == PlayerState_Type.Running;
-        bool isWalking = state == PlayerState_Type.Walking;
-
-        if (isSprinting) return 0.0f;
-        if (isRunning) return 0.2f;
-        if (isWalking) return 0.5f;
-        return 1.0f;
-    }
-
-    private void ResolvePlayerCollision()
-    {
-        bool isInvalidControllers = playerOne.controller == null || playerTwo.controller == null;
-        if (isInvalidControllers) return;
-
-        Vector3 p1Pos = playerOne.controller.GetPosition();
-        Vector3 p2Pos = playerTwo.controller.GetPosition();
-
-        Vector3 diff = p1Pos - p2Pos;
-        diff.y = 0;
-        float distanceSqr = diff.sqrMagnitude;
-
-        bool isOverlapping = distanceSqr < playerCollisionMinDistance * playerCollisionMinDistance && distanceSqr > 0.0001f;
-        if (isOverlapping)
-        {
-            float distance = Mathf.Sqrt(distanceSqr);
-            float totalPushDist = playerCollisionMinDistance - distance;
-            Vector3 pushDir = diff / distance;
-
-            PlayerState_Type p1State = playerOne.controller.GetStateMachine().GetCurrentState();
-            PlayerState_Type p2State = playerTwo.controller.GetStateMachine().GetCurrentState();
-
-            float w1 = GetPushbackWeight(p1State);
-            float w2 = GetPushbackWeight(p2State);
-            float totalWeight = w1 + w2;
-
-            bool isWeightTooSmall = totalWeight <= 0.0001f;
-            if (isWeightTooSmall)
-            {
-                w1 = 0.5f;
-                w2 = 0.5f;
-                totalWeight = 1.0f;
-            }
-
-            float p1Ratio = w1 / totalWeight;
-            float p2Ratio = w2 / totalWeight;
-
-            playerOne.controller.GetPhysics().ApplyPushback(pushDir * (totalPushDist * p1Ratio));
-            playerTwo.controller.GetPhysics().ApplyPushback(-pushDir * (totalPushDist * p2Ratio));
+            targetContext.renderer.PlayHitSpark(hitPoint, effectType);
         }
     }
 

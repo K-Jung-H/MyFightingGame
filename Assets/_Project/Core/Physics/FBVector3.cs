@@ -24,24 +24,24 @@ public struct FPVector3
         return new Vector3(x.ToFloat(), y.ToFloat(), z.ToFloat());
     }
 
+    public FP64 Magnitude()
+    {
+        FP64 x2 = x * x;
+        FP64 y2 = y * y;
+        FP64 z2 = z * z;
+        return FP64.Sqrt(x2 + y2 + z2);
+    }
+
     public FPVector3 Normalized()
     {
-        double xf = x.ToFloat();
-        double yf = y.ToFloat();
-        double zf = z.ToFloat();
-        double mag = Math.Sqrt(xf * xf + yf * yf + zf * zf);
-
-        bool isZero = mag < 0.0001;
-        if (isZero)
+        FP64 mag = Magnitude();
+        
+        if (mag.rawValue == 0)
         {
             return new FPVector3(new FP64(0), new FP64(0), new FP64(0));
         }
 
-        return new FPVector3(
-            FP64.FromFloat((float)(xf / mag)),
-            FP64.FromFloat((float)(yf / mag)),
-            FP64.FromFloat((float)(zf / mag))
-        );
+        return new FPVector3(x / mag, y / mag, z / mag);
     }
 
     public static FP64 Dot(FPVector3 a, FPVector3 b)

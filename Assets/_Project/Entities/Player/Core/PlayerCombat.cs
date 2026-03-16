@@ -77,31 +77,32 @@ public class PlayerCombat
         registeredHitGroupIds.Add(hitGroupID);
     }
 
-    public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController controller)
+public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController attacker, PlayerController defender)
     {
-        PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
+        PlayerState_Type currentState = defender.GetStateMachine().GetCurrentState();
         bool isMoving = currentState != PlayerState_Type.Idle && currentState != PlayerState_Type.Crouching;
 
         if (currentState == PlayerState_Type.Crouching)
         {
-            Vector3 horizontalVelocity = controller.GetPhysics().GetVelocity();
-            horizontalVelocity.y = 0f;
-            isMoving = horizontalVelocity.sqrMagnitude > 0.0001f;
+            FPVector3 horizontalVelocity = defender.GetPhysics().GetFPVelocity();
+            horizontalVelocity.y = new FP64(0);
+            FP64 sqrMag = (horizontalVelocity.x * horizontalVelocity.x) + (horizontalVelocity.z * horizontalVelocity.z);
+            isMoving = sqrMag.rawValue > 0;
         }
 
         EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState, isMoving);
 
         if (!result.isEvaded)
         {
-            ApplyHit(result, controller);
+            ApplyHit(result, attacker, defender);
         }
 
         return result;
     }
 
-    public void ApplyHit(EvaluationResult result, PlayerController controller)
+    public void ApplyHit(EvaluationResult result, PlayerController attacker, PlayerController defender)
     {
-        PlayerStateMachine stateMachine = controller.GetStateMachine();
+        PlayerStateMachine stateMachine = defender.GetStateMachine();
         int damage = result.hurtInfo.damage;
         bool isDamageValid = damage > 0;
 
@@ -114,17 +115,24 @@ public class PlayerCombat
         bool isDead = currentHealth <= 0;
         if (isDead)
         {
-            OnDefeated?.Invoke(controller);
+            OnDefeated?.Invoke(defender);
             stateMachine.TransitionTo(PlayerState_Type.Dead, true);
             return;
         }
 
-        PlayerPhysics physics = controller.GetPhysics();
-        PlayerActionController actionController = controller.GetActionController();
+        PlayerPhysics physics = defender.GetPhysics();
+        PlayerActionController actionController = defender.GetActionController();
         PlayerState_Type currentStateType = stateMachine.GetCurrentState();
         HurtInfo hurtData = result.hurtInfo;
         currentHurtInfo = hurtData;
-        FPVector3 finalPushback = hurtData.pushbackVector;
+        
+        FPVector3 finalPushback = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        bool isBlocked = result.targetState == PlayerState_Type.StandBlock || result.targetState == PlayerState_Type.CrouchBlock;
+        
+        if (!isBlocked)
+        {
+            finalPushback = CalculateWorldPushbackFP(attacker.GetPhysics().GetFPLookDirection(), hurtData.pushbackVector);
+        }
 
         bool isAlreadyInAirHit = currentStateType == PlayerState_Type.AirHit ||
                                  currentStateType == PlayerState_Type.GroundSmash ||
@@ -137,7 +145,7 @@ public class PlayerCombat
             finalPushback.y = FP64.FromFloat(0.25f);
         }
 
-        physics.SetVelocity(finalPushback.ToVector3());
+        physics.SetFPVelocity(finalPushback);
 
         PlayerState_Type nextState = result.targetState;
 
@@ -149,6 +157,18 @@ public class PlayerCombat
         actionController.ClearComboSequence();
         actionController.ClearAllBuffers();
         stateMachine.TransitionTo(nextState, true);
+    }
+
+    private FPVector3 CalculateWorldPushbackFP(FPVector3 lookDirection, FPVector3 localPushback)
+    {
+        FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+        FPVector3 rightDirection = FPVector3.Cross(upVector, lookDirection);
+        
+        FPVector3 forwardPush = lookDirection * localPushback.z;
+        FPVector3 upPush = upVector * localPushback.y;
+        FPVector3 rightPush = rightDirection * localPushback.x;
+        
+        return forwardPush + upPush + rightPush;
     }
 
     public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;

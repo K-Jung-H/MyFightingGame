@@ -129,9 +129,10 @@ public class CrouchingState : PlayerStateBase
 
     public override void Enter()
     {
-        Vector3 zeroVelocity = Vector3.zero;
-        zeroVelocity.y = physics.GetVelocity().y;
-        physics.SetVelocity(zeroVelocity);
+        FPVector3 vel = physics.GetFPVelocity();
+        vel.x = new FP64(0);
+        vel.z = new FP64(0);
+        physics.SetFPVelocity(vel);
     }
 
     public override void UpdateTick(PlayerInput input)
@@ -151,36 +152,42 @@ public class CrouchingState : PlayerStateBase
 
 public class SideStepState : PlayerStateBase
 {
-    private float stepDirection;
+    private FP64 stepDirection;
 
     public SideStepState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.SideStep;
-
+    public void SetStepDirection(FP64 dir) => stepDirection = dir;
+    public FP64 GetStepDirection() => stepDirection;
+    
     public override void Enter()
     {
-        stepDirection = 0f;
+        actionController.ClearAllBuffers();
+
+        stepDirection = new FP64(0);
         InputStateTracker tracker = controller.GetTracker();
 
         bool isUpTriggered = tracker.IsHeld(InputFlags.Up);
         bool isDownTriggered = tracker.IsHeld(InputFlags.Down);
 
-        if (isUpTriggered) stepDirection = -1f;
-        else if (isDownTriggered) stepDirection = 1f;
+        if (isUpTriggered) stepDirection = FP64.FromFloat(-1f);
+        else if (isDownTriggered) stepDirection = FP64.FromFloat(1f);
 
-        bool isFallbackNeeded = stepDirection == 0f;
-        if (isFallbackNeeded) stepDirection = 1f;
+        bool isFallbackNeeded = stepDirection.rawValue == 0;
+        if (isFallbackNeeded) stepDirection = FP64.FromFloat(1f);
     }
 
     public override void UpdateTick(PlayerInput input)
     {
-        Vector3 moveVelocity = physics.GetDepthAxis() * (stepDirection * config.sideStepSpeed);
-        moveVelocity.y = physics.GetVelocity().y;
-        physics.SetVelocity(moveVelocity);
+        FP64 speedFP = FP64.FromFloat(config.sideStepSpeed);
+        
+        FPVector3 moveVelocity = physics.GetFPDepthAxis() * (stepDirection * speedFP);
+        moveVelocity.y = physics.GetFPVelocity().y;
+        physics.SetFPVelocity(moveVelocity);
 
         InputStateTracker tracker = controller.GetTracker();
-        bool isHoldingUp = stepDirection < 0 && tracker.IsHeld(InputFlags.Up);
-        bool isHoldingDown = stepDirection > 0 && tracker.IsHeld(InputFlags.Down);
+        bool isHoldingUp = stepDirection.rawValue < 0 && tracker.IsHeld(InputFlags.Up);
+        bool isHoldingDown = stepDirection.rawValue > 0 && tracker.IsHeld(InputFlags.Down);
 
         int cancelFrame = config.sideStepFrames > 2 ? config.sideStepFrames / 2 : 1;
         bool isPastCancelWindow = stateMachine.GetStateFrameCounter() >= cancelFrame;
@@ -218,9 +225,11 @@ public class SideWalkState : PlayerStateBase
             return;
         }
 
-        float currentDirection = isHoldingDown ? 1f : -1f;
-        Vector3 moveVelocity = physics.GetDepthAxis() * (currentDirection * config.sideWalkSpeed);
-        moveVelocity.y = physics.GetVelocity().y;
-        physics.SetVelocity(moveVelocity);
+        FP64 currentDirFP = FP64.FromFloat(isHoldingDown ? 1f : -1f);
+        FP64 speedFP = FP64.FromFloat(config.sideWalkSpeed);
+
+        FPVector3 moveVelocity = physics.GetFPDepthAxis() * (currentDirFP * speedFP);
+        moveVelocity.y = physics.GetFPVelocity().y;
+        physics.SetFPVelocity(moveVelocity);
     }
 }

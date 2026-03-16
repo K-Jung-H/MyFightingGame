@@ -9,6 +9,11 @@ public abstract class PlayerStateBase
     protected PlayerCombat combat;
     protected PlayerActionController actionController;
 
+    protected FP64 cachedWalkSpeed;
+    protected FP64 cachedRunSpeed;
+    protected FP64 cachedSprintSpeed;
+    protected FP64 cachedCrouchWalkSpeed;
+
     public PlayerStateBase(PlayerStateMachine sm, PlayerConfigSO cfg)
     {
         stateMachine = sm;
@@ -17,6 +22,11 @@ public abstract class PlayerStateBase
         physics = controller.GetPhysics();
         combat = controller.GetCombat();
         actionController = controller.GetActionController();
+
+        cachedWalkSpeed = FP64.FromFloat(config.walkSpeed);
+        cachedRunSpeed = FP64.FromFloat(config.runSpeed);
+        cachedSprintSpeed = FP64.FromFloat(config.sprintSpeed);
+        cachedCrouchWalkSpeed = FP64.FromFloat(config.crouchWalkSpeed);
     }
 
     public abstract PlayerState_Type GetStateType();
@@ -29,72 +39,73 @@ public abstract class PlayerStateBase
         return 999;
     }
 
-    public Vector3 GetRawInputVector(InputFlags flags)
+    public FPVector3 GetFPRawInputVector(InputFlags flags)
     {
-        Vector3 inputVector = Vector3.zero;
+        FPVector3 inputVector = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
 
         bool isUpPressed = (flags & InputFlags.Up) != 0;
         bool isDownPressed = (flags & InputFlags.Down) != 0;
         bool isForwardPressed = (flags & InputFlags.Forward) != 0;
         bool isBackPressed = (flags & InputFlags.Back) != 0;
 
-        if (isForwardPressed) inputVector.z += 1f;
-        if (isBackPressed) inputVector.z -= 1f;
+        if (isForwardPressed) inputVector.z = inputVector.z + FP64.FromFloat(1f);
+        if (isBackPressed) inputVector.z = inputVector.z - FP64.FromFloat(1f);
 
-        if (isUpPressed) inputVector.x -= 1f;
-        if (isDownPressed) inputVector.x += 1f;
+        if (isUpPressed) inputVector.x = inputVector.x - FP64.FromFloat(1f);
+        if (isDownPressed) inputVector.x = inputVector.x + FP64.FromFloat(1f);
 
-        bool isMagnitudeZero = inputVector.sqrMagnitude == 0f;
-        if (isMagnitudeZero) return Vector3.zero;
+        bool isMagnitudeZero = inputVector.x.rawValue == 0 && inputVector.z.rawValue == 0;
+        if (isMagnitudeZero) return new FPVector3(new FP64(0), new FP64(0), new FP64(0));
 
-        return inputVector.normalized;
+        return inputVector.Normalized();
     }
 
     protected void ProcessMovementLogic(PlayerInput input)
     {
-        Vector3 inputDir = GetRawInputVector(input.flags);
-        Vector3 lookDir = physics.GetLookDirection();
-        Vector3 depthAxis = physics.GetDepthAxis();
+        FPVector3 inputDir = GetFPRawInputVector(input.flags);
+        FPVector3 lookDir = physics.GetFPLookDirection();
+        FPVector3 depthAxis = physics.GetFPDepthAxis();
 
-        float currentMoveSpeed = config.walkSpeed;
+        FP64 currentMoveSpeed = cachedWalkSpeed;
         PlayerState_Type currentState = stateMachine.GetCurrentState();
 
         bool isRunning = currentState == PlayerState_Type.Running;
         bool isSprinting = currentState == PlayerState_Type.Sprinting;
 
-        if (isRunning) currentMoveSpeed = config.runSpeed;
-        else if (isSprinting) currentMoveSpeed = config.sprintSpeed;
+        if (isRunning) currentMoveSpeed = cachedRunSpeed;
+        else if (isSprinting) currentMoveSpeed = cachedSprintSpeed;
 
-        Vector3 lateralMove = depthAxis * inputDir.x;
-        Vector3 forwardMove = lookDir * inputDir.z;
+        FPVector3 lateralMove = depthAxis * inputDir.x;
+        FPVector3 forwardMove = lookDir * inputDir.z;
 
-        Vector3 moveVelocity = (forwardMove + lateralMove).normalized * currentMoveSpeed;
-        moveVelocity.y = physics.GetVelocity().y;
+        FPVector3 moveVelocity = (forwardMove + lateralMove).Normalized() * currentMoveSpeed;
+        moveVelocity.y = physics.GetFPVelocity().y;
 
-        physics.SetVelocity(moveVelocity);
+        physics.SetFPVelocity(moveVelocity);
 
-        bool hasMovement = inputDir != Vector3.zero;
+        bool hasMovement = inputDir.x.rawValue != 0 || inputDir.z.rawValue != 0;
         if (hasMovement)
         {
-            physics.SetCurrentDirection(new Vector3(moveVelocity.x, 0f, moveVelocity.z).normalized);
+            FPVector3 currentDir = new FPVector3(moveVelocity.x, new FP64(0), moveVelocity.z).Normalized();
+            physics.SetFPCurrentDirection(currentDir);
         }
     }
 
     protected void ProcessCrouchMovementLogic(PlayerInput input)
     {
-        Vector3 inputDir = GetRawInputVector(input.flags);
-        Vector3 lookDir = physics.GetLookDirection();
+        FPVector3 inputDir = GetFPRawInputVector(input.flags);
+        FPVector3 lookDir = physics.GetFPLookDirection();
 
-        Vector3 moveVelocity = (lookDir * inputDir.z).normalized * config.crouchWalkSpeed;
-        moveVelocity.y = physics.GetVelocity().y;
+        FPVector3 moveVelocity = (lookDir * inputDir.z).Normalized() * cachedCrouchWalkSpeed;
+        moveVelocity.y = physics.GetFPVelocity().y;
 
-        physics.SetVelocity(moveVelocity);
+        physics.SetFPVelocity(moveVelocity);
 
-        bool hasZMovement = inputDir.z != 0f;
+        bool hasZMovement = inputDir.z.rawValue != 0;
         if (hasZMovement)
         {
-            Vector3 flatVelocity = new Vector3(moveVelocity.x, 0f, moveVelocity.z);
-            physics.SetCurrentDirection(flatVelocity.normalized);
+            FPVector3 flatVelocity = new FPVector3(moveVelocity.x, new FP64(0), moveVelocity.z);
+            physics.SetFPCurrentDirection(flatVelocity.Normalized());
         }
     }
 }
