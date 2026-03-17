@@ -192,7 +192,15 @@ public class GameLoopManager : MonoBehaviour
         isSimulationRunning = true;
 
         SaveGameState(currentTick);
+
+        if (isNetworkReset)
+        {
+            string role = networkSession.GetIsServer() ? "Server" : "Client";
+            HashTraceUtility.TraceAndDumpHash(role, stateBuffer[0]);
+        }
     }
+
+    
 
     private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
     {
@@ -314,6 +322,12 @@ public class GameLoopManager : MonoBehaviour
             }
         }
 
+        bool isRollbackNeeded = rollbackTick != -1;
+        if (isRollbackNeeded)
+        {
+            Resimulate(rollbackTick, currentTick);
+        }
+
         for (int t = lastHashedTick + 1; t < latestConfirmedTick; t++)
         {
             bool isVerifyTick = t % SYNC_VERIFY_INTERVAL == 0;
@@ -325,12 +339,6 @@ public class GameLoopManager : MonoBehaviour
                 networkSession.BroadcastSyncHash(t, stateHash);
                 lastHashedTick = t;
             }
-        }
-
-        bool isRollbackNeeded = rollbackTick != -1;
-        if (isRollbackNeeded)
-        {
-            Resimulate(rollbackTick, currentTick);
         }
 
         PlayerInput p1Final = new PlayerInput { flags = p1InputBuffer[bufferIndex] };
@@ -398,6 +406,7 @@ public class GameLoopManager : MonoBehaviour
 
         isResimulating = false;
     }
+    
     private void VerifySyncState()
     {
         List<int> verifiedTicks = new List<int>();
@@ -429,6 +438,17 @@ public class GameLoopManager : MonoBehaviour
     {
         isDesyncDetected = true;
         Debug.LogError($"[DESYNC DETECTED] Tick: {tick} | Local Hash: {localHash} | Remote Hash: {remoteHash}");
+
+        int index = tick % ROLLBACK_WINDOW;
+        GameStateSnapshot snapshotToDump = stateBuffer[index];
+
+        bool isCorrectTick = snapshotToDump.tick == tick;
+        if (isCorrectTick)
+        {
+            string role = networkSession.GetIsServer() ? "Server" : "Client";
+            StateDumpUtility.SaveDumpToFile(role, snapshotToDump);
+            HashTraceUtility.TraceAndDumpHash(role, snapshotToDump);
+        }
     }
 
     private void RunTick(PlayerInput p1Input, PlayerInput p2Input)

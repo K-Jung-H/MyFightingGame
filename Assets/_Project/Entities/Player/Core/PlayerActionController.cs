@@ -22,9 +22,10 @@ public class ActionResolver
         comboTree = combos;
     }
 
-    public ActionRequest? EvaluateInput(InputBuffer inputBuffer, InputFlags currentInput, InputFlags newlyPressedFlags, int currentFrame, PlayerState_Type currentState, List<InputFlags> currentComboSequence)
+    public ActionRequest? EvaluateInput(ref DeterministicInputBuffer inputBuffer, InputFlags currentInput, InputFlags newlyPressedFlags, int currentFrame, PlayerState_Type currentState, List<InputFlags> currentComboSequence)
     {
-        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
+        InputStateTracker tracker = controller.GetTracker();
+        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState, ref tracker);
         
         bool isCommandMatched = matchedCommand != null;
         if (isCommandMatched)
@@ -149,7 +150,7 @@ public class ActionBufferManager
 public class PlayerActionController
 {
     private PlayerController controller;
-    private InputBuffer inputBuffer;
+    private DeterministicInputBuffer inputBuffer;
     private ActionResolver actionResolver;
     private ActionBufferManager actionBuffer;
     private List<InputFlags> comboSequence;
@@ -159,8 +160,8 @@ public class PlayerActionController
     {
         controller = playerController;
         
-        inputBuffer = new InputBuffer(60);
-        inputBuffer.Initialize(controller);
+        inputBuffer = new DeterministicInputBuffer();
+        inputBuffer.Initialize();
 
         comboSequence = new List<InputFlags>();
         commandBufferWindow = bufferWindowFrames;
@@ -174,7 +175,7 @@ public class PlayerActionController
 
     public void ExportState(ref PlayerSnapshot snapshot)
     {
-        inputBuffer.ExportState(ref snapshot);
+        snapshot.actionControllerState.deterministicInputBuffer = inputBuffer;
 
         bool isComboArrayMissing = snapshot.actionControllerState.comboSequence == null || snapshot.actionControllerState.comboSequence.Length != 10;
         if (isComboArrayMissing)
@@ -194,7 +195,7 @@ public class PlayerActionController
 
     public void ImportState(PlayerSnapshot snapshot)
     {
-        inputBuffer.ImportState(snapshot);
+        inputBuffer = snapshot.actionControllerState.deterministicInputBuffer;
 
         comboSequence.Clear();
         int savedComboCount = snapshot.actionControllerState.comboCount;
@@ -215,7 +216,7 @@ public class PlayerActionController
     {
         inputBuffer.AddInput(currentInput);
         
-        ActionRequest? evaluatedAction = actionResolver.EvaluateInput(inputBuffer, currentInput.flags, currentKeyDownFlags, currentFrame, currentState, comboSequence);
+        ActionRequest? evaluatedAction = actionResolver.EvaluateInput(ref inputBuffer, currentInput.flags, currentKeyDownFlags, currentFrame, currentState, comboSequence);
 
         bool isActionEvaluated = evaluatedAction.HasValue;
         if (isActionEvaluated)

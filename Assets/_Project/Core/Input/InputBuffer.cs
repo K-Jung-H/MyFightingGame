@@ -23,26 +23,10 @@ public class InputBuffer : ISnapshotSync
 
     public void ExportState(ref PlayerSnapshot snapshot)
     {
-        bool isArrayMissing = snapshot.inputBufferState.inputs == null || snapshot.inputBufferState.inputs.Length != bufferSize;
-        if (isArrayMissing)
-        {
-            snapshot.inputBufferState.inputs = new PlayerInput[bufferSize];
-        }
-
-        Array.Copy(buffer, snapshot.inputBufferState.inputs, bufferSize);
-        snapshot.inputBufferState.head = head;
-        snapshot.inputBufferState.count = count;
     }
 
     public void ImportState(PlayerSnapshot snapshot)
     {
-        bool isStateValid = snapshot.inputBufferState.inputs != null;
-        if (isStateValid)
-        {
-            Array.Copy(snapshot.inputBufferState.inputs, buffer, bufferSize);
-        }
-        head = snapshot.inputBufferState.head;
-        count = snapshot.inputBufferState.count;
     }
 
     public void AddInput(PlayerInput input)

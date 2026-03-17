@@ -3,13 +3,11 @@ using System;
 
 public class GameSimulationCore
 {
-    private float playerCollisionMinDistance;
     private FP64 fpCollisionMinDistance;
     private FP64 fpCollisionMinDistanceSqr;
 
     public void Initialize(float minCollisionDistance)
     {
-        playerCollisionMinDistance = minCollisionDistance;
         fpCollisionMinDistance = FP64.FromFloat(minCollisionDistance);
         fpCollisionMinDistanceSqr = fpCollisionMinDistance * fpCollisionMinDistance;
     }

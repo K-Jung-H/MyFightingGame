@@ -3,13 +3,13 @@ public struct ActionControllerSnapshot
     public InputFlags[] comboSequence;
     public int comboCount;
     public BufferedAction? pendingAction;
+    public DeterministicInputBuffer deterministicInputBuffer;
 }
 
-public struct InputBufferSnapshot
+public struct CombatStateSnapshot
 {
-    public PlayerInput[] inputs;
-    public int head;
-    public int count;
+    public int[] registeredHitGroups;
+    public int hitGroupCount;
 }
 
 public struct PlayerSnapshot
@@ -40,7 +40,7 @@ public struct PlayerSnapshot
 
     public InputStateTracker inputTrackerState;
     public ActionControllerSnapshot actionControllerState;
-    public InputBufferSnapshot inputBufferState;
+    public CombatStateSnapshot combatState;
 
     public int controllerFrame;
     public InputFlags previousRawFlags;

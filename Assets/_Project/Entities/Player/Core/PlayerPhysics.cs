@@ -55,7 +55,18 @@ public class PlayerPhysics : ISnapshotSync
         bool isLookUpdateDisabled = targetEntity == null || (currentState == PlayerState_Type.Attacking && !isHoming);
         if (isLookUpdateDisabled) return;
 
-        FPVector3 targetPos = FPVector3.FromVector3(targetEntity.GetPosition());
+        FPVector3 targetPos;
+        PlayerController targetPlayer = targetEntity as PlayerController;
+        
+        if (targetPlayer != null)
+        {
+            targetPos = targetPlayer.GetFPPosition();
+        }
+        else
+        {
+            targetPos = FPVector3.FromVector3(targetEntity.GetPosition());
+        }
+
         FPVector3 diff = targetPos - position;
         diff.y = new FP64(0);
 

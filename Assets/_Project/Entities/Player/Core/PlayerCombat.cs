@@ -28,6 +28,20 @@ public class PlayerCombat
         snapshot.currentHealth = this.currentHealth;
         snapshot.hitstopCounter = this.hitstopCounter;
         snapshot.currentHurtInfo = this.currentHurtInfo;
+
+        if (snapshot.combatState.registeredHitGroups == null || snapshot.combatState.registeredHitGroups.Length != 10)
+        {
+            snapshot.combatState.registeredHitGroups = new int[10];
+        }
+
+        int index = 0;
+        foreach (int hitId in registeredHitGroupIds)
+        {
+            if (index >= 10) break;
+            snapshot.combatState.registeredHitGroups[index] = hitId;
+            index++;
+        }
+        snapshot.combatState.hitGroupCount = index;
     }
 
     public void ImportState(PlayerSnapshot snapshot)
@@ -35,6 +49,17 @@ public class PlayerCombat
         this.currentHealth = snapshot.currentHealth;
         this.hitstopCounter = snapshot.hitstopCounter;
         this.currentHurtInfo = snapshot.currentHurtInfo;
+
+        registeredHitGroupIds.Clear();
+        
+        bool hasValidHitGroups = snapshot.combatState.registeredHitGroups != null;
+        if (hasValidHitGroups)
+        {
+            for (int i = 0; i < snapshot.combatState.hitGroupCount; i++)
+            {
+                registeredHitGroupIds.Add(snapshot.combatState.registeredHitGroups[i]);
+            }
+        }
     }
 
     public void InitializeHealth()
