@@ -1,0 +1,3070 @@
+[2026-03-17 15:36:59.545] [Hash Trace] Tick: 0
+Tick                           | Val: 0                    | AccumHash: 12638153115695167455
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 590684067820433389
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 15658191375538532279
+SharedDepthAxis.Z              | Val: 65536                | AccumHash: 5486922011472761845
+--- P1 ---
+P1.Position.X                  | Val: 131072               | AccumHash: 8988146737916733775
+P1.Position.Y                  | Val: 0                    | AccumHash: 10440742568263184701
+P1.Position.Z                  | Val: 0                    | AccumHash: 15385063850581715623
+P1.Velocity.X                  | Val: 0                    | AccumHash: 7893911258520697285
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 13509841935641160127
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 2729984106823282573
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 749882619990248599
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 8140263338320553109
+P1.DepthAxis.Z                 | Val: 65536                | AccumHash: 12670713833136384303
+P1.CurrentDirection.X          | Val: 0                    | AccumHash: 9508272024770067165
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 7791221694730864007
+P1.CurrentDirection.Z          | Val: 65536                | AccumHash: 8889199103670248549
+P1.LookDirection.X             | Val: 0                    | AccumHash: 11172126863455590303
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 5974213564112282413
+P1.LookDirection.Z             | Val: 65536                | AccumHash: 2017256349194470775
+P1.IsGrounded                  | Val: 0                    | AccumHash: 3827736804995303733
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 12859528026214147343
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 16971602008003606218
+P1.StateFrameCounter           | Val: 0                    | AccumHash: 10611978797838096702
+P1.CurrentActionID             | Val: 0                    | AccumHash: 6675577098951205978
+P1.IsCommandActionTriggered    | Val: 0                    | AccumHash: 2559303755852268782
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 4602365113342468202
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 17679894637982487582
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 3619669244093968122
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 18161341485487313614
+P1.SideStepDirection           | Val: 0                    | AccumHash: 5648908433120277514
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 954521739319504126
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 664267880204120986
+P1.CurrentHealth               | Val: 100                  | AccumHash: 17205946474513160346
+P1.HitstopCounter              | Val: 0                    | AccumHash: 8888475680075353518
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 14899232509933010602
+P2.Position.Y                  | Val: 0                    | AccumHash: 15744097539270408926
+P2.Position.Z                  | Val: 0                    | AccumHash: 10739569798158534458
+P2.Velocity.X                  | Val: 0                    | AccumHash: 131002824058374030
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 12204560226308609610
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 14504207125309726654
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 14855993349080444890
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 15323594098492903278
+P2.DepthAxis.Z                 | Val: 65536                | AccumHash: 5340243801559152618
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 15593515805143007902
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 13008864076479820410
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 12599141932499764558
+P2.LookDirection.X             | Val: 0                    | AccumHash: 8898801707111318410
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 15790371330756805502
+P2.LookDirection.Z             | Val: 65536                | AccumHash: 11559661614221979418
+P2.IsGrounded                  | Val: 0                    | AccumHash: 233104935628949806
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 936930363537414442
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 356313985352795153
+P2.StateFrameCounter           | Val: 0                    | AccumHash: 15854514132831561955
+P2.CurrentActionID             | Val: 0                    | AccumHash: 13045183528172173753
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 1900962805323502939
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 6729267209078098337
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8667200528430570643
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 10455159880870530505
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 13846381112637746315
+P2.SideStepDirection           | Val: 0                    | AccumHash: 17854391412068544561
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 2990488894808630083
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 6249831250785757913
+P2.CurrentHealth               | Val: 100                  | AccumHash: 11070484677853536039
+P2.HitstopCounter              | Val: 0                    | AccumHash: 17012142914218274629
+[Final Hash]: 17012142914218274629
+==================================================
+
+[2026-03-17 15:37:01.587] === GameStateSnapshot Tick: 120 ===
+SharedDepthAxis: X:0, Y:0, Z:65536
+
+--- [Player 1 Snapshot] ---
+Position: X:131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65536
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:-65536, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 121
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65536
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65536, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 121
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:01.597] [Hash Trace] Tick: 120
+Tick                           | Val: 120                  | AccumHash: 12638214688346347271
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 644252274336276709
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 13717957977402434847
+SharedDepthAxis.Z              | Val: 65536                | AccumHash: 5547054108571227053
+--- P1 ---
+P1.Position.X                  | Val: 131072               | AccumHash: 1080302229481467639
+P1.Position.Y                  | Val: 0                    | AccumHash: 14396579744958762421
+P1.Position.Z                  | Val: 0                    | AccumHash: 6313603283874777743
+P1.Velocity.X                  | Val: 0                    | AccumHash: 18067688610373791997
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 14061682818953051623
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 9301822746099412869
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 4685892517365972735
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 14012944375181331277
+P1.DepthAxis.Z                 | Val: 65536                | AccumHash: 7974252586214454231
+P1.CurrentDirection.X          | Val: 0                    | AccumHash: 11004715922561422933
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 15962281384400990831
+P1.CurrentDirection.Z          | Val: 65536                | AccumHash: 8495517422692446877
+P1.LookDirection.X             | Val: 18446744073709486080 | AccumHash: 17339786696251769031
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 503034925397430821
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 14596063877396174047
+P1.IsGrounded                  | Val: 1                    | AccumHash: 5631311535427515706
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 9423092160489337230
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 17428682632493282813
+P1.StateFrameCounter           | Val: 121                  | AccumHash: 14291712956838375244
+P1.CurrentActionID             | Val: 0                    | AccumHash: 4012619168788291108
+P1.IsCommandActionTriggered    | Val: 0                    | AccumHash: 3181227214548023084
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 17673413668526047172
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 14611762731734358540
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 16298838007475864164
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 10768937490924965868
+P1.SideStepDirection           | Val: 0                    | AccumHash: 16889578760934985220
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 14606109537006047436
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 2271850814038526628
+P1.CurrentHealth               | Val: 100                  | AccumHash: 402558898295178304
+P1.HitstopCounter              | Val: 0                    | AccumHash: 10138455477217573056
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 4648541428055928384
+P2.Position.Y                  | Val: 0                    | AccumHash: 10694845048771827392
+P2.Position.Z                  | Val: 0                    | AccumHash: 1648866165086611520
+P2.Velocity.X                  | Val: 0                    | AccumHash: 565266480747881664
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 13695666543499866688
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 8752285152295625408
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 16556001747781782592
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 12786137580526850240
+P2.DepthAxis.Z                 | Val: 65536                | AccumHash: 1596275102773622336
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 4875822375079849664
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 9492214021493518400
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 17466321517638827200
+P2.LookDirection.X             | Val: 65536                | AccumHash: 9229530064372808256
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 6910507138956294848
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 4618134443529245760
+P2.IsGrounded                  | Val: 1                    | AccumHash: 8467287019075529331
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 17405748206659002729
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 4687879801765921720
+P2.StateFrameCounter           | Val: 121                  | AccumHash: 9834720711666819315
+P2.CurrentActionID             | Val: 0                    | AccumHash: 18338040410989346025
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 3964000762489241579
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 470457626706926673
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 15379752838175645091
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 8138001877482707961
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 13359894106456459291
+P2.SideStepDirection           | Val: 0                    | AccumHash: 4002368714347496929
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 3705438853208948051
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 15303051280567579657
+P2.CurrentHealth               | Val: 100                  | AccumHash: 12627490137232381239
+P2.HitstopCounter              | Val: 0                    | AccumHash: 4769588838992972917
+[Final Hash]: 4769588838992972917
+==================================================
+
+[2026-03-17 15:37:03.585] === GameStateSnapshot Tick: 240 ===
+SharedDepthAxis: X:0, Y:0, Z:65633
+
+--- [Player 1 Snapshot] ---
+Position: X:23526, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65633
+CurrentDirection: X:-67133, Y:0, Z:0
+LookDirection: X:-65633, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 24
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65633
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65633, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 241
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:03.589] [Hash Trace] Tick: 240
+Tick                           | Val: 240                  | AccumHash: 12638346629741732591
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 759041288298798109
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 14830813288170669383
+SharedDepthAxis.Z              | Val: 65633                | AccumHash: 5367054058185195410
+--- P1 ---
+P1.Position.X                  | Val: 23526                | AccumHash: 156844312270991644
+P1.Position.Y                  | Val: 0                    | AccumHash: 12018161149972492948
+P1.Position.Z                  | Val: 0                    | AccumHash: 16889279876737364348
+P1.Velocity.X                  | Val: 0                    | AccumHash: 6577757530958583220
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 10137739562345570524
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 1730585847856616916
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 11464446027892283196
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 9319980286752865012
+P1.DepthAxis.Z                 | Val: 65633                | AccumHash: 6084338656652987183
+P1.CurrentDirection.X          | Val: 18446744073709484483 | AccumHash: 9964408978338170628
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 9857273324176255948
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 16748365939882519460
+P1.LookDirection.X             | Val: 18446744073709485983 | AccumHash: 1795110765523787841
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 15792742574148914803
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 13819215718578720105
+P1.IsGrounded                  | Val: 1                    | AccumHash: 4713629698014955448
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 1239217622377979304
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 8598021417494717995
+P1.StateFrameCounter           | Val: 24                   | AccumHash: 13403362686815430825
+P1.CurrentActionID             | Val: 0                    | AccumHash: 7914370542007506731
+P1.IsCommandActionTriggered    | Val: 0                    | AccumHash: 14851857802931478033
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 10547249693186528995
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8295554306181424057
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 9713687193973158747
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 1722438132001047457
+P1.SideStepDirection           | Val: 0                    | AccumHash: 2348617866615827091
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 2874462249871792073
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 12214120868305873547
+P1.CurrentHealth               | Val: 100                  | AccumHash: 1537204330555012125
+P1.HitstopCounter              | Val: 0                    | AccumHash: 3192628240263499079
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 17144184397939363749
+P2.Position.Y                  | Val: 0                    | AccumHash: 4681564515239679327
+P2.Position.Z                  | Val: 0                    | AccumHash: 6137766749190099053
+P2.Velocity.X                  | Val: 0                    | AccumHash: 7693290018802362679
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 3534726932074285173
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 11951171728449478351
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 13792137130588789181
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 8448312197267880999
+P2.DepthAxis.Z                 | Val: 65633                | AccumHash: 18055830655602141938
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 10252851437008255286
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 9351168394763007682
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 4031605711403600806
+P2.LookDirection.X             | Val: 65633                | AccumHash: 13182601103436825381
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 16392062214655449055
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 3481271387301384173
+P2.IsGrounded                  | Val: 1                    | AccumHash: 17036759774373383684
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 17344866653451669708
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 9616841133182962775
+P2.StateFrameCounter           | Val: 241                  | AccumHash: 9483390498811297298
+P2.CurrentActionID             | Val: 0                    | AccumHash: 10947833845070395542
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 10791856074565478114
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 1915683638273331718
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8934536806125822002
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 8699106492948378870
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 11424794965910732290
+P2.SideStepDirection           | Val: 0                    | AccumHash: 3557853927735549286
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 5624206679307269202
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 2134869808775161686
+P2.CurrentHealth               | Val: 100                  | AccumHash: 1712495214453971446
+P2.HitstopCounter              | Val: 0                    | AccumHash: 8640215363698646274
+[Final Hash]: 8640215363698646274
+==================================================
+
+[2026-03-17 15:37:04.590] === GameStateSnapshot Tick: 300 ===
+SharedDepthAxis: X:0, Y:0, Z:65589
+
+--- [Player 1 Snapshot] ---
+Position: X:167792, Y:0, Z:0
+Velocity: X:5248, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65589
+CurrentDirection: X:67164, Y:0, Z:0
+LookDirection: X:-65589, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Walking
+StateFrameCounter: 40
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65589
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65560, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 301
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:04.592] [Hash Trace] Tick: 300
+Tick                           | Val: 300                  | AccumHash: 12637840854392755531
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 319016734775799409
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 4415953238989253123
+SharedDepthAxis.Z              | Val: 65589                | AccumHash: 15280379558942226882
+--- P1 ---
+P1.Position.X                  | Val: 167792               | AccumHash: 4315168318345998454
+P1.Position.Y                  | Val: 0                    | AccumHash: 14585182727911708802
+P1.Position.Z                  | Val: 0                    | AccumHash: 5150434302759970022
+P1.Velocity.X                  | Val: 5248                 | AccumHash: 8288425339743747410
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 4151819297481601622
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 16757416358524684322
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 6401202945956434374
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 15985449339216622450
+P1.DepthAxis.Z                 | Val: 65589                | AccumHash: 17943311314228928933
+P1.CurrentDirection.X          | Val: 67164                | AccumHash: 18357701290870516763
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 17844015370582487521
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 17824849836580667731
+P1.LookDirection.X             | Val: 18446744073709486027 | AccumHash: 10900086008195619912
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 13738542809770987096
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 16062297606886317960
+P1.IsGrounded                  | Val: 1                    | AccumHash: 15446040190844130763
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 16794666138305578993
+P1.CachedCurrentState          | Val: 4                    | AccumHash: 501140701487973711
+P1.StateFrameCounter           | Val: 40                   | AccumHash: 9192832648444112389
+P1.CurrentActionID             | Val: 0                    | AccumHash: 16686264109116781183
+P1.IsCommandActionTriggered    | Val: 0                    | AccumHash: 13670437895733087693
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 10647858765027603287
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 1682236768724352213
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 10799845544675122671
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 2236064415670131997
+P1.SideStepDirection           | Val: 0                    | AccumHash: 11790184582390724679
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 13197389266387607717
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 14744751679301318751
+P1.CurrentHealth               | Val: 100                  | AccumHash: 14782068638198746177
+P1.HitstopCounter              | Val: 0                    | AccumHash: 15870472708709323379
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 11032317381421619561
+P2.Position.Y                  | Val: 0                    | AccumHash: 2965797272588217707
+P2.Position.Z                  | Val: 0                    | AccumHash: 7023034962697579729
+P2.Velocity.X                  | Val: 0                    | AccumHash: 6474178109225985827
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 12823754279187726457
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 5200763210617097627
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 7257392003463290465
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 6075629114966744787
+P2.DepthAxis.Z                 | Val: 65589                | AccumHash: 16263944276932067538
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 14937186699882718422
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 8089591795295115170
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 4568092182420875334
+P2.LookDirection.X             | Val: 65560                | AccumHash: 2827451488263690170
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 5203164364180689166
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 12157945953422080714
+P2.IsGrounded                  | Val: 1                    | AccumHash: 15170004423849289457
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 6845952440058915715
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 6778725226217991654
+P2.StateFrameCounter           | Val: 301                  | AccumHash: 10231382239451241713
+P2.CurrentActionID             | Val: 0                    | AccumHash: 40139088830852483
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 5854027012780168601
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 6441611125184606971
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 13558357507784941697
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 18391308194993388339
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 77378656912742313
+P2.SideStepDirection           | Val: 0                    | AccumHash: 5635971418218378283
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 1199650454968182033
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 5601748692260453347
+P2.CurrentHealth               | Val: 100                  | AccumHash: 5356055367699981925
+P2.HitstopCounter              | Val: 0                    | AccumHash: 7100333838165048735
+[Final Hash]: 7100333838165048735
+==================================================
+
+[2026-03-17 15:37:05.585] === GameStateSnapshot Tick: 360 ===
+SharedDepthAxis: X:0, Y:0, Z:65537
+
+--- [Player 1 Snapshot] ---
+Position: X:20863, Y:0, Z:0
+Velocity: X:5243, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65537
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65537, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Walking
+StateFrameCounter: 15
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65537
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65590, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 361
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:05.586] [Hash Trace] Tick: 360
+Tick                           | Val: 360                  | AccumHash: 12637915621183473879
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 384063842687894869
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 9965703001413799791
+SharedDepthAxis.Z              | Val: 65537                | AccumHash: 5954970879798147050
+--- P1 ---
+P1.Position.X                  | Val: 20863                | AccumHash: 10869412421769236271
+P1.Position.Y                  | Val: 0                    | AccumHash: 1652853947469909213
+P1.Position.Z                  | Val: 0                    | AccumHash: 9642117733328690055
+P1.Velocity.X                  | Val: 5243                 | AccumHash: 17074929226839370036
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 6394201357577618268
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 9567008675251991892
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 1454621284608449980
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 2048507673203148404
+P1.DepthAxis.Z                 | Val: 65537                | AccumHash: 4397931902339545295
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 367263615185887877
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 13672617078216992767
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 8901016694079878733
+P1.LookDirection.X             | Val: 18446744073709486079 | AccumHash: 12036843301495077238
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 9219325635733971842
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 18083662832086423014
+P1.IsGrounded                  | Val: 1                    | AccumHash: 16301087239345747845
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 4772721190294738687
+P1.CachedCurrentState          | Val: 4                    | AccumHash: 827434717264530561
+P1.StateFrameCounter           | Val: 15                   | AccumHash: 16421070663130518858
+P1.CurrentActionID             | Val: 0                    | AccumHash: 13180887138234707134
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 15099750796775884941
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 15152142446125975447
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 14127204604019729813
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 18413460894507277359
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 16010112301448618973
+P1.SideStepDirection           | Val: 0                    | AccumHash: 9175782024976216199
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 9215905591518524773
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 5936454344497199775
+P1.CurrentHealth               | Val: 100                  | AccumHash: 1289237342280546433
+P1.HitstopCounter              | Val: 0                    | AccumHash: 3738874422003122995
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 9892386740399648681
+P2.Position.Y                  | Val: 0                    | AccumHash: 10730770375850523691
+P2.Position.Z                  | Val: 0                    | AccumHash: 16638397319860616465
+P2.Velocity.X                  | Val: 0                    | AccumHash: 8487857753996559331
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 3050546245757442745
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 3873596939100448859
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 8624116669437858465
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 13598376051457025939
+P2.DepthAxis.Z                 | Val: 65537                | AccumHash: 17480720424770010390
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 10178901664168807522
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 8245236643019295366
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 11615431199933587890
+P2.LookDirection.X             | Val: 65590                | AccumHash: 17247262417896944460
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 7502946716792531492
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 593479734587136812
+P2.IsGrounded                  | Val: 1                    | AccumHash: 8383684115321761143
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 9916414707446104373
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 11568185143715711836
+P2.StateFrameCounter           | Val: 361                  | AccumHash: 16972879898943035407
+P2.CurrentActionID             | Val: 0                    | AccumHash: 2061940251225678205
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 178663195832297319
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 4302892636190143493
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 4166202265533785215
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 15011718953317336013
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 8778467694319891799
+P2.SideStepDirection           | Val: 0                    | AccumHash: 3469072529788232405
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 16581452690993082351
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 11095133372939252509
+P2.CurrentHealth               | Val: 100                  | AccumHash: 4879773227460032155
+P2.HitstopCounter              | Val: 0                    | AccumHash: 5322337612155750753
+[Final Hash]: 5322337612155750753
+==================================================
+
+[2026-03-17 15:37:07.249] === GameStateSnapshot Tick: 420 ===
+SharedDepthAxis: X:0, Y:0, Z:65555
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65555
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65555, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 55
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65555
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65555, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 421
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:07.250] [Hash Trace] Tick: 420
+Tick                           | Val: 420                  | AccumHash: 12637972795788140851
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 433805748738320809
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 5528808549757487659
+SharedDepthAxis.Z              | Val: 65555                | AccumHash: 15100374010998054184
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 3107743930964926458
+P1.Position.Y                  | Val: 0                    | AccumHash: 6003883530019476942
+P1.Position.Z                  | Val: 0                    | AccumHash: 3859087205728783626
+P1.Velocity.X                  | Val: 0                    | AccumHash: 13311491257243936766
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 11923257423564764314
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 5240413984496460206
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 8802573530972863146
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 8678391344901205726
+P1.DepthAxis.Z                 | Val: 65555                | AccumHash: 5636548968722171479
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 12785411645250492365
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 14685190367129186647
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 382158952368887509
+P1.LookDirection.X             | Val: 18446744073709486061 | AccumHash: 5557761952621922856
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 4996944542865506808
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 12177796343141046376
+P1.IsGrounded                  | Val: 1                    | AccumHash: 2628327801610336875
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 4558835119986312145
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 15922033081961839216
+P1.StateFrameCounter           | Val: 55                   | AccumHash: 15074964488215971493
+P1.CurrentActionID             | Val: 0                    | AccumHash: 4243460871322896991
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 9916929839935462842
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 12538886749381427982
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 7691148863098302666
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 18295997255613245246
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 14654296384642641498
+P1.SideStepDirection           | Val: 0                    | AccumHash: 8938016024404001518
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 2223950363140651626
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 10023612479626215966
+P1.CurrentHealth               | Val: 100                  | AccumHash: 12244843885166409038
+P1.HitstopCounter              | Val: 0                    | AccumHash: 3843795183437714314
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 3689973110822384510
+P2.Position.Y                  | Val: 0                    | AccumHash: 6014641283298885402
+P2.Position.Z                  | Val: 0                    | AccumHash: 4857382224756504878
+P2.Velocity.X                  | Val: 0                    | AccumHash: 8337170158997334314
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 11533098536019898974
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 190285757003765178
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 9461817846719867662
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 5755732615403792586
+P2.DepthAxis.Z                 | Val: 65555                | AccumHash: 18398694933031004347
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 17696930019885168065
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 9598376385628198643
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 3795996530855460585
+P2.LookDirection.X             | Val: 65555                | AccumHash: 14127680706837152462
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 5874596921860277258
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 11367368402650537214
+P2.IsGrounded                  | Val: 1                    | AccumHash: 797774697485124941
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 3841179439166964183
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 12201801250521833122
+P2.StateFrameCounter           | Val: 421                  | AccumHash: 119972556632520933
+P2.CurrentActionID             | Val: 0                    | AccumHash: 13022759763881848095
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 9635059267227642797
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 2717263045369198327
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 11143036042915194293
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 1898525158483202703
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 5596045989184080125
+P2.SideStepDirection           | Val: 0                    | AccumHash: 537296640314328551
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 11373979096266360709
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 16403561051642595071
+P2.CurrentHealth               | Val: 100                  | AccumHash: 7541656912822024545
+P2.HitstopCounter              | Val: 0                    | AccumHash: 8645677729649360851
+[Final Hash]: 8645677729649360851
+==================================================
+
+[2026-03-17 15:37:08.066] === GameStateSnapshot Tick: 480 ===
+SharedDepthAxis: X:0, Y:0, Z:65555
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65555
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65555, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 115
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65555
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65555, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 481
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:08.067] [Hash Trace] Tick: 480
+Tick                           | Val: 480                  | AccumHash: 12638047562578859199
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 498852856650416269
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 11078558312182034327
+SharedDepthAxis.Z              | Val: 65555                | AccumHash: 5630872133953666380
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 13666379671230356558
+P1.Position.Y                  | Val: 0                    | AccumHash: 10652024646942726282
+P1.Position.Z                  | Val: 0                    | AccumHash: 16907578542088761982
+P1.Velocity.X                  | Val: 0                    | AccumHash: 17005933228615552026
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 12275446997987446830
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 11975567129857441322
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 7335312735899918686
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 12734218304958509754
+P1.DepthAxis.Z                 | Val: 65555                | AccumHash: 11500895603639260459
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 17950583362287324697
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 8723536089488864379
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 18394611323666869505
+P1.LookDirection.X             | Val: 18446744073709486061 | AccumHash: 12613023536062719748
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 1706205137875274700
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 4368821349497277348
+P1.IsGrounded                  | Val: 1                    | AccumHash: 17539603667402115423
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 4613646353290538093
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 17618639925519645572
+P1.StateFrameCounter           | Val: 115                  | AccumHash: 10798111443170370741
+P1.CurrentActionID             | Val: 0                    | AccumHash: 16327501186078760847
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 349328631446396490
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 8733997743452993470
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 9939953166426224602
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 4655075188204267374
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 7806532239981920234
+P1.SideStepDirection           | Val: 0                    | AccumHash: 15601749485170530974
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 2473981856459537018
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 6863871726115839310
+P1.CurrentHealth               | Val: 100                  | AccumHash: 15524340375285091934
+P1.HitstopCounter              | Val: 0                    | AccumHash: 3835576088771307962
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 6442862185238161166
+P2.Position.Y                  | Val: 0                    | AccumHash: 15666464492406349002
+P2.Position.Z                  | Val: 0                    | AccumHash: 10845811769094204222
+P2.Velocity.X                  | Val: 0                    | AccumHash: 6832807348479343194
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 16917459221633640174
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 10456106373511194218
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 7419566398536435230
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 2809671211716912378
+P2.DepthAxis.Z                 | Val: 65555                | AccumHash: 5164603081596385259
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 4221782340080796753
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 1637987110717281699
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 11103848593252287481
+P2.LookDirection.X             | Val: 65555                | AccumHash: 6856067658642335390
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 1773952699497979514
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 13920343768490821966
+P2.IsGrounded                  | Val: 1                    | AccumHash: 8837314120598098237
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 3494674789389191847
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 8580337323853010962
+P2.StateFrameCounter           | Val: 481                  | AccumHash: 11453927008733124585
+P2.CurrentActionID             | Val: 0                    | AccumHash: 16417727402174800107
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 18052895745441115985
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 16435356853398988451
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 3637664140361197305
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 3450855927044733211
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 17130267212329044193
+P2.SideStepDirection           | Val: 0                    | AccumHash: 6443933373726545491
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 3913960087122980617
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 5881739103936474187
+P2.CurrentHealth               | Val: 100                  | AccumHash: 6595210739641734109
+P2.HitstopCounter              | Val: 0                    | AccumHash: 13117681451112136839
+[Final Hash]: 13117681451112136839
+==================================================
+
+[2026-03-17 15:37:09.575] === GameStateSnapshot Tick: 540 ===
+SharedDepthAxis: X:0, Y:0, Z:65555
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65555
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65555, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 175
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131072, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65555
+CurrentDirection: X:0, Y:0, Z:65536
+LookDirection: X:65555, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 541
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:09.576] [Hash Trace] Tick: 540
+Tick                           | Val: 540                  | AccumHash: 12637612155974087643
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 120049110574095649
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 3716786971904950035
+SharedDepthAxis.Z              | Val: 65555                | AccumHash: 15448124600266034432
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 2171120044560521410
+P1.Position.Y                  | Val: 0                    | AccumHash: 17675442369713508774
+P1.Position.Z                  | Val: 0                    | AccumHash: 8743881871456369938
+P1.Velocity.X                  | Val: 0                    | AccumHash: 6044497259940971926
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 2606376114344492514
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 523232370059339526
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 13119622044572192562
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 9013560345946345974
+P1.DepthAxis.Z                 | Val: 65555                | AccumHash: 4195249019316381727
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 10932430616906631029
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 2330226610165623759
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 639220662741954749
+P1.LookDirection.X             | Val: 18446744073709486061 | AccumHash: 1815017036114167024
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 12320591199269446608
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 14685286234055481968
+P1.IsGrounded                  | Val: 1                    | AccumHash: 2038711593998708227
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 15478024234748604185
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 1315348406090024392
+P1.StateFrameCounter           | Val: 175                  | AccumHash: 16415868857713094149
+P1.CurrentActionID             | Val: 0                    | AccumHash: 9141637337331692159
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 12467990022528732186
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 17566159782534844462
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 18022955931271527978
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 17809221342401487198
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 2072310392872530618
+P1.SideStepDirection           | Val: 0                    | AccumHash: 7108456357297058318
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 12649193768783007178
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 12569268127547993662
+P1.CurrentHealth               | Val: 100                  | AccumHash: 9930452261652644590
+P1.HitstopCounter              | Val: 0                    | AccumHash: 17602949613662255722
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420544 | AccumHash: 8364329096606204446
+P2.Position.Y                  | Val: 0                    | AccumHash: 16959148605290535162
+P2.Position.Z                  | Val: 0                    | AccumHash: 5978990679326208206
+P2.Velocity.X                  | Val: 0                    | AccumHash: 11124753082047983114
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 13637520010412194558
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 9077478646664592794
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 12844692253296618670
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 15726348204816346026
+P2.DepthAxis.Z                 | Val: 65555                | AccumHash: 618431502327696219
+P2.CurrentDirection.X          | Val: 0                    | AccumHash: 13594743326904748961
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 6507118814387421843
+P2.CurrentDirection.Z          | Val: 65536                | AccumHash: 5057017022980005833
+P2.LookDirection.X             | Val: 65555                | AccumHash: 1370205113924558702
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 3842734627029379050
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 14690465860968059550
+P2.IsGrounded                  | Val: 1                    | AccumHash: 7856498983568581677
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 1660966264525092983
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 1726089849580695682
+P2.StateFrameCounter           | Val: 541                  | AccumHash: 6796617103143339053
+P2.CurrentActionID             | Val: 0                    | AccumHash: 8797558341726574711
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 15602443444262441525
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 5763876965480034319
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 7640084498160839037
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 170211982236663655
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 13747852236433439749
+P2.SideStepDirection           | Val: 0                    | AccumHash: 6794099897500138623
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 4205618936234675149
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 1814772505725996375
+P2.CurrentHealth               | Val: 100                  | AccumHash: 13621669031247539625
+P2.HitstopCounter              | Val: 0                    | AccumHash: 12302642039182972459
+[Final Hash]: 12302642039182972459
+==================================================
+
+[2026-03-17 15:37:10.474] === GameStateSnapshot Tick: 600 ===
+SharedDepthAxis: X:0, Y:0, Z:65596
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65596
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65596, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 235
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-212410, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65596
+CurrentDirection: X:-67164, Y:0, Z:0
+LookDirection: X:65596, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 18
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:10.475] [Hash Trace] Tick: 600
+Tick                           | Val: 600                  | AccumHash: 12637686922764805991
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 185096218486191109
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 9266536734329496703
+SharedDepthAxis.Z              | Val: 65596                | AccumHash: 6122728015749864921
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 8974054986585326365
+P1.Position.Y                  | Val: 0                    | AccumHash: 15901352354510965319
+P1.Position.Z                  | Val: 0                    | AccumHash: 17036105940478260901
+P1.Velocity.X                  | Val: 0                    | AccumHash: 15936977823416392287
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 15279921130161688429
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 10968184240459445815
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 4943861481506987893
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 10027695933481464783
+P1.DepthAxis.Z                 | Val: 65596                | AccumHash: 4847728387158099433
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 8410139628442853619
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 1749316907511610601
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 1212742314959847403
+P1.LookDirection.X             | Val: 18446744073709486020 | AccumHash: 2422734419934875613
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 8518392283151758471
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 10420020437438562661
+P1.IsGrounded                  | Val: 1                    | AccumHash: 10230564703481126124
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 16473924855109641476
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 14145279005381633919
+P1.StateFrameCounter           | Val: 235                  | AccumHash: 2371280515294773372
+P1.CurrentActionID             | Val: 0                    | AccumHash: 16017502114659340980
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 982407460069001615
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 5038391377182719485
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 3310551894123255015
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 14400430592912983173
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 15281967488952479231
+P1.SideStepDirection           | Val: 0                    | AccumHash: 8318118586084468813
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 5389134749482023639
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 12416362908434053973
+P1.CurrentHealth               | Val: 100                  | AccumHash: 6326575636920439875
+P1.HitstopCounter              | Val: 0                    | AccumHash: 8725413812231204313
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709339206 | AccumHash: 17097753966574168877
+P2.Position.Y                  | Val: 0                    | AccumHash: 16017273620925947255
+P2.Position.Z                  | Val: 0                    | AccumHash: 4344805254886166837
+P2.Velocity.X                  | Val: 0                    | AccumHash: 3635403702306454799
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 15570249728368590973
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 12921541415552783463
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 4239004837342817029
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 17391261898246855039
+P2.DepthAxis.Z                 | Val: 65596                | AccumHash: 16668657647890459865
+P2.CurrentDirection.X          | Val: 18446744073709484452 | AccumHash: 15211581583682405223
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 17968455786014722053
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 8137648662414254207
+P2.LookDirection.X             | Val: 65596                | AccumHash: 651417054365913561
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 8723922642237379515
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 4952672589124781761
+P2.IsGrounded                  | Val: 1                    | AccumHash: 7152217090648815680
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 4791359627582510272
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 3512194264463262707
+P2.StateFrameCounter           | Val: 18                   | AccumHash: 5895167579999197011
+P2.CurrentActionID             | Val: 0                    | AccumHash: 4936736654889345545
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 13738564669065565515
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 6634217612245184113
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 17681231537695189507
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 12980395455910716185
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 13811834082348278651
+P2.SideStepDirection           | Val: 0                    | AccumHash: 13002017527030991361
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 12744006222962114483
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 10069760175996026153
+P2.CurrentHealth               | Val: 100                  | AccumHash: 1422941509365410263
+P2.HitstopCounter              | Val: 0                    | AccumHash: 8087051189445531733
+[Final Hash]: 8087051189445531733
+==================================================
+
+[2026-03-17 15:37:11.469] === GameStateSnapshot Tick: 660 ===
+SharedDepthAxis: X:0, Y:0, Z:65543
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65543
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65543, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 295
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-47061, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65543
+CurrentDirection: X:67164, Y:0, Z:0
+LookDirection: X:65543, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Walking
+StateFrameCounter: 0
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:11.472] [Hash Trace] Tick: 660
+Tick                           | Val: 660                  | AccumHash: 12637744097369472963
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 234838124536617049
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 4829642282673184571
+SharedDepthAxis.Z              | Val: 65543                | AccumHash: 15268182823996297972
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 1250709973573417382
+P1.Position.Y                  | Val: 0                    | AccumHash: 6921730341305480466
+P1.Position.Z                  | Val: 0                    | AccumHash: 14398545170097302934
+P1.Velocity.X                  | Val: 0                    | AccumHash: 11140704005620217314
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 8814977356990910214
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 7828790034565400370
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 47767306874305014
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 4546105588302871810
+P1.DepthAxis.Z                 | Val: 65543                | AccumHash: 7572528581436895103
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 11171627884108611285
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 10794211630041498607
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 10262373133167701789
+P1.LookDirection.X             | Val: 18446744073709486073 | AccumHash: 542953551862166380
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 1561728445107576964
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 1623325232854384716
+P1.IsGrounded                  | Val: 1                    | AccumHash: 9115439426666283735
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 18244222118774641493
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 2052440128296179644
+P1.StateFrameCounter           | Val: 295                  | AccumHash: 4617900172618738017
+P1.CurrentActionID             | Val: 0                    | AccumHash: 949393145981095891
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 14421904501580308950
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 7193431836827090594
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 12831666035426274630
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 11375161648176295410
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 8065702961681486390
+P1.SideStepDirection           | Val: 0                    | AccumHash: 768193292794900930
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 18313624479639407782
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 12280633391079980562
+P1.CurrentHealth               | Val: 100                  | AccumHash: 13235868822344557186
+P1.HitstopCounter              | Val: 0                    | AccumHash: 11722087822719050470
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709504555 | AccumHash: 8814484235713002071
+P2.Position.Y                  | Val: 0                    | AccumHash: 14976349354984415701
+P2.Position.Z                  | Val: 0                    | AccumHash: 2948776674919349487
+P2.Velocity.X                  | Val: 0                    | AccumHash: 1136651711721916957
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 6057983244072120135
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 792366135448409509
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 2519876024886839135
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 15230191839769151085
+P2.DepthAxis.Z                 | Val: 65543                | AccumHash: 11923462077299336734
+P2.CurrentDirection.X          | Val: 67164                | AccumHash: 8188001465513496614
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 7274140981002580114
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 5620363411131041814
+P2.LookDirection.X             | Val: 65543                | AccumHash: 11079086905451033827
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 6474811583807544761
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 2179940402396840283
+P2.IsGrounded                  | Val: 1                    | AccumHash: 14606195125706984430
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 4451425330086266218
+P2.CachedCurrentState          | Val: 4                    | AccumHash: 17315688092082141674
+P2.StateFrameCounter           | Val: 0                    | AccumHash: 6375284116289169566
+P2.CurrentActionID             | Val: 0                    | AccumHash: 17417339327140463738
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 6893613662097480526
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 12194557305701983626
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 1402231479214016894
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 9013030995033858330
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 2185836318740987694
+P2.SideStepDirection           | Val: 0                    | AccumHash: 4596257247327640362
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 12265292205953902686
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 8898106260966594490
+P2.CurrentHealth               | Val: 100                  | AccumHash: 7801425952764055098
+P2.HitstopCounter              | Val: 0                    | AccumHash: 18140344362506611854
+[Final Hash]: 18140344362506611854
+==================================================
+
+[2026-03-17 15:37:12.468] === GameStateSnapshot Tick: 720 ===
+SharedDepthAxis: X:0, Y:0, Z:65563
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65563
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65563, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 355
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-149411, Y:0, Z:0
+Velocity: X:5245, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65563
+CurrentDirection: X:67133, Y:0, Z:0
+LookDirection: X:65563, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Walking
+StateFrameCounter: 14
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:12.470] [Hash Trace] Tick: 720
+Tick                           | Val: 720                  | AccumHash: 12637818864160191311
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 299885232448712509
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 10379392045097731239
+SharedDepthAxis.Z              | Val: 65563                | AccumHash: 6086968497822321524
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 4292978722831350566
+P1.Position.Y                  | Val: 0                    | AccumHash: 16735147966564172178
+P1.Position.Z                  | Val: 0                    | AccumHash: 5467602939207232278
+P1.Velocity.X                  | Val: 0                    | AccumHash: 4842258559054198370
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 3829244156758943878
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 2877531309013638066
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 12523441491107811190
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 3497969354332292482
+P1.DepthAxis.Z                 | Val: 65563                | AccumHash: 12209808023695377147
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 18403378937890894473
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 16044280213679283915
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 9751978661203399409
+P1.LookDirection.X             | Val: 18446744073709486053 | AccumHash: 15136684095554689276
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 14505391243524633652
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 7468523068808688732
+P1.IsGrounded                  | Val: 1                    | AccumHash: 4987548681238559239
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 14861775067844811237
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 1997804016786243180
+P1.StateFrameCounter           | Val: 355                  | AccumHash: 9289299056176391805
+P1.CurrentActionID             | Val: 0                    | AccumHash: 15124244815331501671
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 9746598415709159250
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 10475738251847211094
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 6587983609866639906
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 10155788700203558854
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 864938073073423730
+P1.SideStepDirection           | Val: 0                    | AccumHash: 11966931447031132342
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 17319990051144205634
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 3313884098455990054
+P1.CurrentHealth               | Val: 100                  | AccumHash: 7949036936942751014
+P1.HitstopCounter              | Val: 0                    | AccumHash: 7032618846885894034
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709402205 | AccumHash: 14819234583914609853
+P2.Position.Y                  | Val: 0                    | AccumHash: 16090549154032940327
+P2.Position.Z                  | Val: 0                    | AccumHash: 9835235778547880261
+P2.Velocity.X                  | Val: 5245                 | AccumHash: 8988643462669000232
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 18219726103784226296
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 11386643823409892456
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 13933714308424733880
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 191148662200480936
+P2.DepthAxis.Z                 | Val: 65563                | AccumHash: 4837896849380379689
+P2.CurrentDirection.X          | Val: 67133                | AccumHash: 7143605355543633916
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 3920728452113815860
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 8621674320857863004
+P2.LookDirection.X             | Val: 65563                | AccumHash: 2718289750393012645
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 15898100036830956383
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 15369454033797403245
+P2.IsGrounded                  | Val: 1                    | AccumHash: 11473114228179340676
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 12205206299728344908
+P2.CachedCurrentState          | Val: 4                    | AccumHash: 8921841624011648856
+P2.StateFrameCounter           | Val: 14                   | AccumHash: 16565662072897433378
+P2.CurrentActionID             | Val: 0                    | AccumHash: 15755204147516724934
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 464718946919445106
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 8962516988925441974
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 12050049801136106050
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 11825368339676335654
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 7701849572780608146
+P2.SideStepDirection           | Val: 0                    | AccumHash: 12960071571396949526
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 6831772091359045474
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 18191165402749922182
+P2.CurrentHealth               | Val: 100                  | AccumHash: 4758284454704238854
+P2.HitstopCounter              | Val: 0                    | AccumHash: 2147854151166143794
+[Final Hash]: 2147854151166143794
+==================================================
+
+[2026-03-17 15:37:13.466] === GameStateSnapshot Tick: 780 ===
+SharedDepthAxis: X:0, Y:0, Z:65583
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65583
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65583, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 415
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-131018, Y:0, Z:0
+Velocity: X:-5248, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65583
+CurrentDirection: X:-67164, Y:0, Z:0
+LookDirection: X:65583, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Walking
+StateFrameCounter: 24
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:13.468] [Hash Trace] Tick: 780
+Tick                           | Val: 780                  | AccumHash: 12637313088811214251
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 18306604752635265425
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 18411276069625866595
+SharedDepthAxis.Z              | Val: 65583                | AccumHash: 15856038072958069796
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 11908116684206540950
+P1.Position.Y                  | Val: 0                    | AccumHash: 15557323267051099874
+P1.Position.Z                  | Val: 0                    | AccumHash: 6710359091793289734
+P1.Velocity.X                  | Val: 0                    | AccumHash: 16445821836074291250
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 7120765397756904694
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 2048190925693578754
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 8180403767494077798
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 12119883611910038610
+P1.DepthAxis.Z                 | Val: 65583                | AccumHash: 14315163154956173415
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 9193915388913416253
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 18204967649232179111
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 4809563995822971077
+P1.LookDirection.X             | Val: 18446744073709486033 | AccumHash: 943624148072064764
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 10477758634345922100
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 10161654040438403676
+P1.IsGrounded                  | Val: 1                    | AccumHash: 6824063169545917447
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 9806319149778126821
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 16280543569739622508
+P1.StateFrameCounter           | Val: 415                  | AccumHash: 9559376872460765161
+P1.CurrentActionID             | Val: 0                    | AccumHash: 9813347681382478059
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 11405152146065759646
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 8911225794075022202
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 5148506095460833358
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 5263131157250575498
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 5960427774389210750
+P1.SideStepDirection           | Val: 0                    | AccumHash: 7309643771062935578
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 4143921345959382062
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 14518032116914352682
+P1.CurrentHealth               | Val: 100                  | AccumHash: 13795430962121554570
+P1.HitstopCounter              | Val: 0                    | AccumHash: 18375143211125274750
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709420598 | AccumHash: 11796738590027113048
+P2.Position.Y                  | Val: 0                    | AccumHash: 16456539996144671624
+P2.Position.Z                  | Val: 0                    | AccumHash: 5157057159626803224
+P2.Velocity.X                  | Val: 18446744073709546368 | AccumHash: 8273795215424846664
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 15351179820435012440
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 3247119523200210568
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 2876651208195361048
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 335930737075139528
+P2.DepthAxis.Z                 | Val: 65583                | AccumHash: 7685812894776930693
+P2.CurrentDirection.X          | Val: 18446744073709484452 | AccumHash: 8594795116563632147
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 13182644449559171145
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 2111184118462999563
+P2.LookDirection.X             | Val: 65583                | AccumHash: 4092748461088063788
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 12791143074933292484
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 4236695904340046860
+P2.IsGrounded                  | Val: 1                    | AccumHash: 8264924385148875287
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 2968971004542328085
+P2.CachedCurrentState          | Val: 4                    | AccumHash: 3553132608011068387
+P2.StateFrameCounter           | Val: 24                   | AccumHash: 2671565350776791937
+P2.CurrentActionID             | Val: 0                    | AccumHash: 5382349559722710067
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 3238961508339405481
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 2083028099672765739
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 5033960967620433937
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 16702902807215760611
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 15644236505509227961
+P2.SideStepDirection           | Val: 0                    | AccumHash: 18241039240232399195
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 3000197316026670497
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 11047869737169508499
+P2.CurrentHealth               | Val: 100                  | AccumHash: 5551606224394562485
+P2.HitstopCounter              | Val: 0                    | AccumHash: 14758581440877282447
+[Final Hash]: 14758581440877282447
+==================================================
+
+[2026-03-17 15:37:15.644] === GameStateSnapshot Tick: 840 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 475
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 23
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:15.646] [Hash Trace] Tick: 840
+Tick                           | Val: 840                  | AccumHash: 12637387855601932599
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 18371651860547360885
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 5514281758340861647
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 6674865528225965366
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 14950666908434105600
+P1.Position.Y                  | Val: 0                    | AccumHash: 17709530783863897856
+P1.Position.Z                  | Val: 0                    | AccumHash: 12326108288447859968
+P1.Velocity.X                  | Val: 0                    | AccumHash: 11061989776592099072
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 11657241521853682944
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 16912427950163947264
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 13439907247439092992
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 13593808416215353088
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 14547949714349165735
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 1560226003639595261
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 1064471827364085223
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 10126647140236914565
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 12115646681432368882
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 11445969274971729206
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 11755144152738779842
+P1.IsGrounded                  | Val: 1                    | AccumHash: 13058323007573827929
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 12581749381102774843
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 5847034060697026702
+P1.StateFrameCounter           | Val: 475                  | AccumHash: 6222233268681737071
+P1.CurrentActionID             | Val: 0                    | AccumHash: 2242847712784111005
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 12613107641015760916
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 17420120162487634428
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8969518477967030068
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 756093384167656796
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 3059942203187573588
+P1.SideStepDirection           | Val: 0                    | AccumHash: 6994986725438699452
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 5499238308019975284
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 7941756703867478300
+P1.CurrentHealth               | Val: 100                  | AccumHash: 16157256902096707304
+P1.HitstopCounter              | Val: 0                    | AccumHash: 3934940156190245944
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 1323944629413432093
+P2.Position.Y                  | Val: 0                    | AccumHash: 12806958897526645319
+P2.Position.Z                  | Val: 0                    | AccumHash: 2029584620344950437
+P2.Velocity.X                  | Val: 0                    | AccumHash: 2162999589453886047
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 13303577166124799853
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 10763793368631021111
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 14435232294373894005
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 14866101344255085519
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 15657225623974136886
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 6227332613845608285
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 5930342446288413447
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 5307161263174747365
+P2.LookDirection.X             | Val: 65597                | AccumHash: 7349160883176520456
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 4353867354089180824
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 6009428612013624392
+P2.IsGrounded                  | Val: 1                    | AccumHash: 15708063182314594315
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 12386925542152909489
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 6237093015503216912
+P2.StateFrameCounter           | Val: 23                   | AccumHash: 4031423867754553061
+P2.CurrentActionID             | Val: 0                    | AccumHash: 11217368282540277535
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 1255839147183210925
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 9209223553489197303
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 932095329012886453
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 10958443198553343119
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 8907096980863811325
+P2.SideStepDirection           | Val: 0                    | AccumHash: 7075685901559187431
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 9767280550826454405
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 16945440762055350527
+P2.CurrentHealth               | Val: 100                  | AccumHash: 6104841114621120353
+P2.HitstopCounter              | Val: 0                    | AccumHash: 2809889131148943827
+[Final Hash]: 2809889131148943827
+==================================================
+
+[2026-03-17 15:37:16.287] === GameStateSnapshot Tick: 900 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 535
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 83
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:16.288] [Hash Trace] Tick: 900
+Tick                           | Val: 900                  | AccumHash: 12637445030206599571
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 18421393766597786825
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 1077387306684549515
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 15820262062356103234
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 7213971625242487580
+P1.Position.Y                  | Val: 0                    | AccumHash: 8142093363839959188
+P1.Position.Z                  | Val: 0                    | AccumHash: 13798914307113483132
+P1.Velocity.X                  | Val: 0                    | AccumHash: 17566806956704945076
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 9388341192559966940
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 1738168768099517396
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 4399670641021059388
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 9699125040570538228
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 334382113848008075
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 664263349405119993
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 4936727644385736219
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 16190252588028571617
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 16889282672950782406
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 12251338978329033586
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 1897073536445530806
+P1.IsGrounded                  | Val: 1                    | AccumHash: 6743556236073262325
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 729050426408301647
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 11177099264755638410
+P1.StateFrameCounter           | Val: 535                  | AccumHash: 11274807496003866823
+P1.CurrentActionID             | Val: 0                    | AccumHash: 1801328019035046437
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 366286815869002540
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 7717472651402740676
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 11827860078596941324
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 13133952856167966308
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 6192749839884221420
+P1.SideStepDirection           | Val: 0                    | AccumHash: 3502701459419501060
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 9966327840358112460
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 12013160270879616676
+P1.CurrentHealth               | Val: 100                  | AccumHash: 16640360590455550016
+P1.HitstopCounter              | Val: 0                    | AccumHash: 16886305940614872256
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 16279301326407394325
+P2.Position.Y                  | Val: 0                    | AccumHash: 17466102457423466415
+P2.Position.Z                  | Val: 0                    | AccumHash: 3284888687997560413
+P2.Velocity.X                  | Val: 0                    | AccumHash: 4719031422989512711
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 8806475016037702629
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 17500578304769254943
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 6776997230646527661
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 5595879451862063095
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 1856127639996148798
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 9605847777821620677
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 966986485467638207
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 13003047788120846221
+P2.LookDirection.X             | Val: 65597                | AccumHash: 18408937954933934096
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 2795985332732867376
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 12509890538562550416
+P2.IsGrounded                  | Val: 1                    | AccumHash: 767957847115711587
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 16883383690443240505
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 11561719126627105576
+P2.StateFrameCounter           | Val: 83                   | AccumHash: 1654024740982264321
+P2.CurrentActionID             | Val: 0                    | AccumHash: 17700892843978266547
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 18267303048321975593
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 7567042526832592043
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 10558297368543129233
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 17233255584461480035
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 13420255242399926329
+P2.SideStepDirection           | Val: 0                    | AccumHash: 14568954733345683675
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 6855359397936897057
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 5966506731282222099
+P2.CurrentHealth               | Val: 100                  | AccumHash: 13880558248055172661
+P2.HitstopCounter              | Val: 0                    | AccumHash: 14203112042854958095
+[Final Hash]: 14203112042854958095
+==================================================
+
+[2026-03-17 15:37:17.285] === GameStateSnapshot Tick: 960 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 595
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 143
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:17.288] [Hash Trace] Tick: 960
+Tick                           | Val: 960                  | AccumHash: 12637519796997317919
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 39696800800330669
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 6627137069109096183
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 6494813800793407806
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 13863781980861752984
+P1.Position.Y                  | Val: 0                    | AccumHash: 12055410839266710600
+P1.Position.Z                  | Val: 0                    | AccumHash: 3126422186268472920
+P1.Velocity.X                  | Val: 0                    | AccumHash: 2912250119235557256
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 14744656923967831064
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 14868038274697862344
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 16360414073593391064
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 11750435305448600584
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 10478956499646936591
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 6103113281617007173
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 12363331360387959615
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 16895253246862433293
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 1512357119102097162
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 5112087339403716094
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 8862360952879353498
+P1.IsGrounded                  | Val: 1                    | AccumHash: 12047433954665451873
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 16769339031589373907
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 7786439682665482710
+P1.StateFrameCounter           | Val: 595                  | AccumHash: 16538485701158343423
+P1.CurrentActionID             | Val: 0                    | AccumHash: 7762629541277386573
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 15601416045725787684
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 8637218735616839468
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8632277853909845956
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 6066578471603319308
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 118542030441056868
+P1.SideStepDirection           | Val: 0                    | AccumHash: 3470263922472724460
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 12435411958442284548
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 15521182662322792652
+P1.CurrentHealth               | Val: 100                  | AccumHash: 13151908979548853624
+P1.HitstopCounter              | Val: 0                    | AccumHash: 7747904143408429800
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 12173865091281516045
+P2.Position.Y                  | Val: 0                    | AccumHash: 8114321342229518359
+P2.Position.Z                  | Val: 0                    | AccumHash: 5687870539145342741
+P2.Velocity.X                  | Val: 0                    | AccumHash: 5453693209915179183
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 10326820562869545309
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 10322339207327484167
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 4742953688870278885
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 1605519072593979167
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 17395490233439583942
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 2754141271476701549
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 10292754889737864247
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 13057353586211006837
+P2.LookDirection.X             | Val: 65597                | AccumHash: 12666687354628580696
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 4927412487956722824
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 12534033205430354712
+P2.IsGrounded                  | Val: 1                    | AccumHash: 3634314299985281915
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 8252695882171296257
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 14004368967323966976
+P2.StateFrameCounter           | Val: 143                  | AccumHash: 1691326172268047613
+P2.CurrentActionID             | Val: 0                    | AccumHash: 4463054918106149351
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 409510639045512069
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 13056422503695160063
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 1014409076510541645
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 4871199377116866519
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 453649452828340821
+P2.SideStepDirection           | Val: 0                    | AccumHash: 1499138592564020847
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 3860953898781339293
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 1252658103266768071
+P2.CurrentHealth               | Val: 100                  | AccumHash: 14198896352379646201
+P2.HitstopCounter              | Val: 0                    | AccumHash: 153053698449454875
+[Final Hash]: 153053698449454875
+==================================================
+
+[2026-03-17 15:37:18.294] === GameStateSnapshot Tick: 1020 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 655
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 203
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:18.296] [Hash Trace] Tick: 1020
+Tick                           | Val: 1020                 | AccumHash: 12637506602857779387
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 28217899404078529
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 17583897982258003699
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 15736191010391439370
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 2904538378602591220
+P1.Position.Y                  | Val: 0                    | AccumHash: 10875632238456326044
+P1.Position.Z                  | Val: 0                    | AccumHash: 8085322744770473492
+P1.Velocity.X                  | Val: 0                    | AccumHash: 1726581079964929020
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 17249619802669522228
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 7945729502793736028
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 13525346259445139796
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 6132576390301358524
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 8824746087034279475
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 14762637546092568033
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 15042999208497235283
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 12820161898575973385
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 1114419529528737854
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 11029911512364673370
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 10858873000472642542
+P1.IsGrounded                  | Val: 1                    | AccumHash: 5892094359609814813
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 10506096440452845127
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 17268947520036815090
+P1.StateFrameCounter           | Val: 655                  | AccumHash: 16291723802015496807
+P1.CurrentActionID             | Val: 0                    | AccumHash: 1691229309238344965
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 14063133998967123404
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 14432152393149813156
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 6062242556413245868
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 4125273482057137988
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 11698809495784456332
+P1.SideStepDirection           | Val: 0                    | AccumHash: 1355857549964471780
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 11746917526380952172
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 13940460315317650820
+P1.CurrentHealth               | Val: 100                  | AccumHash: 12434927545836026784
+P1.HitstopCounter              | Val: 0                    | AccumHash: 9394312166933319904
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 5184524932540733045
+P2.Position.Y                  | Val: 0                    | AccumHash: 9311518179391121615
+P2.Position.Z                  | Val: 0                    | AccumHash: 14359879786655799229
+P2.Velocity.X                  | Val: 0                    | AccumHash: 10275869719432992295
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 5825439852043347013
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 15123201023454028095
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 7885975609431522829
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 9644708480876228631
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 4736192101688530782
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 15452207699109246245
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 6407903596071423455
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 16467189928340656621
+P2.LookDirection.X             | Val: 65597                | AccumHash: 17677348627131974768
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 14703488875366304336
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 15590827414163211760
+P2.IsGrounded                  | Val: 1                    | AccumHash: 5048921446589028483
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 15698832324425967257
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 555097288484738120
+P2.StateFrameCounter           | Val: 203                  | AccumHash: 98168397869456025
+P2.CurrentActionID             | Val: 0                    | AccumHash: 9095872029193515515
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 18158397228372553089
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 14463734915485209139
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 18179501136619891881
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 13591663140275036971
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 6903245544441954833
+P2.SideStepDirection           | Val: 0                    | AccumHash: 10126325898130997987
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 13456552780087437241
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 13487758685794697051
+P2.CurrentHealth               | Val: 100                  | AccumHash: 785941502140954637
+P2.HitstopCounter              | Val: 0                    | AccumHash: 16272062866265882135
+[Final Hash]: 16272062866265882135
+==================================================
+
+[2026-03-17 15:37:19.288] === GameStateSnapshot Tick: 1080 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 715
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 263
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:19.292] [Hash Trace] Tick: 1080
+Tick                           | Val: 1080                 | AccumHash: 12639270219509429831
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1562564386036447909
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 4174056389838759519
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 3963232086954834054
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 15356778263689705744
+P1.Position.Y                  | Val: 0                    | AccumHash: 14743042674470614576
+P1.Position.Z                  | Val: 0                    | AccumHash: 16740236268683416464
+P1.Velocity.X                  | Val: 0                    | AccumHash: 13720902212312497584
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 5825904806516101648
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 296323038497255728
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 7028946481568093328
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 15686175000201392304
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 9499511510509862807
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 12735081206852525965
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 9384892122316217495
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 6065968213537035413
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 5055107149464167202
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 10250094520941376198
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 11068430469044110962
+P1.IsGrounded                  | Val: 1                    | AccumHash: 9104007750395819369
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 7953415259849163115
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 611234266864641822
+P1.StateFrameCounter           | Val: 715                  | AccumHash: 7877325004923603183
+P1.CurrentActionID             | Val: 0                    | AccumHash: 9811897634393239069
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 16285998200299542932
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 10180136457374217852
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 15783808845375968436
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 9358343268159696348
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 9401970765188852948
+P1.SideStepDirection           | Val: 0                    | AccumHash: 7392867438255729724
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 2195135614857865716
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 3249171157649131932
+P1.CurrentHealth               | Val: 100                  | AccumHash: 13673495344296357992
+P1.HitstopCounter              | Val: 0                    | AccumHash: 3358692577518780600
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 923702687440102813
+P2.Position.Y                  | Val: 0                    | AccumHash: 13340752376929593799
+P2.Position.Z                  | Val: 0                    | AccumHash: 17158357183694961957
+P2.Velocity.X                  | Val: 0                    | AccumHash: 519268685922575839
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 11881483848905808365
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 13902854222072696247
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 9805455368342965749
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 4719564712614180687
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 2483302917926500022
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 4718683163814518749
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 994313129269748871
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 1433922035158733157
+P2.LookDirection.X             | Val: 65597                | AccumHash: 949167457327102088
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 13380425926275141400
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 10809978337657431496
+P2.IsGrounded                  | Val: 1                    | AccumHash: 12050358934190896267
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 10467541156339009585
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 3828349615656446352
+P2.StateFrameCounter           | Val: 263                  | AccumHash: 8919564889009846421
+P2.CurrentActionID             | Val: 0                    | AccumHash: 15019438537342379311
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 5246368542453100253
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 7703565399411220871
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 10272167870238865509
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 9404520308495263
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 9086477568228267821
+P2.SideStepDirection           | Val: 0                    | AccumHash: 1346096512005726583
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 4362863127188970805
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 11638071041822564623
+P2.CurrentHealth               | Val: 100                  | AccumHash: 668443538429626577
+P2.HitstopCounter              | Val: 0                    | AccumHash: 4904930867661847331
+[Final Hash]: 4904930867661847331
+==================================================
+
+[2026-03-17 15:37:20.288] === GameStateSnapshot Tick: 1140 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 775
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 323
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:20.290] [Hash Trace] Tick: 1140
+Tick                           | Val: 1140                 | AccumHash: 12639327394114096803
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1612306292086873849
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 18183906011891999003
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 13108628621084971922
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 7474701154969516460
+P1.Position.Y                  | Val: 0                    | AccumHash: 7820625585576623940
+P1.Position.Z                  | Val: 0                    | AccumHash: 871498825956294796
+P1.Velocity.X                  | Val: 0                    | AccumHash: 15607610098288651748
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 6343824644405705324
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 14149802970313508228
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 18002545987962707788
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 12471044168549969444
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 13211732422501782651
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 5253423880590484233
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 609187408616507467
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 10941794832142096241
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 17316841880692401782
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 11681550995877681794
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 6772041176094329574
+P1.IsGrounded                  | Val: 1                    | AccumHash: 2126134302044964485
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 5541457340072219647
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 12192624672042563738
+P1.StateFrameCounter           | Val: 775                  | AccumHash: 5161420797493169095
+P1.CurrentActionID             | Val: 0                    | AccumHash: 11201759580697019173
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 17111284169249658412
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 7359380113589382340
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 2093860921692164364
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 16779701179244246884
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 13748515645896842988
+P1.SideStepDirection           | Val: 0                    | AccumHash: 14586496930419231492
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 17229515327928989644
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 12016005806065651620
+P1.CurrentHealth               | Val: 100                  | AccumHash: 17130852333213958976
+P1.HitstopCounter              | Val: 0                    | AccumHash: 15848191005225698752
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 4828176457062885653
+P2.Position.Y                  | Val: 0                    | AccumHash: 18308257848292724399
+P2.Position.Z                  | Val: 0                    | AccumHash: 8847843291752379229
+P2.Velocity.X                  | Val: 0                    | AccumHash: 16010804919253747463
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 13900496208703434981
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 4159921337497195807
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 3412103512968881069
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 15399029916508249847
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 4093920336581890366
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 4714368515172020421
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 5265109547841347263
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 14013897510355304077
+P2.LookDirection.X             | Val: 65597                | AccumHash: 17014212949888419088
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 3120950287018121776
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 17799856836113022864
+P2.IsGrounded                  | Val: 1                    | AccumHash: 1303885409020085091
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 3772778417759764793
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 14728985344544625192
+P2.StateFrameCounter           | Val: 323                  | AccumHash: 15623513783515332305
+P2.CurrentActionID             | Val: 0                    | AccumHash: 5070140580080598307
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 10293758426072015481
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 8260218742376289179
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 2768918856200851553
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 510002716906771667
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 13628610979831095945
+P2.SideStepDirection           | Val: 0                    | AccumHash: 3736000022317149899
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 3048652572934603505
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 4412249721096109955
+P2.CurrentHealth               | Val: 100                  | AccumHash: 5478903541651199365
+P2.HitstopCounter              | Val: 0                    | AccumHash: 17516155976069665023
+[Final Hash]: 17516155976069665023
+==================================================
+
+[2026-03-17 15:37:21.287] === GameStateSnapshot Tick: 1200 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 835
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 383
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:21.291] [Hash Trace] Tick: 1200
+Tick                           | Val: 1200                 | AccumHash: 12639402160904815151
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1677353399998969309
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 5286911700606994055
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 3783321097010687502
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 14427237848136639272
+P1.Position.Y                  | Val: 0                    | AccumHash: 8667132493815315704
+P1.Position.Z                  | Val: 0                    | AccumHash: 9047574387933665640
+P1.Velocity.X                  | Val: 0                    | AccumHash: 1159217120302001080
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 9001894844320352680
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 7603218639980849272
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 18108432290289288168
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 17126788130288870200
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 2253745240179605887
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 5225825345227552981
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 13902175307937108463
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 11637014216039151901
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 7422705510311586618
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 9121575385969701774
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 14207705781234702922
+P1.IsGrounded                  | Val: 1                    | AccumHash: 14679324200520559985
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 18113491886688483075
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 2372532979121191014
+P1.StateFrameCounter           | Val: 835                  | AccumHash: 6742973659088469983
+P1.CurrentActionID             | Val: 0                    | AccumHash: 14626759702896052205
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 677722960706369028
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 199204331481565388
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 6924632491699434148
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 3050217738597289132
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 11346831950619396164
+P1.SideStepDirection           | Val: 0                    | AccumHash: 5459453830389058444
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 13412208963147292388
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 18136847940142841196
+P1.CurrentHealth               | Val: 100                  | AccumHash: 3346768438861149336
+P1.HitstopCounter              | Val: 0                    | AccumHash: 13446186074933878344
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 12645043998938678573
+P2.Position.Y                  | Val: 0                    | AccumHash: 2078753740555488119
+P2.Position.Z                  | Val: 0                    | AccumHash: 6351424901644843829
+P2.Velocity.X                  | Val: 0                    | AccumHash: 16357257562097539855
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 2267274773928721021
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 12746865397170954855
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 12584276913806488837
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 6265001594079844223
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 2333847614752687398
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 4905240843310816653
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 17546619744273299095
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 724809914198524565
+P2.LookDirection.X             | Val: 65597                | AccumHash: 10705610345972204408
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 16108161648504628456
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 9998108224927790648
+P2.IsGrounded                  | Val: 1                    | AccumHash: 9253523252641915611
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 13828151351530256929
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 7118022164761248864
+P2.StateFrameCounter           | Val: 383                  | AccumHash: 14834102895918134189
+P2.CurrentActionID             | Val: 0                    | AccumHash: 11116570955068526327
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 7907820338211696053
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 3596139229918014095
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 16823654634980397309
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 10807835816703663591
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 4234643274214887301
+P2.SideStepDirection           | Val: 0                    | AccumHash: 17233638031157632767
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 3804409738438159181
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 6576931892372640727
+P2.CurrentHealth               | Val: 100                  | AccumHash: 16641508560108157225
+P2.HitstopCounter              | Val: 0                    | AccumHash: 5516692107773337771
+[Final Hash]: 5516692107773337771
+==================================================
+
+[2026-03-17 15:37:22.285] === GameStateSnapshot Tick: 1260 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 895
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 443
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:22.286] [Hash Trace] Tick: 1260
+Tick                           | Val: 1260                 | AccumHash: 12639459335509482123
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1727095306049395249
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 850017248950681923
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 12928717631140825370
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 6547412539231026116
+P1.Position.Y                  | Val: 0                    | AccumHash: 3703781243215023628
+P1.Position.Z                  | Val: 0                    | AccumHash: 17090699335306960484
+P1.Velocity.X                  | Val: 0                    | AccumHash: 18421287465015108588
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 18101797513697643012
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 15917719010490893516
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 2843025240216069796
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 10901080488291756204
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 11778684613927022179
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 4443408893151737713
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 16652861240411845891
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 5842254340101821465
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 17973330212336993134
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 18056966741045236714
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 15730554271323625118
+P1.IsGrounded                  | Val: 1                    | AccumHash: 3631081172778151981
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 12479358494073166967
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 4897967916787719298
+P1.StateFrameCounter           | Val: 895                  | AccumHash: 16473253029081979623
+P1.CurrentActionID             | Val: 0                    | AccumHash: 393431261649745541
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 8199694685142524492
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 17319759440759899940
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 2511537004017803820
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 17627070613183942852
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 4185093927643331852
+P1.SideStepDirection           | Val: 0                    | AccumHash: 9509530737325423460
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 3475022492820466412
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 40672481526132484
+P1.CurrentHealth               | Val: 100                  | AccumHash: 8446463507015598112
+P1.HitstopCounter              | Val: 0                    | AccumHash: 2661071721615144544
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 9912548285410162165
+P2.Position.Y                  | Val: 0                    | AccumHash: 9811068470066556751
+P2.Position.Z                  | Val: 0                    | AccumHash: 13115403100783272765
+P2.Velocity.X                  | Val: 0                    | AccumHash: 9651933987727384743
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 11369714732135545797
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 10672159644223131583
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 15557749794571551117
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 13230962405527954071
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 922914804929488606
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 9789958617211836581
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 10087162032758480991
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 4535049786075890029
+P2.LookDirection.X             | Val: 65597                | AccumHash: 12978626930855017200
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 18183339577785902544
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 343535637755101296
+P2.IsGrounded                  | Val: 1                    | AccumHash: 3341354756384112643
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 11634880025195365657
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 7829218038788974536
+P2.StateFrameCounter           | Val: 443                  | AccumHash: 13303185256037193065
+P2.CurrentActionID             | Val: 0                    | AccumHash: 342552380626887019
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 5679122954723330257
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 17940753821515250467
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 3991988861458300025
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 12446152525387350427
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 9991434778804517473
+P2.SideStepDirection           | Val: 0                    | AccumHash: 13629561067220759251
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 10909272441364257929
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 13483314658146581707
+P2.CurrentHealth               | Val: 100                  | AccumHash: 11065830385011744093
+P2.HitstopCounter              | Val: 0                    | AccumHash: 5475419538706769159
+[Final Hash]: 5475419538706769159
+==================================================
+
+[2026-03-17 15:37:23.289] === GameStateSnapshot Tick: 1320 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 955
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 503
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:23.289] [Hash Trace] Tick: 1320
+Tick                           | Val: 1320                 | AccumHash: 12638971152346556439
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1302375954388066069
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 421801413850124463
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 4371114773321279510
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 6476175518700508256
+P1.Position.Y                  | Val: 0                    | AccumHash: 17380298140700581664
+P1.Position.Z                  | Val: 0                    | AccumHash: 12765764610641486688
+P1.Velocity.X                  | Val: 0                    | AccumHash: 10573530198497385504
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 11820727615834262112
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 3700488737203167520
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 10908028028436367712
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 3334927524426198560
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 13697883758812912455
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 12088815119286485917
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 9474055455450194887
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 16085046808569580325
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 6783481164639511250
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 15774187311956699862
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 11628360730055395746
+P1.IsGrounded                  | Val: 1                    | AccumHash: 4922545790887239673
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 9384412535467725851
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 10592745503669774382
+P1.StateFrameCounter           | Val: 955                  | AccumHash: 2673740782118424111
+P1.CurrentActionID             | Val: 0                    | AccumHash: 12807844522281818589
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 1241526038171136212
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 15966660264922609724
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 10564092810977758708
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 12971679381379773852
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 5359823033036560404
+P1.SideStepDirection           | Val: 0                    | AccumHash: 9095526519650527740
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 7377354756276442932
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 15941584687054663004
+P1.CurrentHealth               | Val: 100                  | AccumHash: 11524604433379218984
+P1.HitstopCounter              | Val: 0                    | AccumHash: 4179558598880978424
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 3928562057865785821
+P2.Position.Y                  | Val: 0                    | AccumHash: 14918537801388063367
+P2.Position.Z                  | Val: 0                    | AccumHash: 14250830157698937701
+P2.Velocity.X                  | Val: 0                    | AccumHash: 2280584002778944671
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 15805547106366802477
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 7624582140947335799
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 13864296581277009973
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 11406017790495896079
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 4789973721040505590
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 475039160115650717
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 5448397520484084423
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 991414180436783141
+P2.LookDirection.X             | Val: 65597                | AccumHash: 11110874842032552136
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 3406154407966800856
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 5792356500346433544
+P2.IsGrounded                  | Val: 1                    | AccumHash: 3059112172042706763
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 15077036683229817969
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 18161899201190838864
+P2.StateFrameCounter           | Val: 503                  | AccumHash: 13165066756380488901
+P2.CurrentActionID             | Val: 0                    | AccumHash: 15011571325149113023
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 17462194849170580109
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 4634823087256630679
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 117746764998528917
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 17807519491154197039
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 312169582632099293
+P2.SideStepDirection           | Val: 0                    | AccumHash: 15303862581432548999
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 10443219160726470501
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 16970769360515594399
+P2.CurrentHealth               | Val: 100                  | AccumHash: 14934137579041493633
+P2.HitstopCounter              | Val: 0                    | AccumHash: 13801694038500634931
+[Final Hash]: 13801694038500634931
+==================================================
+
+[2026-03-17 15:37:24.285] === GameStateSnapshot Tick: 1380 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 1015
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 563
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:24.287] [Hash Trace] Tick: 1380
+Tick                           | Val: 1380                 | AccumHash: 12639028326951223411
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1352117860438492009
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 14431651035903363947
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 13516511307451417378
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 17184957671822742780
+P1.Position.Y                  | Val: 0                    | AccumHash: 6710886186636437556
+P1.Position.Z                  | Val: 0                    | AccumHash: 14623206090157789276
+P1.Velocity.X                  | Val: 0                    | AccumHash: 359255463322766420
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 8183226457649263292
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 13547414145903572340
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 2792174554749326364
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 10357065641455610772
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 10977602339494096939
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 16858926340119922457
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 16258338807249964923
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 8791967762353835521
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 16429992755916377254
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 1459096271151070738
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 8561871399396849814
+P1.IsGrounded                  | Val: 1                    | AccumHash: 9716899519320303765
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 7170006869573170479
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 1810482130395634986
+P1.StateFrameCounter           | Val: 1015                 | AccumHash: 2176667747076927879
+P1.CurrentActionID             | Val: 0                    | AccumHash: 16582857258233063525
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 679185077574853100
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 11277920416958407684
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 16239317046911038156
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 437370707000004772
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 3883974485435795116
+P1.SideStepDirection           | Val: 0                    | AccumHash: 12372263499148924484
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 1076083360810816908
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 3925320465021885668
+P1.CurrentHealth               | Val: 100                  | AccumHash: 14114921234521533824
+P1.HitstopCounter              | Val: 0                    | AccumHash: 2281799165681815680
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 17404562644205620437
+P2.Position.Y                  | Val: 0                    | AccumHash: 6147952842844147183
+P2.Position.Z                  | Val: 0                    | AccumHash: 10250041824908651805
+P2.Velocity.X                  | Val: 0                    | AccumHash: 5297321377935599687
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 15724892227750686885
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 3607360963794331743
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 11778559565942446445
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 9843191026951189559
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 15831047785782029566
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 1594755674954108165
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 14471473078764740479
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 12145828878847378637
+P2.LookDirection.X             | Val: 65597                | AccumHash: 14585676027988042704
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 1999509301342870128
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 14434317551621729360
+P2.IsGrounded                  | Val: 1                    | AccumHash: 18090450139934297507
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 5488239125322542073
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 12378096128083277416
+P2.StateFrameCounter           | Val: 563                  | AccumHash: 17240631758491252385
+P2.CurrentActionID             | Val: 0                    | AccumHash: 13788876600061301651
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 9424161390223278793
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 8206900014935047051
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 16263829191448227121
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 7819955252765624899
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 17534548175826448345
+P2.SideStepDirection           | Val: 0                    | AccumHash: 11036220194941341115
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 13289130499941913793
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 4118453542932546547
+P2.CurrentHealth               | Val: 100                  | AccumHash: 10372663400321948053
+P2.HitstopCounter              | Val: 0                    | AccumHash: 8984526832448239663
+[Final Hash]: 8984526832448239663
+==================================================
+
+[2026-03-17 15:37:25.285] === GameStateSnapshot Tick: 1440 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 1075
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 623
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:25.286] [Hash Trace] Tick: 1440
+Tick                           | Val: 1440                 | AccumHash: 12639103093741941759
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1417164968350587469
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 1534656724618358999
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 4335318971510005150
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 1800766137884576376
+P1.Position.Y                  | Val: 0                    | AccumHash: 11563355727726004712
+P1.Position.Z                  | Val: 0                    | AccumHash: 4928051303791170872
+P1.Velocity.X                  | Val: 0                    | AccumHash: 10767477376635538984
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 6057782509411732984
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 16818557688516328552
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 658535433894929592
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 15572724368005391528
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 4676710717061490991
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 18445104941664151781
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 12088711289214467359
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 17551555713573133229
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 2017550758401091306
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 7261854855179083678
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 11800341843514014074
+P1.IsGrounded                  | Val: 1                    | AccumHash: 1835523410293632001
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 13829927997219521971
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 11587071487476821366
+P1.StateFrameCounter           | Val: 1075                 | AccumHash: 6498237098647117887
+P1.CurrentActionID             | Val: 0                    | AccumHash: 6714228510145350413
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 6359149265134372196
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 18044883045474167020
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8858764005589108996
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 1059658061810667980
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 10920562698737794468
+P1.SideStepDirection           | Val: 0                    | AccumHash: 3127685040639655340
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 7102562953428978500
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 8705550648983839884
+P1.CurrentHealth               | Val: 100                  | AccumHash: 2622211208439756344
+P1.HitstopCounter              | Val: 0                    | AccumHash: 17245202645862572328
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 1321160775583827789
+P2.Position.Y                  | Val: 0                    | AccumHash: 155766304779003863
+P2.Position.Z                  | Val: 0                    | AccumHash: 17403703796626005
+P2.Velocity.X                  | Val: 0                    | AccumHash: 18159230283922130543
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 16868758194331332253
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 16006689624450348231
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 13906645901847997989
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 13463562450685520095
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 16303104770262415366
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 16857301924054427693
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 5382893325366428791
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 4119589076861720117
+P2.LookDirection.X             | Val: 65597                | AccumHash: 1324180243910258584
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 1606677278783283016
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 8421526291398895448
+P2.IsGrounded                  | Val: 1                    | AccumHash: 651478394250157115
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 8951686377394255937
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 7032640743013618880
+P2.StateFrameCounter           | Val: 623                  | AccumHash: 1945508233740454749
+P2.CurrentActionID             | Val: 0                    | AccumHash: 10611333301553778439
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 11363884980983154917
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 16120290791702945055
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 10948638547245677485
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 16817306764997519095
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 486650852587074997
+P2.SideStepDirection           | Val: 0                    | AccumHash: 10505421108343636623
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 8216882941551171837
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 16417335535403382247
+P2.CurrentHealth               | Val: 100                  | AccumHash: 4791762608782536089
+P2.HitstopCounter              | Val: 0                    | AccumHash: 8828587555629513467
+[Final Hash]: 8828587555629513467
+==================================================
+
+[2026-03-17 15:37:26.286] === GameStateSnapshot Tick: 1500 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 1135
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 683
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:26.287] [Hash Trace] Tick: 1500
+Tick                           | Val: 1500                 | AccumHash: 12639230637090814235
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1528127681847691489
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 150850981866378835
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 13384734830172249322
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 15661164915915206612
+P1.Position.Y                  | Val: 0                    | AccumHash: 4582687343035008316
+P1.Position.Z                  | Val: 0                    | AccumHash: 6392239977399592180
+P1.Velocity.X                  | Val: 0                    | AccumHash: 12758489363933481628
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 13238492093867247380
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 17647320167961249532
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 1209480453454569012
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 8470743108169192028
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 14038484174163278547
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 18233357603788676737
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 8480434489537926451
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 15859113915225408937
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 10310106119954268702
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 10732657909406701818
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 1182567062481236174
+P1.IsGrounded                  | Val: 1                    | AccumHash: 2911564900385861565
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 12057485396146429479
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 1851889575670626962
+P1.StateFrameCounter           | Val: 1135                 | AccumHash: 14145110926139623399
+P1.CurrentActionID             | Val: 0                    | AccumHash: 11260420562952580485
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 15294882015163291468
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 18325061462032389668
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 14231973595689623340
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 7907345412312364996
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 12165389780268253708
+P1.SideStepDirection           | Val: 0                    | AccumHash: 17221160593401510500
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 13858803509215590380
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 10002739497823684100
+P1.CurrentHealth               | Val: 100                  | AccumHash: 7903980921663329568
+P1.HitstopCounter              | Val: 0                    | AccumHash: 10962301856464954720
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 5490907088249149685
+P2.Position.Y                  | Val: 0                    | AccumHash: 4580152618852657231
+P2.Position.Z                  | Val: 0                    | AccumHash: 14648980299403820605
+P2.Velocity.X                  | Val: 0                    | AccumHash: 1910218249822798247
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 3724224210923081413
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 14796652223574923455
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 1897607066836389005
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 14796659479490499479
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 6961378906677176798
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 10062791116653893029
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 7495524099290187615
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 6019780051129550445
+P2.LookDirection.X             | Val: 65597                | AccumHash: 9418633337255328240
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 15869755346840072912
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 18254767998671542128
+P2.IsGrounded                  | Val: 1                    | AccumHash: 8460509918649685251
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 5426461748353119257
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 14690549715930940616
+P2.StateFrameCounter           | Val: 683                  | AccumHash: 12969592601677748793
+P2.CurrentActionID             | Val: 0                    | AccumHash: 6966380977960799963
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 12337652569604226593
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 7090381382613127699
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 16595023501796767305
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 3489424996337483275
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 6455258808922287281
+P2.SideStepDirection           | Val: 0                    | AccumHash: 4577407754104074435
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 7998980728559770457
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 11576428747010504763
+P2.CurrentHealth               | Val: 100                  | AccumHash: 3133903603416598893
+P2.HitstopCounter              | Val: 0                    | AccumHash: 15953856083620758583
+[Final Hash]: 15953856083620758583
+==================================================
+
+[2026-03-17 15:37:27.289] === GameStateSnapshot Tick: 1560 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 1195
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 743
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:27.290] [Hash Trace] Tick: 1560
+Tick                           | Val: 1560                 | AccumHash: 12638742453927888551
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1103408330186362309
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 18169379220475372991
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 4827131972352703462
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 15588801995477400688
+P1.Position.Y                  | Val: 0                    | AccumHash: 17279671321373717072
+P1.Position.Z                  | Val: 0                    | AccumHash: 8558118131393461744
+P1.Velocity.X                  | Val: 0                    | AccumHash: 6446422904902057680
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 11889802817114798960
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 17422951712181403472
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 3947242446199231728
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 2409878549476479952
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 3755894457250208695
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 15174677228001203501
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 1127430308181146487
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 13517721385772829493
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 9937956215745412610
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 4454667217227259238
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 8410405255828960338
+P1.IsGrounded                  | Val: 1                    | AccumHash: 1708188811556464905
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 7401677066486757963
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 11813901859735604158
+P1.StateFrameCounter           | Val: 1195                 | AccumHash: 8406743510838124719
+P1.CurrentActionID             | Val: 0                    | AccumHash: 10504109336049617245
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 14817906850170529620
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 12336424414457369532
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 1806414086040291444
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 5372734542910774556
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 6715056547700258452
+P1.SideStepDirection           | Val: 0                    | AccumHash: 12640321270209396092
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 13316827904920222132
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 14916217093320068316
+P1.CurrentHealth               | Val: 100                  | AccumHash: 12868140205072506024
+P1.HitstopCounter              | Val: 0                    | AccumHash: 13239560479954891128
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 14460712068635021149
+P2.Position.Y                  | Val: 0                    | AccumHash: 3659210403896056583
+P2.Position.Z                  | Val: 0                    | AccumHash: 17107545103407492325
+P2.Velocity.X                  | Val: 0                    | AccumHash: 18385390085042260255
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 8964076939643961261
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 2480677516005782263
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 5919287986843163061
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 11232429481398218383
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 4398115885672093814
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 3788976084446466077
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 4269167439879905607
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 6982447366497242021
+P2.LookDirection.X             | Val: 65597                | AccumHash: 10876860589828780872
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 12577101405363413848
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 6237156674857438856
+P2.IsGrounded                  | Val: 1                    | AccumHash: 7656790300691608267
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 17293731104505286385
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 17924772746541212112
+P2.StateFrameCounter           | Val: 743                  | AccumHash: 16290879845179512437
+P2.CurrentActionID             | Val: 0                    | AccumHash: 12122629485275539663
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 7260239611495192509
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 11023435532030203431
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 506398878364230725
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 9182984921284895039
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 9264402051184541197
+P2.SideStepDirection           | Val: 0                    | AccumHash: 13325893551265706007
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 1923532756576532245
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 17187193135371933871
+P2.CurrentHealth               | Val: 100                  | AccumHash: 3216814024020123889
+P2.HitstopCounter              | Val: 0                    | AccumHash: 1315976301961558403
+[Final Hash]: 1315976301961558403
+==================================================
+
+[2026-03-17 15:37:28.289] === GameStateSnapshot Tick: 1620 ===
+SharedDepthAxis: X:0, Y:0, Z:65597
+
+--- [Player 1 Snapshot] ---
+Position: X:49718, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67112, Y:0, Z:0
+LookDirection: X:-65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 1255
+CurrentActionID: 0
+IsCommandActionTriggered: True
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+
+--- [Player 2 Snapshot] ---
+Position: X:-52265, Y:0, Z:0
+Velocity: X:0, Y:0, Z:0
+DepthAxis: X:0, Y:0, Z:65597
+CurrentDirection: X:67225, Y:0, Z:0
+LookDirection: X:65597, Y:0, Z:0
+IsGrounded: True
+IsRootMotionActiveThisFrame: False
+LastImpactFallSpeed (Raw): -1311
+CachedCurrentState: Idle
+StateFrameCounter: 803
+CurrentActionID: 0
+IsCommandActionTriggered: False
+CurrentHurtInfo.Damage: 0
+CurrentHurtInfo.HurtStunFrames: 0
+ScheduledWakeUpType: InPlace
+IsFromRoll: False
+SideStepDirection (Raw): 0
+CurrentStunFrames: 0
+IsGroundBouncing: False
+CurrentHealth: 100
+HitstopCounter: 0
+==================================================
+
+[2026-03-17 15:37:28.290] [Hash Trace] Tick: 1620
+Tick                           | Val: 1620                 | AccumHash: 12638799628532555523
+SharedDepthAxis.X              | Val: 0                    | AccumHash: 1153150236236788249
+SharedDepthAxis.Y              | Val: 0                    | AccumHash: 13732484768819060859
+SharedDepthAxis.Z              | Val: 65597                | AccumHash: 13972528506482841330
+--- P1 ---
+P1.Position.X                  | Val: 49718                | AccumHash: 7707850786664499468
+P1.Position.Y                  | Val: 0                    | AccumHash: 11336787151626575716
+P1.Position.Z                  | Val: 0                    | AccumHash: 4645311883716548332
+P1.Velocity.X                  | Val: 0                    | AccumHash: 6797439983391912708
+P1.Velocity.Y                  | Val: 0                    | AccumHash: 7475342033893470156
+P1.Velocity.Z                  | Val: 0                    | AccumHash: 836825752780224420
+P1.DepthAxis.X                 | Val: 0                    | AccumHash: 1801338674359929772
+P1.DepthAxis.Y                 | Val: 0                    | AccumHash: 16136203386361763140
+P1.DepthAxis.Z                 | Val: 65597                | AccumHash: 1223160157331537051
+P1.CurrentDirection.X          | Val: 67112                | AccumHash: 89974018455551529
+P1.CurrentDirection.Y          | Val: 0                    | AccumHash: 3307541522828566443
+P1.CurrentDirection.Z          | Val: 0                    | AccumHash: 880187144340819857
+P1.LookDirection.X             | Val: 18446744073709486019 | AccumHash: 17340070457202187094
+P1.LookDirection.Y             | Val: 0                    | AccumHash: 12631535925701538594
+P1.LookDirection.Z             | Val: 0                    | AccumHash: 16499890358377095878
+P1.IsGrounded                  | Val: 1                    | AccumHash: 922045435644975141
+P1.IsRootMotionActive          | Val: 0                    | AccumHash: 2437921572099163871
+P1.CachedCurrentState          | Val: 1                    | AccumHash: 13320831448390183738
+P1.StateFrameCounter           | Val: 1255                 | AccumHash: 5035701794347635847
+P1.CurrentActionID             | Val: 0                    | AccumHash: 11748601948508037477
+P1.IsCommandActionTriggered    | Val: 1                    | AccumHash: 6127313376594509036
+P1.HurtInfo.Damage             | Val: 0                    | AccumHash: 16705425155803153668
+P1.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 8463878309801952716
+P1.ScheduledWakeUpType         | Val: 0                    | AccumHash: 8652840355728513444
+P1.IsFromRoll                  | Val: 0                    | AccumHash: 7540322746497356204
+P1.SideStepDirection           | Val: 0                    | AccumHash: 10774313017654069060
+P1.CurrentStunFrames           | Val: 0                    | AccumHash: 3895243238758553740
+P1.IsGroundBouncing            | Val: 0                    | AccumHash: 14775201166939633124
+P1.CurrentHealth               | Val: 100                  | AccumHash: 14642129109692541056
+P1.HitstopCounter              | Val: 0                    | AccumHash: 16830144061632713088
+--- P2 ---
+P2.Position.X                  | Val: 18446744073709499351 | AccumHash: 15765195141298837973
+P2.Position.Y                  | Val: 0                    | AccumHash: 11008615247004968175
+P2.Position.Z                  | Val: 0                    | AccumHash: 5142590527717818909
+P2.Velocity.X                  | Val: 0                    | AccumHash: 3296102412804282183
+P2.Velocity.Y                  | Val: 0                    | AccumHash: 4314536636728790437
+P2.Velocity.Z                  | Val: 0                    | AccumHash: 6842640294362312543
+P2.DepthAxis.X                 | Val: 0                    | AccumHash: 11049593592701271661
+P2.DepthAxis.Y                 | Val: 0                    | AccumHash: 17643084359686034231
+P2.DepthAxis.Z                 | Val: 65597                | AccumHash: 7170531501253417470
+P2.CurrentDirection.X          | Val: 67225                | AccumHash: 843616832324508677
+P2.CurrentDirection.Y          | Val: 0                    | AccumHash: 2513898214227811455
+P2.CurrentDirection.Z          | Val: 0                    | AccumHash: 15103762957774154701
+P2.LookDirection.X             | Val: 65597                | AccumHash: 63930349872212176
+P2.LookDirection.Y             | Val: 0                    | AccumHash: 133059382825490800
+P2.LookDirection.Z             | Val: 0                    | AccumHash: 8924856400036542800
+P2.IsGrounded                  | Val: 1                    | AccumHash: 189759559623959715
+P2.IsRootMotionActive          | Val: 0                    | AccumHash: 10984515477807464697
+P2.CachedCurrentState          | Val: 1                    | AccumHash: 9673076080154846568
+P2.StateFrameCounter           | Val: 803                  | AccumHash: 1148591039650468209
+P2.CurrentActionID             | Val: 0                    | AccumHash: 11956215118675419907
+P2.IsCommandActionTriggered    | Val: 0                    | AccumHash: 13789438335228050969
+P2.HurtInfo.Damage             | Val: 0                    | AccumHash: 10995536562531386491
+P2.HurtInfo.StunFrames         | Val: 0                    | AccumHash: 14630365982599535873
+P2.ScheduledWakeUpType         | Val: 0                    | AccumHash: 14916510848142706867
+P2.IsFromRoll                  | Val: 0                    | AccumHash: 10310646777542494249
+P2.SideStepDirection           | Val: 0                    | AccumHash: 1584043281332870571
+P2.CurrentStunFrames           | Val: 0                    | AccumHash: 809068717342976401
+P2.IsGroundBouncing            | Val: 0                    | AccumHash: 3468052781496918371
+P2.CurrentHealth               | Val: 100                  | AccumHash: 3887563223451655909
+P2.HitstopCounter              | Val: 0                    | AccumHash: 7058682377030090527
+[Final Hash]: 7058682377030090527
+==================================================
+

@@ -128,11 +128,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 22342366}
+  - component: {fileID: 22342372}
   - component: {fileID: 22342365}
   - component: {fileID: 22342369}
   - component: {fileID: 22342371}
   - component: {fileID: 22342370}
-  - component: {fileID: 22342372}
   m_Layer: 0
   m_Name: GameSystem
   m_TagString: Untagged
@@ -189,6 +189,8 @@ MonoBehaviour:
   isDebugRollbackEnabled: 0
   debugRollbackFrames: 5
   debugRollbackInterval: 30
+  maxRollbackFrames: 7
+  inputDelayFrames: 2
 --- !u!4 &22342366
 Transform:
   m_ObjectHideFlags: 0
@@ -229,6 +231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugHUD
   gameLoopManager: {fileID: 22342365}
+  networkSession: {fileID: 22342372}
 --- !u!114 &22342371
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -629,7 +632,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraManager
   playerOne: {fileID: 0}
   playerTwo: {fileID: 0}
-  isReverseView: 1
+  isReverseView: 0
   heightOffset: 2
   distanceOffset: 5
   zoomSensitivity: 1

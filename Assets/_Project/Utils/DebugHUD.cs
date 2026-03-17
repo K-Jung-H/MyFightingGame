@@ -6,12 +6,15 @@ public class DebugHUD : MonoBehaviour
     [SerializeField] private GameLoopManager gameLoopManager;
     [SerializeField] private PlayerController p1Controller;
     [SerializeField] private PlayerController p2Controller;
+    [SerializeField] private NetworkSessionManager networkSession;
 
     private Queue<string> p1InputLogQueue = new Queue<string>();
     private Queue<string> p2InputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
 
     private bool isShowServer = true;
+
+    private bool isShowNetworkDetails = true;
     private bool isShowP1 = true;
     private bool isShowP2 = true;
 
@@ -131,31 +134,59 @@ public class DebugHUD : MonoBehaviour
         if (isShowServer)
         {
             float contentY = startY + 20f;
-            GUI.Box(new Rect(startX, contentY, width, 165), "");
-            GUI.Label(new Rect(startX + 10, contentY + 10, width - 20, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
+            float boxHeight = isShowNetworkDetails ? 210f : 160f;
+            GUI.Box(new Rect(startX, contentY, width, boxHeight), "");
             
-            bool isDesync = gameLoopManager.GetIsDesyncDetected();
-            if (isDesync)
-            {
-                GUI.color = Color.red;
-                GUI.Label(new Rect(startX + 10, contentY + 25, width - 20, 20), "STATUS: DESYNC DETECTED");
-                GUI.color = Color.white;
-            }
-            else
-            {
-                GUI.color = Color.green;
-                GUI.Label(new Rect(startX + 10, contentY + 25, width - 20, 20), "STATUS: SYNCED");
-                GUI.color = Color.white;
-            }
+            float currentY = contentY + 10f;
+            GUI.Label(new Rect(startX + 10, currentY, width - 20, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
+            currentY += 25f;
             
-            GUI.Label(new Rect(startX + 10, contentY + 50, width - 20, 20), $"P1 State: {gameLoopManager.GetP1State()}");
-            GUI.Label(new Rect(startX + 10, contentY + 65, width - 20, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
-            GUI.Label(new Rect(startX + 10, contentY + 80, width - 20, 20), $"P1 HP: {p1CurrentHealth} / {p1MaxHealth}");
+            currentY = DrawNetworkStateSection(startX, currentY, width);
+
+            GUI.Label(new Rect(startX + 10, currentY, width - 20, 20), $"P1 State: {gameLoopManager.GetP1State()}");
+            GUI.Label(new Rect(startX + 10, currentY + 15, width - 20, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
+            GUI.Label(new Rect(startX + 10, currentY + 30, width - 20, 20), $"P1 HP: {p1CurrentHealth} / {p1MaxHealth}");
+            currentY += 50f;
             
-            GUI.Label(new Rect(startX + 10, contentY + 105, width - 20, 20), $"P2 State: {gameLoopManager.GetP2State()}");
-            GUI.Label(new Rect(startX + 10, contentY + 120, width - 20, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
-            GUI.Label(new Rect(startX + 10, contentY + 135, width - 20, 20), $"P2 HP: {p2CurrentHealth} / {p2MaxHealth}");
+            GUI.Label(new Rect(startX + 10, currentY, width - 20, 20), $"P2 State: {gameLoopManager.GetP2State()}");
+            GUI.Label(new Rect(startX + 10, currentY + 15, width - 20, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
+            GUI.Label(new Rect(startX + 10, currentY + 30, width - 20, 20), $"P2 HP: {p2CurrentHealth} / {p2MaxHealth}");
         }
+    }
+
+    private float DrawNetworkStateSection(float startX, float currentY, float width)
+    {
+        string netTitle = isShowNetworkDetails ? "▼ Network State" : "▶ Network State";
+        if (GUI.Button(new Rect(startX + 10, currentY, width - 20, 18), netTitle))
+        {
+            isShowNetworkDetails = !isShowNetworkDetails;
+        }
+        currentY += 20f;
+
+        if (isShowNetworkDetails)
+        {
+            bool isConnected = networkSession != null && networkSession.GetIsConnected();
+            GUI.color = isConnected ? Color.green : Color.red;
+            GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Connection: {(isConnected ? "Connected" : "Disconnected")}");
+            currentY += 15f;
+
+            bool isStalling = gameLoopManager.GetIsStalling();
+            GUI.color = isStalling ? Color.yellow : Color.green;
+            GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Lockstep: {(isStalling ? "STALLED" : "Running")}");
+            currentY += 15f;
+
+            bool isDesync = gameLoopManager.GetIsDesyncDetected();
+            GUI.color = isDesync ? Color.red : Color.green;
+            GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Sync: {(isDesync ? "DESYNC DETECTED" : "Synced")}");
+            GUI.color = Color.white;
+            currentY += 25f;
+        }
+        else
+        {
+            currentY += 5f;
+        }
+
+        return currentY;
     }
 
     private void DrawP1DebugPanel(float startX, float startY, float width)

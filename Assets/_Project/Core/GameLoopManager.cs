@@ -45,6 +45,9 @@ public class GameLoopManager : MonoBehaviour
     [SerializeField] private bool isDebugRollbackEnabled = false;
     [SerializeField] private int debugRollbackFrames = 5;
     [SerializeField] private int debugRollbackInterval = 30;
+    
+    [SerializeField] private int maxRollbackFrames = 7;
+    [SerializeField] private int inputDelayFrames = 2;
 
     private const int ROLLBACK_WINDOW = 60;
 
@@ -65,6 +68,8 @@ public class GameLoopManager : MonoBehaviour
     private int lastHashedTick;
     private const int SYNC_VERIFY_INTERVAL = 60;
     private bool isDesyncDetected;
+    
+    public bool GetIsStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
     public bool GetIsDesyncDetected() => isDesyncDetected;
     public int GetCurrentTick() => currentTick;
     public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
@@ -200,8 +205,6 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-    
-
     private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
     {
         bool isDataInvalid = context.characterData == null || context.characterData.characterPrefab == null;
@@ -271,30 +274,33 @@ public class GameLoopManager : MonoBehaviour
     {
         bool isServer = networkSession.GetIsServer();
         int localPlayerIndex = isServer ? 0 : 1;
-        bool isP1OnRight = cameraManager.IsPlayerOneOnRightSide();
-        bool isLocalFacingRight = isServer ? !isP1OnRight : isP1OnRight;
 
-        PlayerInput localInput = inputProvider.GetCurrentInput(currentTick, localPlayerIndex, isLocalFacingRight);
-        networkSession.BroadcastLocalInput(currentTick, localInput.flags);
+        VerifyRemoteInputsAndRollback(isServer);
+        BroadcastSyncHashes();
 
-        int bufferIndex = currentTick % ROLLBACK_WINDOW;
-        if (isServer) p1InputBuffer[bufferIndex] = localInput.flags;
-        else p2InputBuffer[bufferIndex] = localInput.flags;
-
-        InputFlags predictedRemote = InputFlags.None;
-        bool hasPreviousTick = currentTick > 0;
-        if (hasPreviousTick)
+        bool isStalling = (currentTick - latestConfirmedTick) > maxRollbackFrames;
+        if (isStalling)
         {
-            int prevIndex = (currentTick - 1) % ROLLBACK_WINDOW;
-            predictedRemote = isServer ? p2InputBuffer[prevIndex] : p1InputBuffer[prevIndex];
+            BroadcastRedundantInput(isServer);
+            return;
         }
 
-        if (isServer) p2InputBuffer[bufferIndex] = predictedRemote;
-        else p1InputBuffer[bufferIndex] = predictedRemote;
+        UpdateLocalInput(isServer, localPlayerIndex);
+        DetermineCurrentRemoteInput(isServer);
 
+        int bufferIndex = currentTick % ROLLBACK_WINDOW;
+        PlayerInput p1Final = new PlayerInput { flags = p1InputBuffer[bufferIndex] };
+        PlayerInput p2Final = new PlayerInput { flags = p2InputBuffer[bufferIndex] };
+
+        ProcessTick(p1Final, p2Final);
+    }
+
+    private void VerifyRemoteInputsAndRollback(bool isServer)
+    {
         int rollbackTick = -1;
+        InputFlags lastConfirmedRemote = InputFlags.None;
 
-        for (int t = latestConfirmedTick; t <= currentTick; t++)
+        for (int t = latestConfirmedTick; t < currentTick; t++)
         {
             bool hasRealInput = networkSession.TryGetRemoteInput(t, out InputFlags actualRemote);
             if (hasRealInput)
@@ -314,6 +320,7 @@ public class GameLoopManager : MonoBehaviour
                         rollbackTick = t;
                     }
                 }
+                lastConfirmedRemote = actualRemote;
                 latestConfirmedTick = t + 1;
             }
             else
@@ -325,10 +332,76 @@ public class GameLoopManager : MonoBehaviour
         bool isRollbackNeeded = rollbackTick != -1;
         if (isRollbackNeeded)
         {
+            for (int t = latestConfirmedTick; t < currentTick; t++)
+            {
+                int idx = t % ROLLBACK_WINDOW;
+                if (isServer) p2InputBuffer[idx] = lastConfirmedRemote;
+                else p1InputBuffer[idx] = lastConfirmedRemote;
+            }
             Resimulate(rollbackTick, currentTick);
         }
+    }
 
-        for (int t = lastHashedTick + 1; t < latestConfirmedTick; t++)
+    private void DetermineCurrentRemoteInput(bool isServer)
+    {
+        int bufferIndex = currentTick % ROLLBACK_WINDOW;
+        bool hasRealInput = networkSession.TryGetRemoteInput(currentTick, out InputFlags actualRemote);
+
+        if (hasRealInput)
+        {
+            if (isServer) p2InputBuffer[bufferIndex] = actualRemote;
+            else p1InputBuffer[bufferIndex] = actualRemote;
+
+            if (latestConfirmedTick == currentTick)
+            {
+                latestConfirmedTick = currentTick + 1;
+            }
+        }
+        else
+        {
+            InputFlags predictedRemote = InputFlags.None;
+            if (currentTick > 0)
+            {
+                int prevIndex = (currentTick - 1) % ROLLBACK_WINDOW;
+                predictedRemote = isServer ? p2InputBuffer[prevIndex] : p1InputBuffer[prevIndex];
+            }
+            if (isServer) p2InputBuffer[bufferIndex] = predictedRemote;
+            else p1InputBuffer[bufferIndex] = predictedRemote;
+        }
+    }
+
+    private void UpdateLocalInput(bool isServer, int localPlayerIndex)
+    {
+        FP64 p1X = playerOne.controller.GetPhysics().GetFPPosition().x;
+        FP64 p2X = playerTwo.controller.GetPhysics().GetFPPosition().x;
+        bool isP1OnRight = p1X.rawValue > p2X.rawValue;
+        bool isLocalFacingRight = isServer ? !isP1OnRight : isP1OnRight;
+
+        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localPlayerIndex, isLocalFacingRight);
+        
+        int targetTick = currentTick + inputDelayFrames;
+        int bufferIndex = targetTick % ROLLBACK_WINDOW;
+        
+        if (isServer) p1InputBuffer[bufferIndex] = physicalInput.flags;
+        else p2InputBuffer[bufferIndex] = physicalInput.flags;
+        
+        networkSession.BroadcastLocalInput(targetTick, physicalInput.flags);
+    }
+
+    private void BroadcastRedundantInput(bool isServer)
+    {
+        int lastGeneratedTick = Mathf.Max(0, currentTick + inputDelayFrames - 1);
+        int bufferIndex = lastGeneratedTick % ROLLBACK_WINDOW;
+        InputFlags lastInput = isServer ? p1InputBuffer[bufferIndex] : p2InputBuffer[bufferIndex];
+        
+        networkSession.BroadcastLocalInput(lastGeneratedTick, lastInput);
+    }
+
+    private void BroadcastSyncHashes()
+    {
+        int maxHashTick = Mathf.Min(latestConfirmedTick, currentTick);
+
+        for (int t = lastHashedTick + 1; t < maxHashTick; t++)
         {
             bool isVerifyTick = t % SYNC_VERIFY_INTERVAL == 0;
             if (isVerifyTick)
@@ -340,11 +413,6 @@ public class GameLoopManager : MonoBehaviour
                 lastHashedTick = t;
             }
         }
-
-        PlayerInput p1Final = new PlayerInput { flags = p1InputBuffer[bufferIndex] };
-        PlayerInput p2Final = new PlayerInput { flags = p2InputBuffer[bufferIndex] };
-
-        ProcessTick(p1Final, p2Final);
     }
 
     private void ProcessTick(PlayerInput p1Input, PlayerInput p2Input)
@@ -409,6 +477,8 @@ public class GameLoopManager : MonoBehaviour
     
     private void VerifySyncState()
     {
+        isDesyncDetected = false;
+        
         List<int> verifiedTicks = new List<int>();
 
         foreach (var kvp in localHashBuffer)

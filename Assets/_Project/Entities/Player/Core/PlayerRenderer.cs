@@ -10,10 +10,8 @@ public class PlayerRenderer : MonoBehaviour
     private StateAnimationMapSO stateAnimMap;
     
     private Vector3 targetPosition;
-    private Vector3 targetDirection;
     private Vector3 targetLookDirection;
     private float targetSpeed;
-    
     private float currentSpeed;
     private PlayerState_Type previousState;
     private ActionDataSO previousActionData;
@@ -79,7 +77,6 @@ public class PlayerRenderer : MonoBehaviour
     {
         targetPosition = controller.GetPhysics().GetPosition();
         targetSpeed = GetSpeedFromState(controller.GetStateMachine().GetCurrentState()); 
-        targetDirection = controller.GetPhysics().GetCurrentDirection();
         targetLookDirection = controller.GetPhysics().GetLookDirection();
     }
 
@@ -262,6 +259,8 @@ public class PlayerRenderer : MonoBehaviour
             characterAnimator.SetBool(IsCrouchingHash, isCurrentlyCrouching);
         }
     }
+
+    
 
     private void EvaluateVfxEvents()
     {

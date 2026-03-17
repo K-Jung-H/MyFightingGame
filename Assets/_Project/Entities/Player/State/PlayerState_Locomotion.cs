@@ -6,6 +6,15 @@ public class IdleState : PlayerStateBase
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.Idle;
 
+    public override void Enter()
+    {
+        base.Enter();
+        FPVector3 vel = physics.GetFPVelocity();
+        vel.x = new FP64(0);
+        vel.z = new FP64(0);
+        physics.SetFPVelocity(vel);
+    }
+    
     public override void UpdateTick(PlayerInput input)
     {
         InputStateTracker tracker = controller.GetTracker();
