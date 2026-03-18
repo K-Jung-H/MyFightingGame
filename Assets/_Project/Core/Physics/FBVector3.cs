@@ -73,3 +73,10 @@ public struct FPVector3
         return new FPVector3(a.x * b, a.y * b, a.z * b);
     }
 }
+
+public struct FPAxisSet
+{
+    public FPVector3 right;
+    public FPVector3 up;
+    public FPVector3 forward;
+}

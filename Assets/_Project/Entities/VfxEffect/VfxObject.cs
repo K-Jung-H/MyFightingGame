@@ -8,7 +8,9 @@ public class VfxObject : MonoBehaviour
     private Transform attachedTarget;
     private Vector3 localOffset;
     private Quaternion localRotationOffset;
+
     private bool isAttached;
+    private bool isPositionStatic;
     private float timer;
     private int currentFrameIndex;
     private bool isPlaying;
@@ -19,7 +21,7 @@ public class VfxObject : MonoBehaviour
     private void Awake()
     {
         spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
-        
+
         bool hasMainCamera = Camera.main != null;
         if (hasMainCamera)
         {
@@ -27,29 +29,37 @@ public class VfxObject : MonoBehaviour
         }
     }
 
-    public void Play(VfxClipSO clip, Transform target, Vector3 offset, Quaternion rotOffset, bool attached)
+    public void PlayAttached(VfxClipSO clip, Transform target, Vector3 offset, Quaternion rotOffset, bool attached)
     {
         currentClip = clip;
         attachedTarget = target;
         localOffset = offset;
         localRotationOffset = rotOffset;
         isAttached = attached;
-        
-        transform.localScale = Vector3.one * currentClip.scale;
-        
-        timer = 0f;
-        currentFrameIndex = 0;
-        isPlaying = true;
-        spriteRenderer.sprite = currentClip.frames[0];
-        
+        isPositionStatic = false;
+
+        InitializePlayback();
+
         bool isDetachedWithTarget = !isAttached && attachedTarget != null;
         if (isDetachedWithTarget)
         {
             transform.position = attachedTarget.position + attachedTarget.rotation * localOffset;
         }
-        
+
         UpdateTransform();
-        gameObject.SetActive(true);
+    }
+
+    public void PlayAtPosition(VfxClipSO clip, Vector3 position, Quaternion rotation)
+    {
+        currentClip = clip;
+        attachedTarget = null;
+        isAttached = false;
+        isPositionStatic = true;
+
+        transform.position = position;
+        transform.rotation = rotation;
+
+        InitializePlayback();
     }
 
     private void Update()
@@ -59,8 +69,20 @@ public class VfxObject : MonoBehaviour
         UpdateAnimation();
     }
 
+    private void InitializePlayback()
+    {
+        transform.localScale = Vector3.one * currentClip.scale;
+        timer = 0f;
+        currentFrameIndex = 0;
+        isPlaying = true;
+        spriteRenderer.sprite = currentClip.frames[0];
+        gameObject.SetActive(true);
+    }
+
     private void UpdateTransform()
     {
+        if (isPositionStatic) return;
+
         bool hasAttachedTarget = isAttached && attachedTarget != null;
         if (hasAttachedTarget)
         {

@@ -1,11 +1,12 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 
 public class VfxManager : MonoBehaviour
 {
-    public static VfxManager Instance { get; private set; }
-
     private Dictionary<VfxClipSO, Queue<VfxObject>> pools;
+
+    public static VfxManager Instance { get; private set; }
 
     private void Awake()
     {
@@ -27,7 +28,7 @@ public class VfxManager : MonoBehaviour
         if (isClipInvalid) return;
 
         VfxObject vfxObj = GetOrCreateVfx(clip);
-        vfxObj.Play(clip, targetBone, offset, rotOffset, isAttached);
+        vfxObj.PlayAttached(clip, targetBone, offset, rotOffset, isAttached);
     }
 
     public void SpawnVfxAtPosition(VfxClipSO clip, Vector3 position, Quaternion rotation)
@@ -36,11 +37,7 @@ public class VfxManager : MonoBehaviour
         if (isClipInvalid) return;
 
         VfxObject vfxObj = GetOrCreateVfx(clip);
-        GameObject tempTarget = new GameObject("TempVfxTarget");
-        tempTarget.transform.position = position;
-        tempTarget.transform.rotation = rotation;
-        vfxObj.Play(clip, tempTarget.transform, Vector3.zero, Quaternion.identity, false);
-        Destroy(tempTarget, 1f);
+        vfxObj.PlayAtPosition(clip, position, rotation);
     }
 
     private VfxObject GetOrCreateVfx(VfxClipSO clip)
