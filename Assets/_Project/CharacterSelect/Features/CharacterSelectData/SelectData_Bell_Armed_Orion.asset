@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bb1439611396a341a346f6aa4ccc25a, type: 3}
+  m_Name: SelectData_Bell_Armed_Orion
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectDataSO
+  characterId: Bell_Armed_Orion
+  characterName: Bell_Armed_Orion
+  portraitSprite: {fileID: 0}
+  fullBodySprite: {fileID: 0}
+  modelPrefab: {fileID: 4291916966822011271, guid: 1720d692e198bc14abe686be6415a3fe, type: 3}
+  selectSceneAnimator: {fileID: 0}
+  inGameData: {fileID: 11400000, guid: 914a4ffd064c33e47925cfabf435e814, type: 2}

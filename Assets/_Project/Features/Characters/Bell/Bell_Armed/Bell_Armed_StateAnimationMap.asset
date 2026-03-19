@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8738e80a3268b9c48892b56b4050d825, type: 3}
+  m_Name: Bell_Armed_StateAnimationMap
+  m_EditorClassIdentifier: Assembly-CSharp::StateAnimationMapSO
+  standHitHigh: {fileID: -203655887218126122, guid: 3d5d984d5d1293f40999978cfd41027d, type: 3}
+  standHitMid: {fileID: -203655887218126122, guid: 25f36752190195442b9d03ee788edc0b, type: 3}
+  standHitLow: {fileID: -203655887218126122, guid: b7d745203fa946a40891eb3e9a621b27, type: 3}
+  crouchHit: {fileID: -203655887218126122, guid: fa4da6d9b22c58848acee6e0744ea1fd, type: 3}
+  standBlockHigh: {fileID: -203655887218126122, guid: 0330544f6df426f4baab8f8adf01071b, type: 3}
+  standBlockMid: {fileID: -203655887218126122, guid: 9bc13eea443dd89469557922aca9a200, type: 3}
+  crouchBlock: {fileID: -203655887218126122, guid: 01385d252c3eb14468a4386504e42ad5, type: 3}
+  airHit: {fileID: -6894513051456882905, guid: d5a328ab938234e469428eb760a32843, type: 3}
+  stunning: {fileID: -203655887218126122, guid: 073349fe1684326458408986f3d3ab94, type: 3}
+  groundSmash: {fileID: -203655887218126122, guid: d5a328ab938234e469428eb760a32843, type: 3}
+  wakeUp: {fileID: -203655887218126122, guid: 88d38d3bf06863d429085ea51452e868, type: 3}
+  layingDownInitial: {fileID: -203655887218126122, guid: 1e43dfe4933a4ab4b97d069a49a05b87, type: 3}
+  layingDownIdle: {fileID: -203655887218126122, guid: e10d3f6932806ed4aac72055c8a27b70, type: 3}
+  wakeUpInPlace: {fileID: -203655887218126122, guid: 88d38d3bf06863d429085ea51452e868, type: 3}
+  wakeUpRollForward: {fileID: -203655887218126122, guid: 0c534df7dfbf24446b71fe62c833ad7a, type: 3}
+  wakeUpRollBackward: {fileID: -203655887218126122, guid: 0c534df7dfbf24446b71fe62c833ad7a, type: 3}
+  wakeUpRollLeft: {fileID: -203655887218126122, guid: 37994c2afe8a2414e825e5f010576a7c, type: 3}
+  wakeUpRollRight: {fileID: 1543986317409604355, guid: 37994c2afe8a2414e825e5f010576a7c, type: 3}
+  wakeUpAttack: {fileID: -203655887218126122, guid: 1595baccf543b4d449e46fa5f3796656, type: 3}
+  dead: {fileID: -203655887218126122, guid: 211ae8ea41135814481a4676b6cfea75, type: 3}
+  win: {fileID: -203655887218126122, guid: 46e1b68a405483348a7627d20aebb09a, type: 3}

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bb1439611396a341a346f6aa4ccc25a, type: 3}
+  m_Name: SelectData_Anya
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectDataSO
+  characterId: Anya_Armed
+  characterName: Anya_Armed
+  portraitSprite: {fileID: 0}
+  fullBodySprite: {fileID: 0}
+  modelPrefab: {fileID: 8783843684990105037, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+  selectSceneAnimator: {fileID: 0}
+  inGameData: {fileID: 11400000, guid: 2a18729c9b8390a4e9f8eb076df13273, type: 2}

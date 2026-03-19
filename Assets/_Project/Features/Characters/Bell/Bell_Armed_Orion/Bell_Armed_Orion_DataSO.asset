@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0cd11dc4bb61ec409d6c8c4ac32e02b, type: 3}
+  m_Name: Bell_Armed_Orion_DataSO
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
+  characterPrefab: {fileID: 4291916966822011271, guid: 1720d692e198bc14abe686be6415a3fe, type: 3}
+  config: {fileID: 11400000, guid: a9908e57cc83b614a876ce6e4e72fedf, type: 2}
+  animationMap:
+    stateMap: {fileID: 11400000, guid: 141d38e7061fba346b0f4acb5dfa8638, type: 2}
+    commandList: {fileID: 11400000, guid: cc5a285a23e95094287eae5e3f952be1, type: 2}
+    comboTree: {fileID: 11400000, guid: ef0177092d3963641844172a1601e0b6, type: 2}
+  effectTable: {fileID: 11400000, guid: a62828df5bcbddc4d9cb471440d4ca4f, type: 2}

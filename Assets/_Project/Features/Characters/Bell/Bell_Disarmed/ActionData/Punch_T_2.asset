@@ -1,0 +1,107 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Punch_T_2
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: -203655887218126122, guid: 1595baccf543b4d449e46fa5f3796656, type: 3}
+  animationStateName: Uppercut
+  frameData:
+    logicData:
+      totalFrames: 67
+      startupFrames: 22
+      recoveryFrames: 23
+      cancelWindowStartFrame: 44
+    useRootMotion: 0
+    useRootRotation: 0
+    rootMotionPath: []
+    hitboxEvents:
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: 0.03199309, y: 0.078293145, z: 0.2665267}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      attackType: 0
+      targetHurtState: 0
+      damage: 0
+      hitstunFrames: 0
+      localPushbackVector: {x: 0, y: 0.5, z: 0.2}
+      isHardKnockdown: 0
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: 0.08346548, y: 0.051164687, z: -0.079643786}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      hitGroupID: 0
+      attackType: 0
+      targetHurtState: 0
+      damage: 0
+      hitstunFrames: 0
+      localPushbackVector: {x: 0, y: 0.5, z: 0.2}
+      isHardKnockdown: 0
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: -0.2374852, y: 0.7582921, z: 0.19769119}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      hitGroupID: 0
+      attackType: 0
+      targetHurtState: 0
+      damage: 0
+      hitstunFrames: 0
+      localPushbackVector: {x: 0, y: 0.5, z: 0.2}
+      isHardKnockdown: 0
+    - activeStartFrame: 0
+      boxPath:
+      - localPosition: {x: 0.24952862, y: 0.76199657, z: -0.20615764}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      hitGroupID: 0
+      attackType: 0
+      targetHurtState: 0
+      damage: 0
+      hitstunFrames: 0
+      localPushbackVector: {x: 0, y: 0.5, z: 0.2}
+      isHardKnockdown: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 67
+      hurtboxType: 0
+    vfxEvents:
+    - startFrame: 0
+      endFrame: 0
+      intervalFrames: 0
+      effectType: 2
+      targetBone: 5
+      localPositionOffset: {x: 0, y: 0, z: 0}
+      localRotationOffset: {x: 0, y: 0, z: 0, w: 1}
+      isAttached: 0
+    - startFrame: 0
+      endFrame: 0
+      intervalFrames: 0
+      effectType: 2
+      targetBone: 6
+      localPositionOffset: {x: 0, y: 0, z: 0}
+      localRotationOffset: {x: 0, y: 0, z: 0, w: 1}
+      isAttached: 0
+    - startFrame: 0
+      endFrame: 0
+      intervalFrames: 0
+      effectType: 2
+      targetBone: 17
+      localPositionOffset: {x: 0, y: 0.1, z: 0}
+      localRotationOffset: {x: 0, y: 0, z: 0, w: 1}
+      isAttached: 0
+    - startFrame: 0
+      endFrame: 0
+      intervalFrames: 0
+      effectType: 2
+      targetBone: 18
+      localPositionOffset: {x: 0, y: 0.1, z: 0}
+      localRotationOffset: {x: 0, y: 0, z: 0, w: 1}
+      isAttached: 0

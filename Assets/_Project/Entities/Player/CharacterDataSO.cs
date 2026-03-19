@@ -5,7 +5,8 @@ using System.Collections.Generic;
 public struct CharacterAnimationMap
 {
     public StateAnimationMapSO stateMap;
-    public AttackAnimationMapSO attackMap;
+    public CommandListSO commandList;
+    public ComboTreeSO comboTree;
 }
 
 [CreateAssetMenu(fileName = "NewCharacterData", menuName = "Character/Character Data")]
@@ -13,20 +14,12 @@ public class CharacterDataSO : ScriptableObject
 {
     public GameObject characterPrefab;
     public PlayerConfigSO config;
-    public CommandListSO commandList;
-    public ComboTreeSO comboTree;
     public CharacterAnimationMap animationMap;
     public EffectTableSO effectTable;
 
     public List<ActionDataSO> GetAllRegisteredActions()
     {
         HashSet<ActionDataSO> uniqueActions = new HashSet<ActionDataSO>();
-
-        bool hasAttackMap = animationMap.attackMap != null;
-        if (hasAttackMap)
-        {
-            animationMap.attackMap.CollectAllActions(uniqueActions);
-        }
 
         CollectActionsFromCommandList(uniqueActions);
         CollectActionsFromComboTree(uniqueActions);
@@ -36,10 +29,10 @@ public class CharacterDataSO : ScriptableObject
 
     private void CollectActionsFromCommandList(HashSet<ActionDataSO> actionSet)
     {
-        bool hasCommandList = commandList != null && commandList.commands != null;
+        bool hasCommandList = animationMap.commandList != null && animationMap.commandList.commands != null;
         if (!hasCommandList) return;
 
-        foreach (var command in commandList.commands)
+        foreach (var command in animationMap.commandList.commands)
         {
             bool isActionValid = command.actionData != null;
             if (isActionValid)
@@ -51,10 +44,10 @@ public class CharacterDataSO : ScriptableObject
 
     private void CollectActionsFromComboTree(HashSet<ActionDataSO> actionSet)
     {
-        bool hasComboTree = comboTree != null && comboTree.startingAttacks != null;
+        bool hasComboTree = animationMap.comboTree != null && animationMap.comboTree.startingAttacks != null;
         if (!hasComboTree) return;
 
-        TraverseComboNode(comboTree.startingAttacks, actionSet);
+        TraverseComboNode(animationMap.comboTree.startingAttacks, actionSet);
     }
 
     private void TraverseComboNode(List<ComboNode> nodes, HashSet<ActionDataSO> actionSet)

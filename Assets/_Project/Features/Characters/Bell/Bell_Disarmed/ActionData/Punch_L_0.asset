@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Punch_L_0
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 3094330708855449807, guid: fcae9c41b8da9dc46974f5351a44bb66, type: 3}
+  animationStateName: Punch_L_0
+  frameData:
+    logicData:
+      totalFrames: 55
+      startupFrames: 18
+      recoveryFrames: 19
+      cancelWindowStartFrame: 20
+    useRootMotion: 0
+    useRootRotation: 0
+    rootMotionPath: []
+    hitboxEvents:
+    - activeStartFrame: 12
+      boxPath:
+      - localPosition: {x: -0.29503664, y: 0.5555506, z: 0.075989544}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.27453455, y: 0.5701378, z: 0.30261844}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.22048932, y: 0.5473903, z: 0.5692383}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.0037949048, y: 0.72726244, z: 0.9080955}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.022237852, y: 0.7114099, z: 0.9740597}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.012651086, y: 0.68424374, z: 0.9954467}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: -0.0028322227, y: 0.68812835, z: 1.0076888}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.0070886128, y: 0.6919406, z: 1.0126001}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.015681982, y: 0.694605, z: 1.010654}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.017976798, y: 0.69375724, z: 1.0038784}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.024036393, y: 0.6867785, z: 0.9895965}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.02880117, y: 0.6874819, z: 0.9759736}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      - localPosition: {x: 0.024740577, y: 0.6911869, z: 0.9565134}
+        extents: {x: 0.05, y: 0.1, z: 0.05}
+      hitGroupID: 0
+      attackHeight: 1
+      attackType: 1
+      targetHurtState: 0
+      damage: 5
+      hitstunFrames: 20
+      blockStunFrames: 10
+      localPushbackVector: {x: 0, y: 0, z: 0.05}
+      isHardKnockdown: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 55
+      hurtboxType: 0
+    vfxEvents:
+    - startFrame: 0
+      endFrame: 18
+      intervalFrames: 2
+      effectType: 3
+      targetBone: 17
+      localPositionOffset: {x: 0, y: 0.1, z: 0}
+      localRotationOffset: {x: 0, y: 0, z: 0, w: 1}
+      isAttached: 0

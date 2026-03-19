@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b3feab78cba3f745829a5c778ddf3f4, type: 3}
+  m_Name: PlayerConfig_Default
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerConfigSO
+  walkSpeed: 0.1
+  runSpeed: 0.18
+  sprintSpeed: 0.25
+  turnLerpSpeed: 0.2
+  crouchWalkSpeed: 0.06
+  sideStepSpeed: 0.3
+  sideWalkSpeed: 0.05
+  sideStepFrames: 10
+  wakeUpInPlaceFrames: 50
+  wakeUpRollForwardFrames: 60
+  wakeUpRollBackwardFrames: 45
+  wakeUpRollLeftFrames: 70
+  wakeUpRollRightFrames: 70
+  wakeUpAttackFrames: 30
+  gravityScale: 1
+  bounceVelocityThreshold: -0.3
+  bounceVelocityMultiplier: 0.5
+  groundSmashBounceFrames: 10
+  groundSmashLayFrames: 15
+  defaultHurtboxes:
+  - type: 0
+    boxes:
+    - localPosition: {x: 0, y: 0.75, z: 0}
+      extents: {x: 0.25, y: 1, z: 0.25}
+  - type: 1
+    boxes:
+    - localPosition: {x: 0, y: 0.5, z: 0}
+      extents: {x: 0.25, y: 1, z: 0.25}
+  - type: 2
+    boxes:
+    - localPosition: {x: 0, y: 0, z: 0}
+      extents: {x: 0, y: 0, z: 0}
+  - type: 3
+    boxes: []
+  commandBufferWindow: 15
+  tapWindowFrames: 15
+  autoSprintFrames: 60
+  stunningFrames: 90
+  defaultHitStunFrames: 15
+  defaultBlockStunFrames: 15
+  hitstopLightHit: 3
+  hitstopHeavyHit: 8
+  hitstopCrash: 15
+  hitstopDefault: 5
+  maxHealth: 100

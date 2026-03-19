@@ -37,7 +37,7 @@ public class PlayerController : ITargetable, ISnapshotSync
         combat = new PlayerCombat(config);
 
         actionController = new PlayerActionController();
-        actionController.Initialize(this, characterData.commandList, characterData.comboTree, config.commandBufferWindow);
+        actionController.Initialize(this, characterData.animationMap.commandList, characterData.animationMap.comboTree, config.commandBufferWindow);
 
         stateMachine = new PlayerStateMachine();
         stateMachine.Initialize(this, config);

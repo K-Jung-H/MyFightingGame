@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bb1439611396a341a346f6aa4ccc25a, type: 3}
+  m_Name: SelectData_Bell_Disarmed
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectDataSO
+  characterId: Bell_Disarmed
+  characterName: Bell_Disarmed
+  portraitSprite: {fileID: 0}
+  fullBodySprite: {fileID: 0}
+  modelPrefab: {fileID: 8631758495989884382, guid: b8c3e5129d8ae184483cbf915780c70d, type: 3}
+  selectSceneAnimator: {fileID: 0}
+  inGameData: {fileID: 11400000, guid: 11926062782fb794cb5324248f2c7b9e, type: 2}

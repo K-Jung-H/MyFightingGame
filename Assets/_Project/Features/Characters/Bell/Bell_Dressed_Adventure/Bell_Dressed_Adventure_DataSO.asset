@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0cd11dc4bb61ec409d6c8c4ac32e02b, type: 3}
+  m_Name: Bell_Dressed_Adventure_DataSO
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
+  characterPrefab: {fileID: 4175921655541932620, guid: 87a83ddfdb9b41a49b1384175a3767e3, type: 3}
+  config: {fileID: 11400000, guid: a9908e57cc83b614a876ce6e4e72fedf, type: 2}
+  animationMap:
+    stateMap: {fileID: 11400000, guid: 24b825ce0f03a494a864264c3c61d86e, type: 2}
+    commandList: {fileID: 11400000, guid: 27a60011a7a0fcb4da866ab34873c041, type: 2}
+    comboTree: {fileID: 11400000, guid: bf88139d117ba114f858b7d4647a9d50, type: 2}
+  effectTable: {fileID: 11400000, guid: 68c84892f53566a41b3d514f3cc86299, type: 2}
