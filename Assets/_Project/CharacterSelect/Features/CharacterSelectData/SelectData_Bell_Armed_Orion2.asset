@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectDataSO
   characterId: Bell_Armed_Orion2
   characterName: Bell_Armed_Orion2
-  portraitSprite: {fileID: 0}
-  fullBodySprite: {fileID: 0}
+  portraitSprite: {fileID: 21300000, guid: e10bc37e20757e847a3713913468bece, type: 3}
+  fullBodySprite: {fileID: 21300000, guid: 466e8fcb9243d0d4dab1d4750112883f, type: 3}
   modelPrefab: {fileID: 1997878154993656655, guid: ec64515f55499b04484443c74e27631d, type: 3}
-  selectSceneAnimator: {fileID: 0}
   inGameData: {fileID: 11400000, guid: ea086e0d306af8e49881f91a37848246, type: 2}

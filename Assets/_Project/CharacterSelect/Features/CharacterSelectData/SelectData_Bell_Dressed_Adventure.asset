@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectDataSO
   characterId: Bell_Dressed_Adventure
   characterName: Bell_Dressed_Adventure
-  portraitSprite: {fileID: 0}
-  fullBodySprite: {fileID: 0}
+  portraitSprite: {fileID: 21300000, guid: 2013a73c5a3c96e43a64691f32cb6d18, type: 3}
+  fullBodySprite: {fileID: 21300000, guid: 00310b78cdbf4d94b9e20632a1947a5f, type: 3}
   modelPrefab: {fileID: 4175921655541932620, guid: 87a83ddfdb9b41a49b1384175a3767e3, type: 3}
-  selectSceneAnimator: {fileID: 0}
   inGameData: {fileID: 11400000, guid: 84e0c1b9d66ca1d42926825ab7f97264, type: 2}

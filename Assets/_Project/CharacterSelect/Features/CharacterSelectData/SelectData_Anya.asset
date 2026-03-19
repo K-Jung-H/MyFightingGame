@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectDataSO
   characterId: Anya_Armed
   characterName: Anya_Armed
-  portraitSprite: {fileID: 0}
-  fullBodySprite: {fileID: 0}
+  portraitSprite: {fileID: 21300000, guid: 5dafde6bcd6d5bf4b8909112eb308458, type: 3}
+  fullBodySprite: {fileID: 21300000, guid: bb2f387e74a87a34ca2f57523deee05c, type: 3}
   modelPrefab: {fileID: 8783843684990105037, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
-  selectSceneAnimator: {fileID: 0}
   inGameData: {fileID: 11400000, guid: 2a18729c9b8390a4e9f8eb076df13273, type: 2}

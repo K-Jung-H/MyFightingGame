@@ -171,6 +171,7 @@ public class CharacterSelectManager : MonoBehaviour
         if (hasIllustrationImage)
         {
             context.illustrationImage.sprite = selectedData.fullBodySprite;
+            context.illustrationImage.preserveAspect = true;
 
             Vector3 imageScale = context.illustrationImage.rectTransform.localScale;
             imageScale.x = context.isMirrored ? -Mathf.Abs(imageScale.x) : Mathf.Abs(imageScale.x);
