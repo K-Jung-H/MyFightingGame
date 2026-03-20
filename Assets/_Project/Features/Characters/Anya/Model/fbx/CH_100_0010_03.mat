@@ -123,7 +123,7 @@ Material:
     - _RimStep: 0.2
     - _RimStepSmooth: 1
     - _ShadowStep: 0
-    - _ShadowStepSmooth: 1
+    - _ShadowStepSmooth: 0
     - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
