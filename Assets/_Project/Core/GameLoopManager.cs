@@ -81,6 +81,8 @@ public class GameLoopManager : MonoBehaviour
 
     private void Awake()
     {
+        networkSession = NetworkSessionManager.Instance;
+
         bool hasP1Data = MatchDataManager.P1CharacterData != null;
         if (hasP1Data)
         {
@@ -99,12 +101,23 @@ public class GameLoopManager : MonoBehaviour
         simulationCore = new GameSimulationCore();
         simulationCore.Initialize(playerCollisionMinDistance);
 
-        InitializeMatch(false);
-
-        bool hasNetworkSession = networkSession != null;
-        if (hasNetworkSession)
+        bool isNetworkActive = networkSession != null && networkSession.GetIsInitialized();
+        if (isNetworkActive)
         {
-            networkSession.OnConnectionEstablished += () => InitializeMatch(true);
+            bool isAlreadyConnected = networkSession.GetIsConnected();
+            if (isAlreadyConnected)
+            {
+                InitializeMatch(true);
+            }
+            else
+            {
+                InitializeMatch(false);
+                networkSession.OnConnectionEstablished += () => InitializeMatch(true);
+            }
+        }
+        else
+        {
+            InitializeMatch(false);
         }
     }
 

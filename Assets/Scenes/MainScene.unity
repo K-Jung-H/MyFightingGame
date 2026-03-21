@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 22342366}
-  - component: {fileID: 22342372}
   - component: {fileID: 22342365}
   - component: {fileID: 22342369}
   - component: {fileID: 22342371}
@@ -166,6 +165,8 @@ MonoBehaviour:
       rpKey: 0
       lkKey: 0
       rkKey: 0
+      pauseKey: 0
+      selectKey: 0
     instance: {fileID: 0}
     renderer: {fileID: 0}
   playerTwo:
@@ -179,13 +180,15 @@ MonoBehaviour:
       rpKey: 0
       lkKey: 0
       rkKey: 0
+      pauseKey: 0
+      selectKey: 0
     instance: {fileID: 0}
     renderer: {fileID: 0}
   p1SpawnPos: {x: 2, y: 0, z: 0}
   p2SpawnPos: {x: -2, y: 0, z: 0}
   p1HealthBar: {fileID: 147935802}
   p2HealthBar: {fileID: 1930355440}
-  networkSession: {fileID: 22342372}
+  networkSession: {fileID: 0}
   isDebugRollbackEnabled: 0
   debugRollbackFrames: 5
   debugRollbackInterval: 30
@@ -231,7 +234,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugHUD
   gameLoopManager: {fileID: 22342365}
-  networkSession: {fileID: 22342372}
+  networkSession: {fileID: 0}
 --- !u!114 &22342371
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -250,18 +253,6 @@ MonoBehaviour:
   isShowingHurtboxes: 1
   isShowingHitboxes: 1
   isShowingLookDirection: 0
---- !u!114 &22342372
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22342364}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11545989d7799e44fa6b0f55e1177194, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkSessionManager
 --- !u!1 &36788660
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,14 +6,14 @@ public class DebugHUD : MonoBehaviour
     [SerializeField] private GameLoopManager gameLoopManager;
     [SerializeField] private PlayerController p1Controller;
     [SerializeField] private PlayerController p2Controller;
-    [SerializeField] private NetworkSessionManager networkSession;
+
+    private NetworkSessionManager networkSession;
 
     private Queue<string> p1InputLogQueue = new Queue<string>();
     private Queue<string> p2InputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
 
     private bool isShowServer = true;
-
     private bool isShowNetworkDetails = true;
     private bool isShowP1 = true;
     private bool isShowP2 = true;
@@ -22,12 +22,13 @@ public class DebugHUD : MonoBehaviour
     private int p1MaxHealth;
     private int p2CurrentHealth;
     private int p2MaxHealth;
-    
+
     private bool isP1HealthBound = false;
     private bool isP2HealthBound = false;
 
     private void Start()
     {
+        networkSession = NetworkSessionManager.Instance;
         TryConnectControllers();
     }
 
@@ -35,7 +36,7 @@ public class DebugHUD : MonoBehaviour
     {
         bool isManagerMissing = gameLoopManager == null;
         if (isManagerMissing) return;
-        
+
         bool isP1Missing = p1Controller == null;
         if (isP1Missing)
         {
@@ -53,9 +54,9 @@ public class DebugHUD : MonoBehaviour
         {
             PlayerCombat p1Combat = p1Controller.GetCombat();
             p1Combat.OnHealthChanged += UpdateP1Health;
-            
+
             UpdateP1Health(p1Combat.GetCurrentHealth(), p1Combat.GetMaxHealth());
-            
+
             isP1HealthBound = true;
         }
 
@@ -64,9 +65,9 @@ public class DebugHUD : MonoBehaviour
         {
             PlayerCombat p2Combat = p2Controller.GetCombat();
             p2Combat.OnHealthChanged += UpdateP2Health;
-            
+
             UpdateP2Health(p2Combat.GetCurrentHealth(), p2Combat.GetMaxHealth());
-            
+
             isP2HealthBound = true;
         }
     }
@@ -75,14 +76,12 @@ public class DebugHUD : MonoBehaviour
     {
         p1CurrentHealth = current;
         p1MaxHealth = max;
-        Debug.Log($"[Combat] P1 Health Updated: {current} / {max}");
     }
 
     private void UpdateP2Health(int current, int max)
     {
         p2CurrentHealth = current;
         p2MaxHealth = max;
-        Debug.Log($"[Combat] P2 Health Updated: {current} / {max}");
     }
 
     private void OnDestroy()
@@ -136,18 +135,18 @@ public class DebugHUD : MonoBehaviour
             float contentY = startY + 20f;
             float boxHeight = isShowNetworkDetails ? 210f : 160f;
             GUI.Box(new Rect(startX, contentY, width, boxHeight), "");
-            
+
             float currentY = contentY + 10f;
             GUI.Label(new Rect(startX + 10, currentY, width - 20, 20), $"Current Tick: {gameLoopManager.GetCurrentTick()}");
             currentY += 25f;
-            
+
             currentY = DrawNetworkStateSection(startX, currentY, width);
 
             GUI.Label(new Rect(startX + 10, currentY, width - 20, 20), $"P1 State: {gameLoopManager.GetP1State()}");
             GUI.Label(new Rect(startX + 10, currentY + 15, width - 20, 20), $"P1 Pos: {gameLoopManager.GetP1Pos()}");
             GUI.Label(new Rect(startX + 10, currentY + 30, width - 20, 20), $"P1 HP: {p1CurrentHealth} / {p1MaxHealth}");
             currentY += 50f;
-            
+
             GUI.Label(new Rect(startX + 10, currentY, width - 20, 20), $"P2 State: {gameLoopManager.GetP2State()}");
             GUI.Label(new Rect(startX + 10, currentY + 15, width - 20, 20), $"P2 Pos: {gameLoopManager.GetP2Pos()}");
             GUI.Label(new Rect(startX + 10, currentY + 30, width - 20, 20), $"P2 HP: {p2CurrentHealth} / {p2MaxHealth}");
@@ -265,7 +264,7 @@ public class DebugHUD : MonoBehaviour
 
         List<InputFlags> comboSeq = controller.GetActionController().GetComboSequence();
         List<string> formattedCombo = new List<string>();
-        
+
         bool hasComboSequence = comboSeq != null && comboSeq.Count > 0;
         if (hasComboSequence)
         {
@@ -274,7 +273,7 @@ public class DebugHUD : MonoBehaviour
                 formattedCombo.Add(InputFlagsToString(flag));
             }
         }
-        
+
         string comboString = hasComboSequence ? string.Join(" -> ", formattedCombo) : "Empty (Idle/Broken)";
 
         GUIStyle multilineStyle = new GUIStyle(GUI.skin.label);
@@ -331,6 +330,6 @@ public class DebugHUD : MonoBehaviour
             return attackString;
         }
 
-        return flags.ToString(); 
+        return flags.ToString();
     }
 }

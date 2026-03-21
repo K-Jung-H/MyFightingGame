@@ -49,9 +49,7 @@ public class CharacterSelectManager : MonoBehaviour
     public float modelLoadDelay = 0.2f;
 
     public string nextSceneName = "MainScene";
-    public float matchStartDelay = 1.0f;
 
-    private bool isMatchStarting;
     private CharacterSelectTile[] gridTiles;
     private int gridColumns;
     private int character3DLayer;
@@ -96,11 +94,58 @@ public class CharacterSelectManager : MonoBehaviour
 
         UpdateLockUI(p1Context);
         UpdateLockUI(p2Context);
+
+        bool isNetworkValid = NetworkSessionManager.Instance != null;
+        if (isNetworkValid)
+        {
+            NetworkSessionManager.Instance.OnSelectBroadcastReceived += OnReceiveSelectBroadcast;
+            NetworkSessionManager.Instance.OnMatchStartCommand += ExecuteMatchStart;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        bool isNetworkValid = NetworkSessionManager.Instance != null;
+        if (isNetworkValid)
+        {
+            NetworkSessionManager.Instance.OnSelectBroadcastReceived -= OnReceiveSelectBroadcast;
+            NetworkSessionManager.Instance.OnMatchStartCommand -= ExecuteMatchStart;
+        }
+    }
+
+    private void OnGUI()
+    {
+        bool isNetworkValid = NetworkSessionManager.Instance != null;
+        if (!isNetworkValid) return;
+
+        bool isInitialized = NetworkSessionManager.Instance.GetIsInitialized();
+        if (isInitialized) return;
+
+        if (GUI.Button(new Rect(10, 10, 150, 50), "Start Server (P1)"))
+        {
+            localPlayerId = 1;
+            currentConnectionMode = ConnectionMode.Online;
+            NetworkSessionManager.Instance.InitializeNetwork(true);
+        }
+
+        if (GUI.Button(new Rect(10, 70, 150, 50), "Start Client (P2)"))
+        {
+            localPlayerId = 2;
+            currentConnectionMode = ConnectionMode.Online;
+            NetworkSessionManager.Instance.InitializeNetwork(false);
+        }
     }
 
     private void Update()
     {
-        if (isMatchStarting) return;
+        bool isNetworkValid = NetworkSessionManager.Instance != null;
+        if (isNetworkValid)
+        {
+            NetworkSessionManager.Instance.UpdateNetwork();
+
+            bool isMatchStarting = NetworkSessionManager.Instance.selectContext.isMatchStarting;
+            if (isMatchStarting) return;
+        }
 
         bool isOnlineMode = currentConnectionMode == ConnectionMode.Online;
 
@@ -113,29 +158,6 @@ public class CharacterSelectManager : MonoBehaviour
         {
             HandleLocalInput(p1Context, false);
             HandleLocalInput(p2Context, false);
-        }
-    }
-
-    public void OnReceiveRemotePlayerState(int remoteIndex, bool isRemoteLocked)
-    {
-        PlayerSelectContext remoteContext = localPlayerId == 1 ? p2Context : p1Context;
-
-        bool isIndexChanged = remoteContext.currentIndex != remoteIndex;
-        if (isIndexChanged)
-        {
-            int oldIndex = remoteContext.currentIndex;
-            remoteContext.currentIndex = remoteIndex;
-
-            UpdateCharacterDisplay(remoteContext);
-            UpdateSpecificTiles(oldIndex, remoteIndex);
-        }
-
-        bool isLockChanged = remoteContext.isLocked != isRemoteLocked;
-        if (isLockChanged)
-        {
-            remoteContext.isLocked = isRemoteLocked;
-            UpdateLockUI(remoteContext);
-            CheckMatchReady();
         }
     }
 
@@ -163,7 +185,6 @@ public class CharacterSelectManager : MonoBehaviour
                 context.isLocked = !context.isLocked;
                 UpdateLockUI(context);
                 SendLocalStateToServer();
-                CheckMatchReady();
             }
             else if (context.isLocked && isPausePressed)
             {
@@ -186,7 +207,6 @@ public class CharacterSelectManager : MonoBehaviour
             {
                 context.isLocked = true;
                 UpdateLockUI(context);
-                CheckMatchReady();
             }
             else if (context.isLocked && isUnlockAttempted)
             {
@@ -255,30 +275,49 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
-    private void CheckMatchReady()
+    private void SendLocalStateToServer()
     {
-        bool areBothLocked = p1Context.isLocked && p2Context.isLocked;
-        if (areBothLocked && !isMatchStarting)
+        bool isNetworkValid = NetworkSessionManager.Instance != null;
+        if (!isNetworkValid) return;
+
+        bool isConnected = NetworkSessionManager.Instance.GetIsConnected();
+        if (!isConnected) return;
+
+        PlayerSelectContext localContext = localPlayerId == 1 ? p1Context : p2Context;
+        NetworkSessionManager.Instance.SendSelectUpdate(localPlayerId, localContext.currentIndex, localContext.isLocked);
+    }
+
+    public void OnReceiveSelectBroadcast(int p1Index, bool p1Lock, int p2Index, bool p2Lock)
+    {
+        bool isLocalP1 = localPlayerId == 1;
+
+        PlayerSelectContext remoteContext = isLocalP1 ? p2Context : p1Context;
+        int remoteIndex = isLocalP1 ? p2Index : p1Index;
+        bool isRemoteLocked = isLocalP1 ? p2Lock : p1Lock;
+
+        bool isIndexChanged = remoteContext.currentIndex != remoteIndex;
+        if (isIndexChanged)
         {
-            StartCoroutine(StartMatchRoutine());
+            int oldIndex = remoteContext.currentIndex;
+            remoteContext.currentIndex = remoteIndex;
+
+            UpdateCharacterDisplay(remoteContext);
+            UpdateSpecificTiles(oldIndex, remoteIndex);
+        }
+
+        bool isLockChanged = remoteContext.isLocked != isRemoteLocked;
+        if (isLockChanged)
+        {
+            remoteContext.isLocked = isRemoteLocked;
+            UpdateLockUI(remoteContext);
         }
     }
 
-    private IEnumerator StartMatchRoutine()
+    private void ExecuteMatchStart()
     {
-        isMatchStarting = true;
-
         MatchDataManager.P1CharacterData = characterRoster[p1Context.currentIndex].inGameData;
         MatchDataManager.P2CharacterData = characterRoster[p2Context.currentIndex].inGameData;
-
-        yield return new WaitForSeconds(matchStartDelay);
-
         SceneManager.LoadScene(nextSceneName);
-    }
-
-    private void SendLocalStateToServer()
-    {
-        PlayerSelectContext localContext = localPlayerId == 1 ? p1Context : p2Context;
     }
 
     private void UpdateLockUI(PlayerSelectContext context)
