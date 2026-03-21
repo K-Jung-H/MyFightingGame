@@ -79,9 +79,20 @@ public class GameLoopManager : MonoBehaviour
     public PlayerController GetPlayerOneController() => playerOne.controller;
     public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
-
     private void Awake()
     {
+        bool hasP1Data = MatchDataManager.P1CharacterData != null;
+        if (hasP1Data)
+        {
+            playerOne.characterData = MatchDataManager.P1CharacterData;
+        }
+
+        bool hasP2Data = MatchDataManager.P2CharacterData != null;
+        if (hasP2Data)
+        {
+            playerTwo.characterData = MatchDataManager.P2CharacterData;
+        }
+
         Time.fixedDeltaTime = 1f / 60f;
         Application.targetFrameRate = 120;
 
