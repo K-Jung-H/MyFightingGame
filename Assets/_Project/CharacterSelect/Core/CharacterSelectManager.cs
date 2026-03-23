@@ -11,12 +11,6 @@ public static class MatchDataManager
     public static CharacterDataSO P2CharacterData { get; set; }
 }
 
-public enum ConnectionMode
-{
-    Offline,
-    Online
-}
-
 [System.Serializable]
 public class PlayerSelectContext
 {
@@ -36,26 +30,24 @@ public class PlayerSelectContext
     [HideInInspector] public Coroutine loadCoroutine;
 }
 
+
 public class CharacterSelectManager : MonoBehaviour
 {
-    public ConnectionMode currentConnectionMode = ConnectionMode.Offline;
-    public int localPlayerId = 1;
-
     public Transform characterGridPanel;
     public CharacterSelectDataSO[] characterRoster;
-
     public RuntimeAnimatorController sharedSelectAnimator;
     public int maxRandomIdles = 3;
     public float modelLoadDelay = 0.2f;
 
-    public string nextSceneName = "MainScene";
+    public PlayerSelectContext p1Context;
+    public PlayerSelectContext p2Context;
 
     private CharacterSelectTile[] gridTiles;
     private int gridColumns;
     private int character3DLayer;
-
-    public PlayerSelectContext p1Context;
-    public PlayerSelectContext p2Context;
+    private bool isMatchStarted;
+    private bool isLobbyReady = false;
+    private bool isEventsSubscribed = false;
 
     private void Start()
     {
@@ -63,21 +55,12 @@ public class CharacterSelectManager : MonoBehaviour
         gridTiles = characterGridPanel.GetComponentsInChildren<CharacterSelectTile>();
 
         GridLayoutGroup gridLayout = characterGridPanel.GetComponent<GridLayoutGroup>();
-        bool isGridLayoutValid = gridLayout != null && gridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount;
-
-        if (isGridLayoutValid)
-        {
-            gridColumns = gridLayout.constraintCount;
-        }
-        else
-        {
-            gridColumns = 7;
-        }
+        gridColumns = (gridLayout != null && gridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount) 
+            ? gridLayout.constraintCount : 7;
 
         for (int i = 0; i < gridTiles.Length; i++)
         {
-            bool isIndexValid = i < characterRoster.Length;
-            if (isIndexValid)
+            if (i < characterRoster.Length)
             {
                 gridTiles[i].SetupTile(characterRoster[i].portraitSprite);
             }
@@ -88,373 +71,216 @@ public class CharacterSelectManager : MonoBehaviour
 
         UpdateSpecificTiles(p1Context.currentIndex, p1Context.currentIndex);
         UpdateSpecificTiles(p2Context.currentIndex, p2Context.currentIndex);
-
         UpdateCharacterDisplay(p1Context);
         UpdateCharacterDisplay(p2Context);
-
         UpdateLockUI(p1Context);
         UpdateLockUI(p2Context);
-
-        bool isNetworkValid = NetworkSessionManager.Instance != null;
-        if (isNetworkValid)
-        {
-            NetworkSessionManager.Instance.OnSelectBroadcastReceived += OnReceiveSelectBroadcast;
-            NetworkSessionManager.Instance.OnMatchStartCommand += ExecuteMatchStart;
-        }
     }
 
     private void OnDestroy()
     {
-        bool isNetworkValid = NetworkSessionManager.Instance != null;
-        if (isNetworkValid)
+        MatchedRoomManager.OnMatchStartCommand -= HandleMatchStartCommand;
+        if (NetworkSessionManager.Instance != null)
         {
-            NetworkSessionManager.Instance.OnSelectBroadcastReceived -= OnReceiveSelectBroadcast;
-            NetworkSessionManager.Instance.OnMatchStartCommand -= ExecuteMatchStart;
-        }
-    }
-
-    private void OnGUI()
-    {
-        bool isNetworkValid = NetworkSessionManager.Instance != null;
-        if (!isNetworkValid) return;
-
-        bool isInitialized = NetworkSessionManager.Instance.GetIsInitialized();
-        if (isInitialized) return;
-
-        if (GUI.Button(new Rect(10, 10, 150, 50), "Start Server (P1)"))
-        {
-            localPlayerId = 1;
-            currentConnectionMode = ConnectionMode.Online;
-            NetworkSessionManager.Instance.InitializeNetwork(true);
-        }
-
-        if (GUI.Button(new Rect(10, 70, 150, 50), "Start Client (P2)"))
-        {
-            localPlayerId = 2;
-            currentConnectionMode = ConnectionMode.Online;
-            NetworkSessionManager.Instance.InitializeNetwork(false);
+            NetworkSessionManager.Instance.OnSelectBroadcastReceived -= HandleNetworkSelectBroadcast;
+            NetworkSessionManager.Instance.OnMatchStartReceived -= HandleMatchStartCommand;
         }
     }
 
     private void Update()
     {
-        bool isNetworkValid = NetworkSessionManager.Instance != null;
-        if (isNetworkValid)
+        if (!isEventsSubscribed)
         {
-            NetworkSessionManager.Instance.UpdateNetwork();
+            ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
+            if (currentMode == ConnectionMode.None) return;
 
-            bool isMatchStarting = NetworkSessionManager.Instance.selectContext.isMatchStarting;
-            if (isMatchStarting) return;
+            SubscribeToFlowEvents(currentMode);
+            isEventsSubscribed = true;
         }
 
-        bool isOnlineMode = currentConnectionMode == ConnectionMode.Online;
+        if (isMatchStarted || !isLobbyReady) return;
 
-        if (isOnlineMode)
+        ConnectionMode mode = GameFlowManager.Instance.currentMode;
+
+        if (mode == ConnectionMode.Offline)
         {
-            PlayerSelectContext localContext = localPlayerId == 1 ? p1Context : p2Context;
-            HandleLocalInput(localContext, true);
+            HandleLocalInput(1, p1Context);
+            HandleLocalInput(2, p2Context);
         }
         else
         {
-            HandleLocalInput(p1Context, false);
-            HandleLocalInput(p2Context, false);
+            int localId = (mode == ConnectionMode.OnlineHost) ? 1 : 2;
+            PlayerSelectContext localCtx = (localId == 1) ? p1Context : p2Context;
+            HandleLocalInput(localId, localCtx);
         }
     }
 
-    private void HandleLocalInput(PlayerSelectContext context, bool isOnlineMode)
+    private void SubscribeToFlowEvents(ConnectionMode mode)
     {
-        bool isKeyboardNull = Keyboard.current == null;
-        if (isKeyboardNull) return;
+        if (mode == ConnectionMode.Offline)
+        {
+            isLobbyReady = true;
+            MatchedRoomManager.OnMatchStartCommand += HandleMatchStartCommand;
+        }
+        else if (mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient)
+        {
+            if (NetworkSessionManager.Instance != null)
+            {
+                NetworkSessionManager.Instance.OnConnectionEstablished += () => isLobbyReady = true;
+                NetworkSessionManager.Instance.OnSelectBroadcastReceived += HandleNetworkSelectBroadcast;
+                NetworkSessionManager.Instance.OnMatchStartReceived += HandleMatchStartCommand;
+            }
+        }
+    }
 
-        ProcessLockState(context, isOnlineMode);
+    private void HandleLocalInput(int playerId, PlayerSelectContext context)
+    {
+        if (Keyboard.current == null) return;
+
+        if (GetLockInput(context))
+        {
+            context.isLocked = !context.isLocked;
+            UpdateLockUI(context);
+            NotifyStateToManager(playerId, context);
+        }
 
         if (context.isLocked) return;
 
-        ProcessGridMovement(context);
+        int move = GetMovementInput(context);
+        if (move != 0)
+        {
+            int oldIndex = context.currentIndex;
+            context.currentIndex = (context.currentIndex + move + characterRoster.Length) % characterRoster.Length;
+            
+            UpdateCharacterDisplay(context);
+            UpdateSpecificTiles(oldIndex, context.currentIndex);
+            NotifyStateToManager(playerId, context);
+        }
     }
 
-    private void ProcessLockState(PlayerSelectContext context, bool isOnlineMode)
+    private void NotifyStateToManager(int playerId, PlayerSelectContext context)
     {
-        if (isOnlineMode)
+        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
         {
-            bool isSelectPressed = Keyboard.current[context.inputBinding.selectKey].wasPressedThisFrame;
-            bool isPausePressed = Keyboard.current[context.inputBinding.pauseKey].wasPressedThisFrame;
-
-            if (isSelectPressed)
+            MatchedRoomManager roomManager = GameFlowManager.Instance.GetLocalRoomManager();
+            if (roomManager != null)
             {
-                context.isLocked = !context.isLocked;
-                UpdateLockUI(context);
-                SendLocalStateToServer();
-            }
-            else if (context.isLocked && isPausePressed)
-            {
-                context.isLocked = false;
-                UpdateLockUI(context);
-                SendLocalStateToServer();
+                roomManager.UpdatePlayerLockState(playerId, context.isLocked);
             }
         }
         else
         {
-            bool isLpPressed = Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
-            bool isRpPressed = Keyboard.current[context.inputBinding.rpKey].wasPressedThisFrame;
-            bool isLkPressed = Keyboard.current[context.inputBinding.lkKey].wasPressedThisFrame;
-            bool isRkPressed = Keyboard.current[context.inputBinding.rkKey].wasPressedThisFrame;
-
-            bool isLockAttempted = isLpPressed || isRpPressed;
-            bool isUnlockAttempted = isLkPressed || isRkPressed;
-
-            if (!context.isLocked && isLockAttempted)
-            {
-                context.isLocked = true;
-                UpdateLockUI(context);
-            }
-            else if (context.isLocked && isUnlockAttempted)
-            {
-                context.isLocked = false;
-                UpdateLockUI(context);
-            }
+            NetworkSessionManager.Instance.SendSelectUpdate(playerId, context.currentIndex, context.isLocked);
         }
     }
 
-    private void ProcessGridMovement(PlayerSelectContext context)
+    private void HandleNetworkSelectBroadcast(int p1Idx, bool p1Lock, int p2Idx, bool p2Lock)
     {
-        bool isLeftPressed = Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame;
-        bool isRightPressed = Keyboard.current[context.inputBinding.rightKey].wasPressedThisFrame;
-        bool isUpPressed = Keyboard.current[context.inputBinding.upKey].wasPressedThisFrame;
-        bool isDownPressed = Keyboard.current[context.inputBinding.downKey].wasPressedThisFrame;
+        UpdateRemoteState(p1Context, p1Idx, p1Lock);
+        UpdateRemoteState(p2Context, p2Idx, p2Lock);
+    }
 
-        int newIndex = context.currentIndex;
-        int totalCount = characterRoster.Length;
-
-        if (isLeftPressed)
+    private void UpdateRemoteState(PlayerSelectContext context, int newIdx, bool newLock)
+    {
+        if (context.currentIndex != newIdx)
         {
-            newIndex--;
-            if (newIndex < 0) newIndex = totalCount - 1;
-        }
-        else if (isRightPressed)
-        {
-            newIndex++;
-            if (newIndex >= totalCount) newIndex = 0;
-        }
-        else if (isUpPressed)
-        {
-            newIndex -= gridColumns;
-            if (newIndex < 0)
-            {
-                int currentColumn = context.currentIndex % gridColumns;
-                int maxRow = (totalCount - 1) / gridColumns;
-                int bottomIndex = currentColumn + (maxRow * gridColumns);
-
-                newIndex = bottomIndex < totalCount ? bottomIndex : bottomIndex - gridColumns;
-            }
-        }
-        else if (isDownPressed)
-        {
-            newIndex += gridColumns;
-            if (newIndex >= totalCount)
-            {
-                newIndex = context.currentIndex % gridColumns;
-            }
-        }
-
-        bool isIndexChanged = newIndex != context.currentIndex;
-
-        if (isIndexChanged)
-        {
-            int oldIndex = context.currentIndex;
-            context.currentIndex = newIndex;
-
+            int oldIdx = context.currentIndex;
+            context.currentIndex = newIdx;
             UpdateCharacterDisplay(context);
-            UpdateSpecificTiles(oldIndex, newIndex);
-
-            bool isOnlineMode = currentConnectionMode == ConnectionMode.Online;
-            if (isOnlineMode)
-            {
-                SendLocalStateToServer();
-            }
+            UpdateSpecificTiles(oldIdx, newIdx);
         }
-    }
 
-    private void SendLocalStateToServer()
-    {
-        bool isNetworkValid = NetworkSessionManager.Instance != null;
-        if (!isNetworkValid) return;
-
-        bool isConnected = NetworkSessionManager.Instance.GetIsConnected();
-        if (!isConnected) return;
-
-        PlayerSelectContext localContext = localPlayerId == 1 ? p1Context : p2Context;
-        NetworkSessionManager.Instance.SendSelectUpdate(localPlayerId, localContext.currentIndex, localContext.isLocked);
-    }
-
-    public void OnReceiveSelectBroadcast(int p1Index, bool p1Lock, int p2Index, bool p2Lock)
-    {
-        bool isLocalP1 = localPlayerId == 1;
-
-        PlayerSelectContext remoteContext = isLocalP1 ? p2Context : p1Context;
-        int remoteIndex = isLocalP1 ? p2Index : p1Index;
-        bool isRemoteLocked = isLocalP1 ? p2Lock : p1Lock;
-
-        bool isIndexChanged = remoteContext.currentIndex != remoteIndex;
-        if (isIndexChanged)
+        if (context.isLocked != newLock)
         {
-            int oldIndex = remoteContext.currentIndex;
-            remoteContext.currentIndex = remoteIndex;
-
-            UpdateCharacterDisplay(remoteContext);
-            UpdateSpecificTiles(oldIndex, remoteIndex);
-        }
-
-        bool isLockChanged = remoteContext.isLocked != isRemoteLocked;
-        if (isLockChanged)
-        {
-            remoteContext.isLocked = isRemoteLocked;
-            UpdateLockUI(remoteContext);
+            context.isLocked = newLock;
+            UpdateLockUI(context);
         }
     }
 
-    private void ExecuteMatchStart()
+    private void HandleMatchStartCommand()
     {
+        if (isMatchStarted) return;
+        isMatchStarted = true;
+
         MatchDataManager.P1CharacterData = characterRoster[p1Context.currentIndex].inGameData;
         MatchDataManager.P2CharacterData = characterRoster[p2Context.currentIndex].inGameData;
-        SceneManager.LoadScene(nextSceneName);
+        
+        SceneManager.LoadScene("MainScene");
+    }
+
+    private bool GetLockInput(PlayerSelectContext context)
+    {
+        return Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
+    }
+
+    private int GetMovementInput(PlayerSelectContext context)
+    {
+        if (Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame) return -1;
+        if (Keyboard.current[context.inputBinding.rightKey].wasPressedThisFrame) return 1;
+        return 0;
     }
 
     private void UpdateLockUI(PlayerSelectContext context)
     {
-        bool isStatusTextValid = context.statusText != null;
-        if (isStatusTextValid)
-        {
-            context.statusText.text = context.isLocked ? "Ready" : "Selecting";
-        }
-
-        bool isLockIconObjectValid = context.lockIconObject != null;
-        if (isLockIconObjectValid)
-        {
-            context.lockIconObject.SetActive(context.isLocked);
-        }
+        if (context.statusText != null) context.statusText.text = context.isLocked ? "Ready" : "Selecting";
+        if (context.lockIconObject != null) context.lockIconObject.SetActive(context.isLocked);
     }
 
     private void UpdateSpecificTiles(int oldIndex, int newIndex)
     {
-        bool isTilesNull = gridTiles == null;
-        if (isTilesNull) return;
-
         UpdateTileVisual(oldIndex);
         UpdateTileVisual(newIndex);
     }
 
     private void UpdateTileVisual(int targetIndex)
     {
-        bool isIndexValid = targetIndex >= 0 && targetIndex < gridTiles.Length;
-        if (!isIndexValid) return;
-
+        if (targetIndex < 0 || targetIndex >= gridTiles.Length) return;
         bool isP1 = (targetIndex == p1Context.currentIndex);
         bool isP2 = (targetIndex == p2Context.currentIndex);
-
         gridTiles[targetIndex].UpdateVisuals(isP1, isP2, p1Context.cursorColor, p2Context.cursorColor);
     }
 
     private void UpdateCharacterDisplay(PlayerSelectContext context)
     {
-        CharacterSelectDataSO selectedData = characterRoster[context.currentIndex];
-
-        bool isIllustrationImageValid = context.illustrationImage != null;
-        if (isIllustrationImageValid)
+        CharacterSelectDataSO data = characterRoster[context.currentIndex];
+        if (context.illustrationImage != null)
         {
-            context.illustrationImage.sprite = selectedData.fullBodySprite;
-            context.illustrationImage.preserveAspect = true;
-
-            Vector3 imageScale = context.illustrationImage.rectTransform.localScale;
-            imageScale.x = context.isMirrored ? -Mathf.Abs(imageScale.x) : Mathf.Abs(imageScale.x);
-            context.illustrationImage.rectTransform.localScale = imageScale;
+            context.illustrationImage.sprite = data.fullBodySprite;
+            Vector3 scale = context.illustrationImage.rectTransform.localScale;
+            scale.x = context.isMirrored ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+            context.illustrationImage.rectTransform.localScale = scale;
         }
-
-        bool isNameTextValid = context.nameText != null;
-        if (isNameTextValid)
-        {
-            context.nameText.text = selectedData.characterName;
-        }
-
-        bool isCoroutineActive = context.loadCoroutine != null;
-        if (isCoroutineActive)
-        {
-            StopCoroutine(context.loadCoroutine);
-        }
-
+        if (context.nameText != null) context.nameText.text = data.characterName;
+        if (context.loadCoroutine != null) StopCoroutine(context.loadCoroutine);
         context.loadCoroutine = StartCoroutine(SpawnModelRoutine(context, context.currentIndex));
     }
 
     private IEnumerator SpawnModelRoutine(PlayerSelectContext context, int targetIndex)
     {
         yield return new WaitForSeconds(modelLoadDelay);
+        if (context.currentIndex != targetIndex) yield break;
+        if (context.currentModel != null) Destroy(context.currentModel);
 
-        bool isIndexMatched = context.currentIndex == targetIndex;
-        if (!isIndexMatched) yield break;
-
-        bool isCurrentModelValid = context.currentModel != null;
-        if (isCurrentModelValid)
+        CharacterSelectDataSO data = characterRoster[targetIndex];
+        if (data.modelPrefab != null)
         {
-            Destroy(context.currentModel);
-        }
-
-        CharacterSelectDataSO selectedData = characterRoster[targetIndex];
-        bool isPrefabValid = selectedData.modelPrefab != null;
-
-        if (isPrefabValid)
-        {
-            context.currentModel = Instantiate(
-                selectedData.modelPrefab,
-                context.displayTransform.position,
-                context.displayTransform.rotation,
-                context.displayTransform
-            );
-
+            context.currentModel = Instantiate(data.modelPrefab, context.displayTransform.position, context.displayTransform.rotation, context.displayTransform);
             SetLayerRecursively(context.currentModel, character3DLayer);
-
-            Animator modelAnimator = context.currentModel.GetComponentInChildren<Animator>();
-            bool isAnimatorAndSharedControllerValid = modelAnimator != null && sharedSelectAnimator != null;
-
-            if (isAnimatorAndSharedControllerValid)
+            Animator anim = context.currentModel.GetComponentInChildren<Animator>();
+            if (anim != null && sharedSelectAnimator != null)
             {
-                modelAnimator.runtimeAnimatorController = sharedSelectAnimator;
-                modelAnimator.applyRootMotion = false;
-
-                modelAnimator.Rebind();
-                modelAnimator.SetBool("IsMirrored", context.isMirrored);
-
-                int randomIdleIndex;
-                if (maxRandomIdles > 1)
-                {
-                    do
-                    {
-                        randomIdleIndex = Random.Range(0, maxRandomIdles);
-                    } while (randomIdleIndex == context.lastIdleIndex);
-                }
-                else
-                {
-                    randomIdleIndex = 0;
-                }
-
-                context.lastIdleIndex = randomIdleIndex;
-                string targetStateName = "Selecting_Idle_" + randomIdleIndex;
-
-                modelAnimator.Play(targetStateName, 0, 0f);
-                modelAnimator.Update(0f);
+                anim.runtimeAnimatorController = sharedSelectAnimator;
+                anim.SetBool("IsMirrored", context.isMirrored);
+                context.lastIdleIndex = (maxRandomIdles > 1) ? Random.Range(0, maxRandomIdles) : 0;
+                anim.Play("Selecting_Idle_" + context.lastIdleIndex, 0, 0f);
             }
         }
     }
 
-    private void SetLayerRecursively(GameObject targetObject, int targetLayer)
+    private void SetLayerRecursively(GameObject obj, int layer)
     {
-        bool isTargetNull = targetObject == null;
-        if (isTargetNull) return;
-
-        targetObject.layer = targetLayer;
-
-        foreach (Transform childTransform in targetObject.transform)
-        {
-            SetLayerRecursively(childTransform.gameObject, targetLayer);
-        }
+        if (obj == null) return;
+        obj.layer = layer;
+        foreach (Transform child in obj.transform) SetLayerRecursively(child.gameObject, layer);
     }
 }
