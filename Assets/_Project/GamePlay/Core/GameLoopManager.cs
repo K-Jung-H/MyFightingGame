@@ -59,6 +59,7 @@ public class GameLoopManager : MonoBehaviour
     private bool isSimulationRunning;
     private bool isRoundOver;
     private bool isResimulating;
+    private bool isWaitingForGameStart;
     private FPVector3 sharedDepthAxis;
 
     private Dictionary<int, ulong> localHashBuffer;
@@ -88,9 +89,26 @@ public class GameLoopManager : MonoBehaviour
         simulationCore.Initialize(playerCollisionMinDistance);
 
         NetworkSessionManager.Instance.OnPeerAddressReceived += HandlePeerConnection;
-        NetworkSessionManager.Instance.OnMatchStartReceived += () => InitializeMatch(true);
+        NetworkSessionManager.Instance.OnGameStartReceived += HandleGameStartCommand;
 
-        InitializeMatch(false);
+        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
+        if (isOnline)
+        {
+            isWaitingForGameStart = true;
+        }
+        else
+        {
+            InitializeMatch(false);
+        }
+    }
+
+    private void Start()
+    {
+        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
+        if (isOnline)
+        {
+            NetworkSessionManager.Instance.SendHandshake();
+        }
     }
 
     private void OnDestroy()
@@ -98,16 +116,21 @@ public class GameLoopManager : MonoBehaviour
         if (NetworkSessionManager.Instance != null)
         {
             NetworkSessionManager.Instance.OnPeerAddressReceived -= HandlePeerConnection;
+            NetworkSessionManager.Instance.OnGameStartReceived -= HandleGameStartCommand;
         }
     }
 
     private void FixedUpdate()
     {
-        if (!isSimulationRunning) return;
-
-        NetworkSessionManager.Instance.UpdateNetwork();
-
         bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
+
+        if (isOnline)
+        {
+            NetworkSessionManager.Instance.UpdateNetwork();
+        }
+
+        if (isWaitingForGameStart || !isSimulationRunning) return;
+
         if (isOnline)
         {
             ProcessOnlineTick();
@@ -119,6 +142,11 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    private void HandleGameStartCommand()
+    {
+        isWaitingForGameStart = false;
+        InitializeMatch(true);
+    }
 
     private void InitializeMatch(bool isNetworkReset)
     {

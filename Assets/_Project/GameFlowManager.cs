@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public enum ConnectionMode
 {
@@ -14,14 +15,10 @@ public class GameFlowManager : MonoBehaviour
     
     public ConnectionMode currentMode = ConnectionMode.None;
     
-    private MatchedRoomManager localRoomManager;
+    private IMatchSession currentSession;
     private DummyMatchServer dummyServer;
     private bool isFlowInitialized;
-    private bool isServerRunning;
-    private bool isConnected;
 
-    public MatchedRoomManager GetLocalRoomManager() => localRoomManager;
-    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -33,6 +30,21 @@ public class GameFlowManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private void OnGUI()
+    {
+        if (isFlowInitialized)
+        {
+            DrawStatusGUI();
+            return;
+        }
+        DrawConnectionGUI();
+    }
+
+    public IMatchSession GetCurrentSession()
+    {
+        return currentSession;
+    }
+
     public void InitializeMatchFlow(ConnectionMode mode)
     {
         if (isFlowInitialized || mode == ConnectionMode.None) return;
@@ -42,31 +54,46 @@ public class GameFlowManager : MonoBehaviour
 
         if (currentMode == ConnectionMode.Offline)
         {
-            CreateLocalRoomManager();
+            currentSession = new OfflineMatchSession();
         }
-        else
+        else if (currentMode == ConnectionMode.OnlineHost)
         {
-            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", currentMode == ConnectionMode.OnlineHost);
+            StartLocalServer();
+            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", true);
+            currentSession = new OnlineClientSession();
+        }
+        else if (currentMode == ConnectionMode.OnlineClient)
+        {
+            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", false);
+            currentSession = new OnlineClientSession();
         }
     }
 
-    private void CreateLocalRoomManager()
+    public void OnReceiveSceneChangeCommand(string sceneName)
     {
-        localRoomManager = new MatchedRoomManager();
-        localRoomManager.Initialize();
+        SceneManager.LoadScene(sceneName);
     }
 
-    private void OnGUI()
+    private void StartLocalServer()
     {
-        if (isFlowInitialized)
-        {
-            float debugWidth = 200f;
-            float debugHeight = 50f;
-            string status = isServerRunning ? "Mode: Host" : (currentMode == ConnectionMode.Offline ? "Mode: Offline" : "Mode: Client");
-            GUI.Label(new Rect(10f, 10f, debugWidth, debugHeight), status);
-            return;
-        }
+        GameObject serverObj = new GameObject("DummyServer");
+        DontDestroyOnLoad(serverObj);
+        
+        dummyServer = serverObj.AddComponent<DummyMatchServer>();
+        dummyServer.StartServer();
+    }
 
+    private void DrawStatusGUI()
+    {
+        float debugWidth = 300f;
+        float debugHeight = 50f;
+        string modeStr = $"Mode: {currentMode}";
+        string netStatus = NetworkSessionManager.Instance != null && NetworkSessionManager.Instance.GetIsConnected() ? "[Server Connected]" : "[Connecting...]";
+        GUI.Label(new Rect(10f, 10f, debugWidth, debugHeight), $"{modeStr} | {netStatus}");
+    }
+
+    private void DrawConnectionGUI()
+    {
         float width = 200f;
         float height = 50f;
         float spacing = 15f;
@@ -80,19 +107,12 @@ public class GameFlowManager : MonoBehaviour
 
         if (GUI.Button(new Rect(startX, startY + height + spacing, width, height), "Start as Host"))
         {
-            GameObject serverObj = new GameObject("DummyServer");
-            dummyServer = serverObj.AddComponent<DummyMatchServer>();
-            dummyServer.StartServer();
-            isServerRunning = true;
-
             InitializeMatchFlow(ConnectionMode.OnlineHost);
-            isConnected = true;
         }
 
         if (GUI.Button(new Rect(startX, startY + (height + spacing) * 2f, width, height), "Start as Client"))
         {
             InitializeMatchFlow(ConnectionMode.OnlineClient);
-            isConnected = true;
         }
     }
 }

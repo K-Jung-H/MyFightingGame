@@ -10,7 +10,9 @@ public static class NetworkPacketType
     public const byte Hash = 1;
     public const byte SelectUpdate = 10;
     public const byte SelectBroadcast = 11;
-    public const byte MatchStart = 12;
+    public const byte SceneChange = 12;
+    public const byte Handshake = 13;
+    public const byte GameStart = 14;
 }
 
 public class NetworkBufferContext
@@ -49,8 +51,10 @@ public class NetworkSessionManager : MonoBehaviour
 
     public event Action<int, bool, int, bool> OnSelectBroadcastReceived;
     public event Action OnConnectionEstablished;
-    public event Action OnMatchStartReceived;
+    public event Action OnSceneChangeReceived;
+    public event Action OnGameStartReceived;
     public event Action<string> OnPeerAddressReceived;
+
     public bool GetIsConnected() => isConnected;
 
     private void Awake()
@@ -145,6 +149,18 @@ public class NetworkSessionManager : MonoBehaviour
             writer.WriteInt(playerIndex);
             writer.WriteInt(characterIndex);
             writer.WriteByte((byte)(isLocked ? 1 : 0));
+            driver.EndSend(writer);
+        }
+    }
+
+    public void SendHandshake()
+    {
+        if (!serverConnection.IsCreated) return;
+
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.Handshake);
             driver.EndSend(writer);
         }
     }
@@ -267,11 +283,16 @@ public class NetworkSessionManager : MonoBehaviour
             bool p2Lock = stream.ReadByte() == 1;
             OnSelectBroadcastReceived?.Invoke(p1Idx, p1Lock, p2Idx, p2Lock);
         }
-        else if (packetType == NetworkPacketType.MatchStart)
+        else if (packetType == NetworkPacketType.SceneChange)
         {
+            OnSceneChangeReceived?.Invoke();
+        }
+        else if (packetType == NetworkPacketType.GameStart)
+        {
+            Debug.Log($"[Client] Received Packet: {packetType}");
             FixedString64Bytes peerIp = stream.ReadFixedString64();
             OnPeerAddressReceived?.Invoke(peerIp.ToString());
-            OnMatchStartReceived?.Invoke();
+            OnGameStartReceived?.Invoke();
         }
     }
 

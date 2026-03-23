@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
-using UnityEngine.SceneManagement;
 
 public static class MatchDataManager
 {
@@ -29,7 +28,6 @@ public class PlayerSelectContext
     [HideInInspector] public int lastIdleIndex = -1;
     [HideInInspector] public Coroutine loadCoroutine;
 }
-
 
 public class CharacterSelectManager : MonoBehaviour
 {
@@ -79,19 +77,27 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        MatchedRoomManager.OnMatchStartCommand -= HandleMatchStartCommand;
         if (NetworkSessionManager.Instance != null)
         {
             NetworkSessionManager.Instance.OnSelectBroadcastReceived -= HandleNetworkSelectBroadcast;
-            NetworkSessionManager.Instance.OnMatchStartReceived -= HandleMatchStartCommand;
+            NetworkSessionManager.Instance.OnSceneChangeReceived -= HandleSceneChangeCommand;
         }
     }
 
     private void Update()
     {
+        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
+        
+        if (currentMode == ConnectionMode.OnlineHost || currentMode == ConnectionMode.OnlineClient)
+        {
+            if (NetworkSessionManager.Instance != null)
+            {
+                NetworkSessionManager.Instance.UpdateNetwork();
+            }
+        }
+
         if (!isEventsSubscribed)
         {
-            ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
             if (currentMode == ConnectionMode.None) return;
 
             SubscribeToFlowEvents(currentMode);
@@ -100,16 +106,14 @@ public class CharacterSelectManager : MonoBehaviour
 
         if (isMatchStarted || !isLobbyReady) return;
 
-        ConnectionMode mode = GameFlowManager.Instance.currentMode;
-
-        if (mode == ConnectionMode.Offline)
+        if (currentMode == ConnectionMode.Offline)
         {
             HandleLocalInput(1, p1Context);
             HandleLocalInput(2, p2Context);
         }
         else
         {
-            int localId = (mode == ConnectionMode.OnlineHost) ? 1 : 2;
+            int localId = (currentMode == ConnectionMode.OnlineHost) ? 1 : 2;
             PlayerSelectContext localCtx = (localId == 1) ? p1Context : p2Context;
             HandleLocalInput(localId, localCtx);
         }
@@ -120,7 +124,6 @@ public class CharacterSelectManager : MonoBehaviour
         if (mode == ConnectionMode.Offline)
         {
             isLobbyReady = true;
-            MatchedRoomManager.OnMatchStartCommand += HandleMatchStartCommand;
         }
         else if (mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient)
         {
@@ -128,7 +131,7 @@ public class CharacterSelectManager : MonoBehaviour
             {
                 NetworkSessionManager.Instance.OnConnectionEstablished += () => isLobbyReady = true;
                 NetworkSessionManager.Instance.OnSelectBroadcastReceived += HandleNetworkSelectBroadcast;
-                NetworkSessionManager.Instance.OnMatchStartReceived += HandleMatchStartCommand;
+                NetworkSessionManager.Instance.OnSceneChangeReceived += HandleSceneChangeCommand;
             }
         }
     }
@@ -160,27 +163,25 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void NotifyStateToManager(int playerId, PlayerSelectContext context)
     {
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
+        if (context.isLocked)
         {
-            MatchedRoomManager roomManager = GameFlowManager.Instance.GetLocalRoomManager();
-            if (roomManager != null)
-            {
-                roomManager.UpdatePlayerLockState(playerId, context.isLocked);
-            }
+            SaveCharacterData(playerId, context.currentIndex);
         }
-        else
+
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        if (session != null)
         {
-            NetworkSessionManager.Instance.SendSelectUpdate(playerId, context.currentIndex, context.isLocked);
+            session.UpdateCharacterSelect(playerId, context.currentIndex, context.isLocked);
         }
     }
 
     private void HandleNetworkSelectBroadcast(int p1Idx, bool p1Lock, int p2Idx, bool p2Lock)
     {
-        UpdateRemoteState(p1Context, p1Idx, p1Lock);
-        UpdateRemoteState(p2Context, p2Idx, p2Lock);
+        UpdateRemoteState(p1Context, p1Idx, p1Lock, 1);
+        UpdateRemoteState(p2Context, p2Idx, p2Lock, 2);
     }
 
-    private void UpdateRemoteState(PlayerSelectContext context, int newIdx, bool newLock)
+    private void UpdateRemoteState(PlayerSelectContext context, int newIdx, bool newLock, int playerId)
     {
         if (context.currentIndex != newIdx)
         {
@@ -194,18 +195,25 @@ public class CharacterSelectManager : MonoBehaviour
         {
             context.isLocked = newLock;
             UpdateLockUI(context);
+            
+            if (newLock)
+            {
+                SaveCharacterData(playerId, newIdx);
+            }
         }
     }
 
-    private void HandleMatchStartCommand()
+    private void SaveCharacterData(int playerId, int index)
+    {
+        if (playerId == 1) MatchDataManager.P1CharacterData = characterRoster[index].inGameData;
+        else if (playerId == 2) MatchDataManager.P2CharacterData = characterRoster[index].inGameData;
+    }
+
+    private void HandleSceneChangeCommand()
     {
         if (isMatchStarted) return;
         isMatchStarted = true;
-
-        MatchDataManager.P1CharacterData = characterRoster[p1Context.currentIndex].inGameData;
-        MatchDataManager.P2CharacterData = characterRoster[p2Context.currentIndex].inGameData;
-        
-        SceneManager.LoadScene("MainScene");
+        GameFlowManager.Instance.OnReceiveSceneChangeCommand("MainScene");
     }
 
     private bool GetLockInput(PlayerSelectContext context)
