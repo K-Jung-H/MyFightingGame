@@ -33,13 +33,11 @@ public class PlayerRenderer : MonoBehaviour
 
     public void UpdateRenderer()
     {
-        bool isControllerNull = controller == null;
-        if (isControllerNull) return;
+        if (controller == null) return;
 
         bool isHitstopActive = controller.GetCombat().GetHitstopCounter() > 0;
-        bool hasAnimator = characterAnimator != null;
 
-        if (hasAnimator)
+        if (characterAnimator != null)
         {
             characterAnimator.speed = isHitstopActive ? 0f : 1f;
         }
@@ -53,9 +51,7 @@ public class PlayerRenderer : MonoBehaviour
     public void PlayHitSpark(Vector3 hitPosition, EffectType effectType)
     {
         VfxClipSO resolvedClip = effectTable != null ? effectTable.GetClip(effectType) : null;
-        bool isClipValid = resolvedClip != null;
-        
-        if (isClipValid)
+        if (resolvedClip != null)
         {
             VfxManager.Instance.SpawnVfxAtPosition(resolvedClip, hitPosition, Quaternion.identity);
         }
@@ -63,8 +59,7 @@ public class PlayerRenderer : MonoBehaviour
 
     private void Update()
     {
-        bool isControllerNull = controller == null;
-        if (isControllerNull) return;
+        if (controller == null) return;
 
         bool isHitstopActive = controller.GetCombat().GetHitstopCounter() > 0;
         if (isHitstopActive) return;
@@ -109,48 +104,60 @@ public class PlayerRenderer : MonoBehaviour
         bool isStateChanged = previousState != currentState;
         bool isActionChanged = previousActionData != currentAction;
 
-        bool isHitState = currentState == PlayerState_Type.StandHit || 
-                            currentState == PlayerState_Type.CrouchHit ||
-                            currentState == PlayerState_Type.StandBlock ||
-                            currentState == PlayerState_Type.CrouchBlock ||
-                            currentState == PlayerState_Type.AirHit || 
-                            currentState == PlayerState_Type.Stunning || 
-                            currentState == PlayerState_Type.GroundSmash ||
-                            currentState == PlayerState_Type.LayingDown ||
-                            currentState == PlayerState_Type.WakeUp;
+        bool isStrictSyncState = currentState == PlayerState_Type.Attacking || 
+                                 currentState == PlayerState_Type.StandHit || 
+                                 currentState == PlayerState_Type.CrouchHit ||
+                                 currentState == PlayerState_Type.StandBlock ||
+                                 currentState == PlayerState_Type.CrouchBlock ||
+                                 currentState == PlayerState_Type.AirHit || 
+                                 currentState == PlayerState_Type.Stunning || 
+                                 currentState == PlayerState_Type.GroundSmash ||
+                                 currentState == PlayerState_Type.LayingDown ||
+                                 currentState == PlayerState_Type.WakeUp ||
+                                 currentState == PlayerState_Type.Dead ||
+                                 currentState == PlayerState_Type.Defeat ||
+                                 currentState == PlayerState_Type.Win;
 
-        bool isEndState = currentState == PlayerState_Type.Dead || 
-                          currentState == PlayerState_Type.Win || 
-                          currentState == PlayerState_Type.Defeat;
-                          
-        if (currentState == PlayerState_Type.Attacking)
+        if (isStrictSyncState)
         {
-            if (isStateChanged || isActionChanged)
+            int hash = 0;
+
+            if (currentState == PlayerState_Type.Attacking)
             {
-                int hash = 0;
-                bool hasActionName = currentAction != null && !string.IsNullOrEmpty(currentAction.animationStateName);
-                if (hasActionName)
+                if (currentAction != null && !string.IsNullOrEmpty(currentAction.animationStateName))
                 {
                     hash = controller.GetStateMachine().GetAnimationHash(currentAction.animationStateName);
                 }
-                
-                bool isHashValid = hash != 0;
-                if (isHashValid)
-                {
-                    float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
-                    characterAnimator.PlayInFixedTime(hash, 0, exactTime);
-                }
             }
-        }
-        else if (isHitState || isEndState)
-        {
-            if (isStateChanged)
+            else if (currentState == PlayerState_Type.Dead)
             {
-                int hash = GetStaticStateHash(currentState);
-                bool isHashValid = hash != 0;
-                if (isHashValid)
+                PlayerState_Type prevState = controller.GetStateMachine().GetPreviousStateType();
+                AnimationClip deadClip = stateAnimMap.GetDeadAnimationClip(prevState);
+                if (deadClip != null) hash = controller.GetStateMachine().GetAnimationHash(deadClip.name);
+            }
+            else
+            {
+                hash = GetStaticStateHash(currentState);
+            }
+
+            if (hash != 0)
+            {
+                float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
+                bool needsSync = isStateChanged || isActionChanged;
+
+                if (!needsSync)
                 {
-                    float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
+                    AnimatorStateInfo stateInfo = characterAnimator.GetCurrentAnimatorStateInfo(0);
+                    float currentVisualTime = stateInfo.normalizedTime * stateInfo.length;
+                    
+                    if (stateInfo.shortNameHash != hash || Mathf.Abs(currentVisualTime - exactTime) > 0.034f)
+                    {
+                        needsSync = true;
+                    }
+                }
+
+                if (needsSync)
+                {
                     characterAnimator.PlayInFixedTime(hash, 0, exactTime);
                 }
             }
@@ -169,39 +176,27 @@ public class PlayerRenderer : MonoBehaviour
     private int GetStaticStateHash(PlayerState_Type currentState)
     {
         AnimationClip targetClip = null;
-        bool isStateMapValid = stateAnimMap != null;
-        
-        bool isWakeUpState = currentState == PlayerState_Type.WakeUp;
-        bool isLayingDownState = currentState == PlayerState_Type.LayingDown;
-        bool isHurtOrBlockState = currentState == PlayerState_Type.StandHit || 
-                                  currentState == PlayerState_Type.CrouchHit ||
-                                  currentState == PlayerState_Type.StandBlock ||
-                                  currentState == PlayerState_Type.CrouchBlock;
-        bool isDeadState = currentState == PlayerState_Type.Dead;
-
-        if (isStateMapValid)
+        if (stateAnimMap != null)
         {
-            if (isWakeUpState)
+            if (currentState == PlayerState_Type.WakeUp)
             {
                 WakeUpState wakeUpState = controller.GetStateMachine().GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
                 WakeUp_Type currentWakeUpType = wakeUpState != null ? wakeUpState.GetScheduledWakeUpType() : WakeUp_Type.InPlace;
                 targetClip = stateAnimMap.GetWakeUpAnimationClip(currentWakeUpType);
             }
-            else if (isLayingDownState)
+            else if (currentState == PlayerState_Type.LayingDown)
             {
                 LayingDownState layState = controller.GetStateMachine().GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
                 bool isFromRoll = layState != null && layState.IsFromRoll();
                 targetClip = stateAnimMap.GetLayingDownAnimationClip(isFromRoll);
             }
-            else if (isHurtOrBlockState)
+            else if (currentState == PlayerState_Type.StandHit || 
+                     currentState == PlayerState_Type.CrouchHit ||
+                     currentState == PlayerState_Type.StandBlock ||
+                     currentState == PlayerState_Type.CrouchBlock)
             {
                 HurtInfo hurtInfo = controller.GetCombat().GetCurrentHurtInfo();
                 targetClip = stateAnimMap.GetHurtAnimationClip(currentState, hurtInfo.attackHeight);
-            }
-            else if (isDeadState)
-            {
-                PlayerState_Type prevState = controller.GetStateMachine().GetPreviousStateType();
-                targetClip = stateAnimMap.GetDeadAnimationClip(prevState);
             }
             else
             {
@@ -233,10 +228,12 @@ public class PlayerRenderer : MonoBehaviour
                                 previousState == PlayerState_Type.GroundSmash ||
                                 previousState == PlayerState_Type.LayingDown ||
                                 previousState == PlayerState_Type.WakeUp ||
+                                previousState == PlayerState_Type.Dead ||
+                                previousState == PlayerState_Type.Defeat ||
+                                previousState == PlayerState_Type.Win ||
                                 previousState == PlayerState_Type.SideStep; 
 
-        bool shouldTransitionToLocomotion = isCurrentLocomotion && isPreviousAction;
-        if (shouldTransitionToLocomotion)
+        if (isCurrentLocomotion && isPreviousAction)
         {
             characterAnimator.CrossFadeInFixedTime(LocomotionHash, locomotionBlendTime, 0);
         }
@@ -250,8 +247,7 @@ public class PlayerRenderer : MonoBehaviour
         Vector3 worldVelocity = controller.GetPhysics().GetVelocity();
         Vector3 localVelocity = transform.InverseTransformDirection(worldVelocity);
 
-        bool hasAnimator = characterAnimator != null;
-        if (hasAnimator)
+        if (characterAnimator != null)
         {
             characterAnimator.SetFloat(MoveSpeedHash, currentSpeed);
             
@@ -263,53 +259,40 @@ public class PlayerRenderer : MonoBehaviour
             }
 
             PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
-            bool isCurrentlyCrouching = currentState == PlayerState_Type.Crouching;
-            characterAnimator.SetBool(IsCrouchingHash, isCurrentlyCrouching);
+            characterAnimator.SetBool(IsCrouchingHash, currentState == PlayerState_Type.Crouching);
         }
     }
-
-    
 
     private void EvaluateVfxEvents()
     {
         ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
-        bool isActionInvalid = currentAction == null || currentAction.frameData.vfxEvents == null;
-        if (isActionInvalid) return;
+        if (currentAction == null || currentAction.frameData.vfxEvents == null) return;
 
         int currentFrame = controller.GetStateMachine().GetStateFrameCounter();
 
         foreach (var vfxEvent in currentAction.frameData.vfxEvents)
         {
-            bool isWithinRange = currentFrame >= vfxEvent.startFrame && currentFrame <= vfxEvent.endFrame;
-            if (!isWithinRange) continue;
+            if (currentFrame >= vfxEvent.startFrame && currentFrame <= vfxEvent.endFrame)
+            {
+                bool isSpawnFrame = vfxEvent.intervalFrames <= 0 
+                                    ? currentFrame == vfxEvent.startFrame 
+                                    : (currentFrame - vfxEvent.startFrame) % vfxEvent.intervalFrames == 0;
 
-            bool isSpawnFrame = false;
-            bool isSingleSpawn = vfxEvent.intervalFrames <= 0;
-            
-            if (isSingleSpawn)
-            {
-                isSpawnFrame = currentFrame == vfxEvent.startFrame;
-            }
-            else
-            {
-                isSpawnFrame = (currentFrame - vfxEvent.startFrame) % vfxEvent.intervalFrames == 0;
-            }
-
-            if (isSpawnFrame)
-            {
-                Transform targetBoneTransform = characterAnimator.GetBoneTransform(vfxEvent.targetBone);
-                VfxClipSO resolvedClip = effectTable != null ? effectTable.GetClip(vfxEvent.effectType) : null;
-                
-                bool isSpawnValid = targetBoneTransform != null && resolvedClip != null;
-                if (isSpawnValid)
+                if (isSpawnFrame)
                 {
-                    VfxManager.Instance.SpawnVfx(
-                        resolvedClip, 
-                        targetBoneTransform, 
-                        vfxEvent.localPositionOffset, 
-                        vfxEvent.localRotationOffset, 
-                        vfxEvent.isAttached
-                    );
+                    Transform targetBoneTransform = characterAnimator.GetBoneTransform(vfxEvent.targetBone);
+                    VfxClipSO resolvedClip = effectTable != null ? effectTable.GetClip(vfxEvent.effectType) : null;
+                    
+                    if (targetBoneTransform != null && resolvedClip != null)
+                    {
+                        VfxManager.Instance.SpawnVfx(
+                            resolvedClip, 
+                            targetBoneTransform, 
+                            vfxEvent.localPositionOffset, 
+                            vfxEvent.localRotationOffset, 
+                            vfxEvent.isAttached
+                        );
+                    }
                 }
             }
         }
@@ -317,26 +300,15 @@ public class PlayerRenderer : MonoBehaviour
 
     private float GetSpeedFromState(PlayerState_Type stateType)
     {
-        bool isWalking = stateType == PlayerState_Type.Walking;
-        bool isRunning = stateType == PlayerState_Type.Running;
-        bool isSprinting = stateType == PlayerState_Type.Sprinting;
-        bool isSideWalking = stateType == PlayerState_Type.SideWalk || stateType == PlayerState_Type.SideStep;
-        bool isCrouching = stateType == PlayerState_Type.Crouching;
-
-        if (isWalking || isSideWalking) return 1.0f;
-        if (isRunning) return 2.0f;
-        if (isSprinting) return 3.0f;
+        if (stateType == PlayerState_Type.Walking || stateType == PlayerState_Type.SideWalk || stateType == PlayerState_Type.SideStep) return 1.0f;
+        if (stateType == PlayerState_Type.Running) return 2.0f;
+        if (stateType == PlayerState_Type.Sprinting) return 3.0f;
         
-        if (isCrouching)
+        if (stateType == PlayerState_Type.Crouching)
         {
             Vector3 currentVelocity = controller.GetPhysics().GetVelocity();
             currentVelocity.y = 0f;
-            
-            bool hasCrouchMovement = currentVelocity.sqrMagnitude > 0.0001f;
-            if (hasCrouchMovement)
-            {
-                return 1.0f;
-            }
+            if (currentVelocity.sqrMagnitude > 0.0001f) return 1.0f;
         }
 
         return 0.0f;

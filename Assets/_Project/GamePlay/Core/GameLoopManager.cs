@@ -324,15 +324,32 @@ public class GameLoopManager : MonoBehaviour
     private void VerifySyncState()
     {
         List<int> verifiedTicks = new List<int>();
+        
         foreach (var kvp in localHashBuffer)
         {
-            if (NetworkSessionManager.Instance.TryGetRemoteHash(kvp.Key, out ulong remoteHash))
+            bool hasRemoteHash = NetworkSessionManager.Instance.TryGetRemoteHash(kvp.Key, out ulong remoteHash);
+            
+            if (hasRemoteHash)
             {
-                if (kvp.Value != remoteHash) TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
+                bool isHashMismatch = kvp.Value != remoteHash;
+                
+                if (isHashMismatch) 
+                {
+                    TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
+                }
+                else 
+                {
+                    isDesyncDetected = false;
+                }
+                
                 verifiedTicks.Add(kvp.Key);
             }
         }
-        foreach (int t in verifiedTicks) localHashBuffer.Remove(t);
+        
+        foreach (int t in verifiedTicks) 
+        {
+            localHashBuffer.Remove(t);
+        }
     }
 
     private void ProcessTick(PlayerInput p1, PlayerInput p2)

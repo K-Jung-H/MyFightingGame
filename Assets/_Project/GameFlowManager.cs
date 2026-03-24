@@ -6,7 +6,8 @@ public enum ConnectionMode
     None,
     Offline,
     OnlineHost,
-    OnlineClient
+    OnlineClient,
+    DedicatedServer
 }
 
 public class GameFlowManager : MonoBehaviour
@@ -14,6 +15,9 @@ public class GameFlowManager : MonoBehaviour
     public static GameFlowManager Instance { get; private set; }
     
     public ConnectionMode currentMode = ConnectionMode.None;
+    
+    [SerializeField] private string gameplaySceneName = "GameplayScene";
+    [SerializeField] private string serverSceneName = "EmptyServerScene";
     
     private IMatchSession currentSession;
     private DummyMatchServer dummyServer;
@@ -55,17 +59,25 @@ public class GameFlowManager : MonoBehaviour
         if (currentMode == ConnectionMode.Offline)
         {
             currentSession = new OfflineMatchSession();
+            SceneManager.LoadScene(gameplaySceneName);
         }
         else if (currentMode == ConnectionMode.OnlineHost)
         {
             StartLocalServer();
             NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", true);
             currentSession = new OnlineClientSession();
+            SceneManager.LoadScene(gameplaySceneName);
         }
         else if (currentMode == ConnectionMode.OnlineClient)
         {
             NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", false);
             currentSession = new OnlineClientSession();
+            SceneManager.LoadScene(gameplaySceneName);
+        }
+        else if (currentMode == ConnectionMode.DedicatedServer)
+        {
+            StartLocalServer();
+            SceneManager.LoadScene(serverSceneName);
         }
     }
 
@@ -88,7 +100,20 @@ public class GameFlowManager : MonoBehaviour
         float debugWidth = 300f;
         float debugHeight = 50f;
         string modeStr = $"Mode: {currentMode}";
-        string netStatus = NetworkSessionManager.Instance != null && NetworkSessionManager.Instance.GetIsConnected() ? "[Server Connected]" : "[Connecting...]";
+        
+        bool hasNetworkSession = NetworkSessionManager.Instance != null;
+        bool isConnected = hasNetworkSession && NetworkSessionManager.Instance.GetIsConnected();
+        
+        string netStatus = "";
+        if (currentMode == ConnectionMode.DedicatedServer)
+        {
+            netStatus = "[Dedicated Server Running]";
+        }
+        else
+        {
+            netStatus = isConnected ? "[Server Connected]" : "[Connecting...]";
+        }
+        
         GUI.Label(new Rect(10f, 10f, debugWidth, debugHeight), $"{modeStr} | {netStatus}");
     }
 
@@ -98,7 +123,7 @@ public class GameFlowManager : MonoBehaviour
         float height = 50f;
         float spacing = 15f;
         float startX = (Screen.width - width) * 0.5f;
-        float startY = (Screen.height - (height * 3f + spacing * 2f)) * 0.5f;
+        float startY = (Screen.height - (height * 4f + spacing * 3f)) * 0.5f;
 
         if (GUI.Button(new Rect(startX, startY, width, height), "Offline Mode"))
         {
@@ -113,6 +138,11 @@ public class GameFlowManager : MonoBehaviour
         if (GUI.Button(new Rect(startX, startY + (height + spacing) * 2f, width, height), "Start as Client"))
         {
             InitializeMatchFlow(ConnectionMode.OnlineClient);
+        }
+
+        if (GUI.Button(new Rect(startX, startY + (height + spacing) * 3f, width, height), "Start Dedicated Server"))
+        {
+            InitializeMatchFlow(ConnectionMode.DedicatedServer);
         }
     }
 }
