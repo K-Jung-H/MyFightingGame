@@ -24,6 +24,8 @@ public struct GameStateSnapshot
     public PlayerSnapshot p1Snapshot;
     public PlayerSnapshot p2Snapshot;
     public FPVector3 sharedDepthAxis;
+    public int currentTimerFrames;
+    public bool isTimerPaused;
 }
 
 public class GameLoopManager : MonoBehaviour
@@ -37,6 +39,7 @@ public class GameLoopManager : MonoBehaviour
     [SerializeField] private Vector3 p2SpawnPos = new Vector3(2, 0, 0);
     [SerializeField] private HealthBarController p1HealthBar;
     [SerializeField] private HealthBarController p2HealthBar;
+    [SerializeField] private SpriteNumberDisplay roundTimerDisplay;
     
     [SerializeField] private bool isDebugRollbackEnabled = false;
     [SerializeField] private int debugRollbackFrames = 5;
@@ -53,6 +56,7 @@ public class GameLoopManager : MonoBehaviour
     private InputFlags[] p2InputBuffer;
     private LocalInputProvider inputProvider;
     private GameSimulationCore simulationCore;
+    private RoundTimerManager roundTimer;
     
     private int currentTick;
     private int latestConfirmedTick;
@@ -69,6 +73,7 @@ public class GameLoopManager : MonoBehaviour
     public bool GetIsStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
     public bool GetIsDesyncDetected() => isDesyncDetected;
     public int GetCurrentTick() => currentTick;
+    public RoundTimerManager GetRoundTimer() => roundTimer;
     
     public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
     public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
@@ -162,6 +167,9 @@ public class GameLoopManager : MonoBehaviour
         p2InputBuffer = new InputFlags[ROLLBACK_WINDOW];
         localHashBuffer = new Dictionary<int, ulong>();
         sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64.FromFloat(1f));
+
+        roundTimer = new RoundTimerManager();
+        roundTimer.InitializeTimer(99);
 
         if (isNetworkReset) NetworkSessionManager.Instance.ClearBuffer();
 
@@ -336,6 +344,9 @@ public class GameLoopManager : MonoBehaviour
     private void RunTick(PlayerInput p1, PlayerInput p2)
     {
         if (isRoundOver) { p1.flags = InputFlags.None; p2.flags = InputFlags.None; }
+        
+        roundTimer.UpdateTick();
+        
         simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref sharedDepthAxis, HandleHitSpark);
         if (!isResimulating) SyncVisuals();
     }
@@ -345,6 +356,9 @@ public class GameLoopManager : MonoBehaviour
         int idx = tick % ROLLBACK_WINDOW;
         stateBuffer[idx].tick = tick;
         stateBuffer[idx].sharedDepthAxis = sharedDepthAxis;
+        
+        roundTimer.ExportState(ref stateBuffer[idx]);
+        
         if (playerOne.controller != null) playerOne.controller.ExportState(ref stateBuffer[idx].p1Snapshot);
         if (playerTwo.controller != null) playerTwo.controller.ExportState(ref stateBuffer[idx].p2Snapshot);
     }
@@ -353,6 +367,9 @@ public class GameLoopManager : MonoBehaviour
     {
         int idx = tick % ROLLBACK_WINDOW;
         sharedDepthAxis = stateBuffer[idx].sharedDepthAxis;
+        
+        roundTimer.ImportState(stateBuffer[idx]);
+        
         if (playerOne.controller != null) playerOne.controller.ImportState(stateBuffer[idx].p1Snapshot);
         if (playerTwo.controller != null) playerTwo.controller.ImportState(stateBuffer[idx].p2Snapshot);
     }
@@ -393,6 +410,11 @@ public class GameLoopManager : MonoBehaviour
     {
         if (playerOne.renderer != null) playerOne.renderer.UpdateRenderer();
         if (playerTwo.renderer != null) playerTwo.renderer.UpdateRenderer();
+
+        if (roundTimer != null && roundTimerDisplay != null)
+        {
+            roundTimerDisplay.SetNumber(roundTimer.GetRemainingSeconds());
+        }
     }
 
     private void TriggerDesyncError(int tick, ulong local, ulong remote)

@@ -13,6 +13,7 @@ public class DebugHUD : MonoBehaviour
     private Queue<string> p2InputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
 
+    private bool isShowAllHUD = true;
     private bool isShowServer = true;
     private bool isShowNetworkDetails = true;
     private bool isShowP1 = true;
@@ -101,6 +102,10 @@ public class DebugHUD : MonoBehaviour
 
     private void OnGUI()
     {
+        isShowAllHUD = GUI.Toggle(new Rect(10f, 50f, 150f, 20f), isShowAllHUD, " Toggle All Debug HUD");
+
+        if (!isShowAllHUD) return;
+
         bool isManagerMissing = gameLoopManager == null;
         if (isManagerMissing) return;
 
@@ -111,29 +116,30 @@ public class DebugHUD : MonoBehaviour
         }
 
         float panelWidth = 280f;
-        float topY = 10f;
+        float bottomY = Screen.height - 30f;
 
         float p1StartX = 10f;
         float serverStartX = (Screen.width - panelWidth) / 2f;
         float p2StartX = Screen.width - panelWidth - 10f;
 
-        DrawServerStatusPanel(serverStartX, topY, panelWidth);
-        DrawP1DebugPanel(p1StartX, topY, panelWidth);
-        DrawP2DebugPanel(p2StartX, topY, panelWidth);
+        DrawServerStatusPanel(serverStartX, bottomY, panelWidth);
+        DrawP1DebugPanel(p1StartX, bottomY, panelWidth);
+        DrawP2DebugPanel(p2StartX, bottomY, panelWidth);
     }
 
-    private void DrawServerStatusPanel(float startX, float startY, float width)
+    private void DrawServerStatusPanel(float startX, float bottomY, float width)
     {
-        string serverTitle = isShowServer ? "▼ Server Status" : "▶ Server Status";
-        if (GUI.Button(new Rect(startX, startY, width, 20), serverTitle))
+        string serverTitle = isShowServer ? "▼ Server Status" : "▲ Server Status";
+        if (GUI.Button(new Rect(startX, bottomY, width, 20), serverTitle))
         {
             isShowServer = !isShowServer;
         }
 
         if (isShowServer)
         {
-            float contentY = startY + 20f;
             float boxHeight = isShowNetworkDetails ? 210f : 160f;
+            float contentY = bottomY - boxHeight;
+            
             GUI.Box(new Rect(startX, contentY, width, boxHeight), "");
 
             float currentY = contentY + 10f;
@@ -188,43 +194,44 @@ public class DebugHUD : MonoBehaviour
         return currentY;
     }
 
-    private void DrawP1DebugPanel(float startX, float startY, float width)
+    private void DrawP1DebugPanel(float startX, float bottomY, float width)
     {
         bool hasP1Controller = p1Controller != null;
         if (!hasP1Controller) return;
 
-        string p1Title = isShowP1 ? "▼ P1 Input & Action Debug" : "▶ P1 Input & Action Debug";
-        if (GUI.Button(new Rect(startX, startY, width, 20), p1Title))
+        string p1Title = isShowP1 ? "▼ P1 Input & Action Debug" : "▲ P1 Input & Action Debug";
+        if (GUI.Button(new Rect(startX, bottomY, width, 20), p1Title))
         {
             isShowP1 = !isShowP1;
         }
 
         if (isShowP1)
         {
-            DrawInputDebugContent(p1Controller, p1InputLogQueue, startX, startY + 20f, width);
+            float panelHeight = 350f;
+            DrawInputDebugContent(p1Controller, p1InputLogQueue, startX, bottomY - panelHeight, width, panelHeight);
         }
     }
 
-    private void DrawP2DebugPanel(float startX, float startY, float width)
+    private void DrawP2DebugPanel(float startX, float bottomY, float width)
     {
         bool hasP2Controller = p2Controller != null;
         if (!hasP2Controller) return;
 
-        string p2Title = isShowP2 ? "▼ P2 Input & Action Debug" : "▶ P2 Input & Action Debug";
-        if (GUI.Button(new Rect(startX, startY, width, 20), p2Title))
+        string p2Title = isShowP2 ? "▼ P2 Input & Action Debug" : "▲ P2 Input & Action Debug";
+        if (GUI.Button(new Rect(startX, bottomY, width, 20), p2Title))
         {
             isShowP2 = !isShowP2;
         }
 
         if (isShowP2)
         {
-            DrawInputDebugContent(p2Controller, p2InputLogQueue, startX, startY + 20f, width);
+            float panelHeight = 350f;
+            DrawInputDebugContent(p2Controller, p2InputLogQueue, startX, bottomY - panelHeight, width, panelHeight);
         }
     }
 
-    private void DrawInputDebugContent(PlayerController controller, Queue<string> logQueue, float startX, float startY, float width)
+    private void DrawInputDebugContent(PlayerController controller, Queue<string> logQueue, float startX, float startY, float width, float panelHeight)
     {
-        float panelHeight = 350f;
         GUI.Box(new Rect(startX, startY, width, panelHeight), "");
 
         InputFlags currentHold = controller.currentInput.flags;
