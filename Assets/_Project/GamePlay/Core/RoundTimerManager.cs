@@ -60,6 +60,11 @@ public class RoundTimerManager
         return CalculateSecondsFromFrames(currentTimerFrames);
     }
 
+    public int GetCurrentFrames()
+    {
+        return currentTimerFrames;
+    }
+
     private int CalculateSecondsFromFrames(int frames)
     {
         return Mathf.CeilToInt((float)frames / 60f);

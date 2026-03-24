@@ -8,6 +8,7 @@ public class PlayerStateMachine : ISnapshotSync
     private Dictionary<PlayerState_Type, PlayerStateBase> states;
     private PlayerStateBase currentStateObject;
     private PlayerState_Type cachedCurrentState;
+    private PlayerState_Type previousStateType;
     private int stateFrameCounter;
     private ActionDataSO currentActionData;
     private bool isCommandActionTriggered;
@@ -16,6 +17,7 @@ public class PlayerStateMachine : ISnapshotSync
     public void ExportState(ref PlayerSnapshot snapshot)
     {
         snapshot.cachedCurrentState = cachedCurrentState;
+        snapshot.previousStateType = previousStateType;
         snapshot.stateFrameCounter = stateFrameCounter;
         snapshot.isCommandActionTriggered = isCommandActionTriggered;
         
@@ -60,6 +62,7 @@ public class PlayerStateMachine : ISnapshotSync
     public void ImportState(PlayerSnapshot snapshot)
     {
         cachedCurrentState = snapshot.cachedCurrentState;
+        previousStateType = snapshot.previousStateType;
         stateFrameCounter = snapshot.stateFrameCounter;
         isCommandActionTriggered = snapshot.isCommandActionTriggered;
 
@@ -110,6 +113,7 @@ public class PlayerStateMachine : ISnapshotSync
 
         InitializeStates();
         cachedCurrentState = (PlayerState_Type)(-1);
+        previousStateType = (PlayerState_Type)(-1);
         TransitionTo(PlayerState_Type.Idle);
     }
 
@@ -138,9 +142,8 @@ public class PlayerStateMachine : ISnapshotSync
             { PlayerState_Type.WakeUp, new WakeUpState(this, config) },
 
             { PlayerState_Type.Dead, new DeadState(this, config) },
+            { PlayerState_Type.Defeat, new DefeatState(this, config) },
             { PlayerState_Type.Win, new WinState(this, config) }
-
-
         };
     }
 
@@ -164,7 +167,11 @@ public class PlayerStateMachine : ISnapshotSync
         if (isSameState) return;
 
         bool isCurrentStateValid = currentStateObject != null;
-        if (isCurrentStateValid) currentStateObject.Exit();
+        if (isCurrentStateValid)
+        {
+            currentStateObject.Exit();
+            previousStateType = cachedCurrentState;
+        }
 
         cachedCurrentState = newState;
         currentStateObject = states[newState];
@@ -199,13 +206,12 @@ public class PlayerStateMachine : ISnapshotSync
         TransitionTo(request.targetState, true);
     }
 
-
     public bool CanTransitionToAttack()
     {
         bool isHit = cachedCurrentState == PlayerState_Type.StandHit || cachedCurrentState == PlayerState_Type.AirHit;
         bool isDown = cachedCurrentState == PlayerState_Type.LayingDown || cachedCurrentState == PlayerState_Type.WakeUp || cachedCurrentState == PlayerState_Type.GroundSmash;
         bool isStunned = cachedCurrentState == PlayerState_Type.Stunning;
-        bool isMatchEnd = cachedCurrentState == PlayerState_Type.Dead || cachedCurrentState == PlayerState_Type.Win;
+        bool isMatchEnd = cachedCurrentState == PlayerState_Type.Dead || cachedCurrentState == PlayerState_Type.Defeat || cachedCurrentState == PlayerState_Type.Win;
 
         bool isAttacking = cachedCurrentState == PlayerState_Type.Attacking;
         bool isCancelable = true;
@@ -251,6 +257,7 @@ public class PlayerStateMachine : ISnapshotSync
     }
 
     public PlayerState_Type GetCurrentState() => cachedCurrentState;
+    public PlayerState_Type GetPreviousStateType() => previousStateType;
     public int GetStateFrameCounter() => stateFrameCounter;
     public ActionDataSO GetCurrentActionData() => currentActionData;
     public void ClearCurrentAction() => currentActionData = null;

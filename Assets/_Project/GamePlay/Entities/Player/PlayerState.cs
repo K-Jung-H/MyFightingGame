@@ -28,7 +28,9 @@ public enum PlayerState_Type
     WakeUp = 1 << 16,
 
     Dead = 1 << 17, 
+    
     Win = 1 << 18,
+    Defeat = 1 << 19,
 }
 
 public enum WakeUp_Type

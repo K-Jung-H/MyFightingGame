@@ -23,6 +23,7 @@ public struct PlayerSnapshot
     public bool isRootMotionActiveThisFrame;
 
     public PlayerState_Type cachedCurrentState;
+    public PlayerState_Type previousStateType;
     public int stateFrameCounter;
     public int currentActionID;
     public bool isCommandActionTriggered;

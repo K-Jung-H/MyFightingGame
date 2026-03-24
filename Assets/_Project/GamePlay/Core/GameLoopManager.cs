@@ -26,6 +26,8 @@ public struct GameStateSnapshot
     public FPVector3 sharedDepthAxis;
     public int currentTimerFrames;
     public bool isTimerPaused;
+    public bool isRoundOver;
+    public int postMatchDelayTicks;
 }
 
 public class GameLoopManager : MonoBehaviour
@@ -47,6 +49,7 @@ public class GameLoopManager : MonoBehaviour
     
     [SerializeField] private int maxRollbackFrames = 7;
     [SerializeField] private int inputDelayFrames = 2;
+    [SerializeField] private float postMatchDelaySeconds = 3.0f;
 
     private const int ROLLBACK_WINDOW = 60;
     private const int SYNC_VERIFY_INTERVAL = 60;
@@ -69,6 +72,7 @@ public class GameLoopManager : MonoBehaviour
     private Dictionary<int, ulong> localHashBuffer;
     private int lastHashedTick;
     private bool isDesyncDetected;
+    private int postMatchDelayTicks;
 
     public bool GetIsStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
     public bool GetIsDesyncDetected() => isDesyncDetected;
@@ -162,6 +166,8 @@ public class GameLoopManager : MonoBehaviour
         lastHashedTick = -1;
         latestConfirmedTick = 0;
 
+        postMatchDelayTicks = Mathf.RoundToInt(postMatchDelaySeconds * 60f);
+
         stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
         p1InputBuffer = new InputFlags[ROLLBACK_WINDOW];
         p2InputBuffer = new InputFlags[ROLLBACK_WINDOW];
@@ -185,8 +191,6 @@ public class GameLoopManager : MonoBehaviour
         {
             playerOne.controller.SetTarget(playerTwo.controller);
             playerTwo.controller.SetTarget(playerOne.controller);
-            playerOne.controller.GetCombat().OnDefeated += HandlePlayerDefeated;
-            playerTwo.controller.GetCombat().OnDefeated += HandlePlayerDefeated;
 
             if (p1HealthBar != null) p1HealthBar.Initialize(playerOne.controller.GetCombat(), false);
             if (p2HealthBar != null) p2HealthBar.Initialize(playerTwo.controller.GetCombat(), true);
@@ -343,12 +347,110 @@ public class GameLoopManager : MonoBehaviour
 
     private void RunTick(PlayerInput p1, PlayerInput p2)
     {
-        if (isRoundOver) { p1.flags = InputFlags.None; p2.flags = InputFlags.None; }
+        bool isDelayFinished = isRoundOver && postMatchDelayTicks <= 0;
+        if (isDelayFinished) 
+        { 
+            p1.flags = InputFlags.None; 
+            p2.flags = InputFlags.None; 
+        }
         
-        roundTimer.UpdateTick();
+        if (!isRoundOver)
+        {
+            roundTimer.UpdateTick();
+        }
         
         simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref sharedDepthAxis, HandleHitSpark);
+
+        UpdateMatchState();
+
         if (!isResimulating) SyncVisuals();
+    }
+
+    private void UpdateMatchState()
+    {
+        if (isRoundOver)
+        {
+            ProcessPostMatchDelay();
+            return;
+        }
+
+        CheckRoundEndCondition();
+    }
+
+    private void CheckRoundEndCondition()
+    {
+        int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
+        int p2Hp = playerTwo.controller.GetCombat().GetCurrentHealth();
+        int timeFrames = roundTimer.GetCurrentFrames();
+
+        if (p1Hp > 0 && p2Hp > 0 && timeFrames > 0)
+        {
+            return;
+        }
+
+        isRoundOver = true;
+    }
+
+
+    private void ProcessPostMatchDelay()
+    {
+        if (postMatchDelayTicks > 0)
+        {
+            postMatchDelayTicks--;
+            
+            if (postMatchDelayTicks == 0)
+            {
+                ApplyFinalMatchResult();
+                
+                if (!isResimulating)
+                {
+                    ShowSceneTransitionUI();
+                }
+            }
+        }
+    }
+
+    private void ApplyFinalMatchResult()
+    {
+        int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
+        int p2Hp = playerTwo.controller.GetCombat().GetCurrentHealth();
+        int timeFrames = roundTimer.GetCurrentFrames();
+
+        if (p1Hp <= 0 && p2Hp <= 0)
+        {
+            SetDrawState();
+        }
+        else if (p1Hp <= 0)
+        {
+            SetWinLossState(playerTwo, playerOne);
+        }
+        else if (p2Hp <= 0)
+        {
+            SetWinLossState(playerOne, playerTwo);
+        }
+        else if (timeFrames <= 0)
+        {
+            if (p1Hp > p2Hp) SetWinLossState(playerOne, playerTwo);
+            else if (p2Hp > p1Hp) SetWinLossState(playerTwo, playerOne);
+            else SetDrawState();
+        }
+    }
+
+    private void SetWinLossState(PlayerSessionContext winner, PlayerSessionContext loser)
+    {
+        winner.controller.GetStateMachine().TransitionTo(PlayerState_Type.Win, true);
+        loser.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true); 
+    }
+
+    private void SetDrawState()
+    {
+        playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
+        playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
+    }
+
+    private void ShowSceneTransitionUI()
+    {
+        Debug.Log("Show Scene Transition UI");
     }
 
     private void SaveGameState(int tick)
@@ -356,6 +458,8 @@ public class GameLoopManager : MonoBehaviour
         int idx = tick % ROLLBACK_WINDOW;
         stateBuffer[idx].tick = tick;
         stateBuffer[idx].sharedDepthAxis = sharedDepthAxis;
+        stateBuffer[idx].isRoundOver = isRoundOver;
+        stateBuffer[idx].postMatchDelayTicks = postMatchDelayTicks;
         
         roundTimer.ExportState(ref stateBuffer[idx]);
         
@@ -367,6 +471,8 @@ public class GameLoopManager : MonoBehaviour
     {
         int idx = tick % ROLLBACK_WINDOW;
         sharedDepthAxis = stateBuffer[idx].sharedDepthAxis;
+        isRoundOver = stateBuffer[idx].isRoundOver;
+        postMatchDelayTicks = stateBuffer[idx].postMatchDelayTicks;
         
         roundTimer.ImportState(stateBuffer[idx]);
         
@@ -396,14 +502,6 @@ public class GameLoopManager : MonoBehaviour
         context.controller.Initialize(spawnPos, context.characterData);
         context.controller.GetPhysics().SetGlobalGravity(globalGravity);
         if (context.renderer != null) context.renderer.InitializeRenderer(context.controller, context.characterData.animationMap.stateMap, context.characterData.effectTable);
-    }
-
-    private void HandlePlayerDefeated(PlayerController defeated)
-    {
-        if (isRoundOver) return;
-        isRoundOver = true;
-        PlayerSessionContext winner = (defeated == playerOne.controller) ? playerTwo : playerOne;
-        winner.controller.GetStateMachine().TransitionTo(PlayerState_Type.Win, true);
     }
 
     private void SyncVisuals()

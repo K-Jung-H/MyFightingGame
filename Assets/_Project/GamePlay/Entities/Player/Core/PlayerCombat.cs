@@ -12,7 +12,6 @@ public class PlayerCombat
     private int currentHealth;
 
     public event System.Action<int, int> OnHealthChanged;
-    public event System.Action<PlayerController> OnDefeated;
 
     public PlayerCombat(PlayerConfigSO playerconfig)
     {
@@ -46,7 +45,12 @@ public class PlayerCombat
 
     public void ImportState(PlayerSnapshot snapshot)
     {
-        this.currentHealth = snapshot.currentHealth;
+        if (this.currentHealth != snapshot.currentHealth)
+        {
+            this.currentHealth = snapshot.currentHealth;
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        }
+
         this.hitstopCounter = snapshot.hitstopCounter;
         this.currentHurtInfo = snapshot.currentHurtInfo;
 
@@ -102,7 +106,7 @@ public class PlayerCombat
         registeredHitGroupIds.Add(hitGroupID);
     }
 
-public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController attacker, PlayerController defender)
+    public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController attacker, PlayerController defender)
     {
         PlayerState_Type currentState = defender.GetStateMachine().GetCurrentState();
         bool isMoving = currentState != PlayerState_Type.Idle && currentState != PlayerState_Type.Crouching;
@@ -135,14 +139,6 @@ public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerControlle
         {
             currentHealth = Mathf.Max(0, currentHealth - damage);
             OnHealthChanged?.Invoke(currentHealth, maxHealth);
-        }
-
-        bool isDead = currentHealth <= 0;
-        if (isDead)
-        {
-            OnDefeated?.Invoke(defender);
-            stateMachine.TransitionTo(PlayerState_Type.Dead, true);
-            return;
         }
 
         PlayerPhysics physics = defender.GetPhysics();

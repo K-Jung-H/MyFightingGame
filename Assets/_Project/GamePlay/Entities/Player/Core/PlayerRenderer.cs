@@ -119,8 +119,10 @@ public class PlayerRenderer : MonoBehaviour
                             currentState == PlayerState_Type.LayingDown ||
                             currentState == PlayerState_Type.WakeUp;
 
-        bool isEndState = currentState == PlayerState_Type.Dead || currentState == PlayerState_Type.Win;
-
+        bool isEndState = currentState == PlayerState_Type.Dead || 
+                          currentState == PlayerState_Type.Win || 
+                          currentState == PlayerState_Type.Defeat;
+                          
         if (currentState == PlayerState_Type.Attacking)
         {
             if (isStateChanged || isActionChanged)
@@ -175,6 +177,7 @@ public class PlayerRenderer : MonoBehaviour
                                   currentState == PlayerState_Type.CrouchHit ||
                                   currentState == PlayerState_Type.StandBlock ||
                                   currentState == PlayerState_Type.CrouchBlock;
+        bool isDeadState = currentState == PlayerState_Type.Dead;
 
         if (isStateMapValid)
         {
@@ -194,6 +197,11 @@ public class PlayerRenderer : MonoBehaviour
             {
                 HurtInfo hurtInfo = controller.GetCombat().GetCurrentHurtInfo();
                 targetClip = stateAnimMap.GetHurtAnimationClip(currentState, hurtInfo.attackHeight);
+            }
+            else if (isDeadState)
+            {
+                PlayerState_Type prevState = controller.GetStateMachine().GetPreviousStateType();
+                targetClip = stateAnimMap.GetDeadAnimationClip(prevState);
             }
             else
             {

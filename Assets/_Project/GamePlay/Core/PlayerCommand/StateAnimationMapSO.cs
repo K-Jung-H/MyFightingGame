@@ -31,7 +31,11 @@ public class StateAnimationMapSO : ScriptableObject
     public AnimationClip wakeUpAttack;
 
     [Header("Match End States")]
-    public AnimationClip dead;
+    public AnimationClip deadDefault;
+    public AnimationClip deadAirHit;
+    public AnimationClip deadStandHit;
+    public AnimationClip deadCrouchHit;
+    public AnimationClip defeat;
     public AnimationClip win;
 
     public AnimationClip GetHurtAnimationClip(PlayerState_Type state, Attack_Height attackHeight)
@@ -39,11 +43,11 @@ public class StateAnimationMapSO : ScriptableObject
         switch (state)
         {
             case PlayerState_Type.StandHit:
+                if (attackHeight == Attack_Height.High) return standHitHigh;
                 if (attackHeight == Attack_Height.Low) return standHitLow;
-                if (attackHeight == Attack_Height.Mid) return standHitMid;
-                return standHitHigh;
+                return standHitMid;
             case PlayerState_Type.StandBlock:
-                return (attackHeight == Attack_Height.Mid) ? standBlockMid : standBlockHigh;
+                return attackHeight == Attack_Height.Mid ? standBlockMid : standBlockHigh;
             case PlayerState_Type.CrouchHit:
                 return crouchHit;
             case PlayerState_Type.CrouchBlock:
@@ -60,7 +64,8 @@ public class StateAnimationMapSO : ScriptableObject
             case PlayerState_Type.Stunning: return stunning;
             case PlayerState_Type.GroundSmash: return groundSmash;
             case PlayerState_Type.WakeUp: return wakeUp;
-            case PlayerState_Type.Dead: return dead;
+            case PlayerState_Type.Dead: return deadDefault;
+            case PlayerState_Type.Defeat: return defeat;
             case PlayerState_Type.Win: return win;
         }
         return null;
@@ -83,5 +88,20 @@ public class StateAnimationMapSO : ScriptableObject
             case WakeUp_Type.Attack: return wakeUpAttack;
         }
         return null;
+    }
+
+    public AnimationClip GetDeadAnimationClip(PlayerState_Type previousState)
+    {
+        switch (previousState)
+        {
+            case PlayerState_Type.AirHit:
+                return deadAirHit != null ? deadAirHit : deadDefault;
+            case PlayerState_Type.StandHit:
+                return deadStandHit != null ? deadStandHit : deadDefault;
+            case PlayerState_Type.CrouchHit:
+                return deadCrouchHit != null ? deadCrouchHit : deadDefault;
+            default:
+                return deadDefault;
+        }
     }
 }

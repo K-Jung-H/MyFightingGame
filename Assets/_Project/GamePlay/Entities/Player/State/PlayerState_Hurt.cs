@@ -28,6 +28,13 @@ public abstract class HurtStateBase : PlayerStateBase
 
         if (currentStunFrames <= 0)
         {
+            bool isLethal = combat.GetCurrentHealth() <= 0;
+            if (isLethal)
+            {
+                stateMachine.TransitionTo(PlayerState_Type.Dead, true);
+                return;
+            }
+
             stateMachine.TransitionTo(GetRecoveryState(), true);
         }
     }
@@ -109,7 +116,15 @@ public class AirHitState : HurtStateBase
 
         if (isFallingAndGrounded)
         {
-            stateMachine.TransitionTo(PlayerState_Type.GroundSmash);
+            bool isLethal = combat.GetCurrentHealth() <= 0;
+            if (isLethal)
+            {
+                stateMachine.TransitionTo(PlayerState_Type.Dead, true);
+            }
+            else
+            {
+                stateMachine.TransitionTo(PlayerState_Type.GroundSmash);
+            }
         }
     }
 
@@ -157,7 +172,13 @@ public class GroundSmashState : HurtStateBase
         }
     }
 
-    protected override PlayerState_Type GetRecoveryState() => isBouncing ? PlayerState_Type.AirHit : PlayerState_Type.LayingDown;
+    protected override PlayerState_Type GetRecoveryState() 
+    {
+        if (isBouncing) return PlayerState_Type.AirHit;
+        
+        bool isLethal = combat.GetCurrentHealth() <= 0;
+        return isLethal ? PlayerState_Type.Dead : PlayerState_Type.LayingDown;
+    }
 }
 
 public class LayingDownState : HurtStateBase
@@ -186,6 +207,13 @@ public class LayingDownState : HurtStateBase
     public override void UpdateTick(PlayerInput input)
     {
         if (combat.ProcessHitstopTick()) return;
+
+        bool isLethal = combat.GetCurrentHealth() <= 0;
+        if (isLethal)
+        {
+            stateMachine.TransitionTo(PlayerState_Type.Dead, true);
+            return;
+        }
 
         bool isDirectionalInputDetected = (input.flags & (InputFlags.Forward | InputFlags.Back | InputFlags.Up | InputFlags.Down)) != 0;
 
@@ -263,6 +291,13 @@ public class WakeUpState : HurtStateBase
 
         if (currentStunFrames <= 0)
         {
+            bool isLethal = combat.GetCurrentHealth() <= 0;
+            if (isLethal)
+            {
+                stateMachine.TransitionTo(PlayerState_Type.Dead, true);
+                return;
+            }
+
             bool isGroundRoll = scheduledWakeUpType == WakeUp_Type.RollLeft || scheduledWakeUpType == WakeUp_Type.RollRight;
 
             if (isGroundRoll)
