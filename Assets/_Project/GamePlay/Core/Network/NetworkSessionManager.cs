@@ -13,6 +13,10 @@ public static class NetworkPacketType
     public const byte SceneChange = 12;
     public const byte Handshake = 13;
     public const byte GameStart = 14;
+
+    public const byte CountdownUpdate = 15;
+    public const byte StartButtonActive = 16;
+    public const byte StartRequest = 17;
 }
 
 public class NetworkBufferContext
@@ -50,6 +54,9 @@ public class NetworkSessionManager : MonoBehaviour
     private NetworkBufferContext bufferContext;
 
     public event Action<int, bool, int, bool> OnSelectBroadcastReceived;
+    public event Action<bool> OnCountdownUpdateReceived;
+    public event Action OnStartButtonActiveReceived;
+
     public event Action OnConnectionEstablished;
     public event Action OnSceneChangeReceived;
     public event Action OnGameStartReceived;
@@ -294,6 +301,15 @@ public class NetworkSessionManager : MonoBehaviour
             OnPeerAddressReceived?.Invoke(peerIp.ToString());
             OnGameStartReceived?.Invoke();
         }
+        else if (packetType == NetworkPacketType.CountdownUpdate)
+        {
+            bool isStarted = stream.ReadByte() == 1;
+            OnCountdownUpdateReceived?.Invoke(isStarted);
+        }
+        else if (packetType == NetworkPacketType.StartButtonActive)
+        {
+            OnStartButtonActiveReceived?.Invoke();
+        }
     }
 
     private void HandlePeerData(byte packetType, ref DataStreamReader stream)
@@ -317,6 +333,17 @@ public class NetworkSessionManager : MonoBehaviour
             int tick = stream.ReadInt();
             ulong hash = stream.ReadULong();
             bufferContext.remoteHashBuffer[tick] = hash;
+        }
+    }
+
+    public void SendStartRequest()
+    {
+        if (!serverConnection.IsCreated) return;
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.StartRequest);
+            driver.EndSend(writer);
         }
     }
 }

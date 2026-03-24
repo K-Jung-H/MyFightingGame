@@ -1,3 +1,5 @@
+using System;
+
 public class RoomStateModel
 {
     public int p1CharacterIndex;
@@ -19,11 +21,24 @@ public interface IMatchSession
     void UpdateCharacterSelect(int playerId, int characterIndex, bool isLocked);
     void UpdateStageSelect(int stageIndex, bool isLocked);
     void SyncRemoteState(RoomStateModel remoteState);
+    void SendStartRequest(int playerId);
+    void UpdateSession(float deltaTime);
+
+    event Action<bool> OnCountdownUpdate;
+    event Action OnStartButtonActive;
+    event Action OnSceneChange;
 }
 
 public class OfflineMatchSession : IMatchSession
 {
     private RoomStateModel roomState;
+    private bool isCountdownActive;
+    private float countdownTimer;
+    private bool isStartButtonReady;
+
+    public event Action<bool> OnCountdownUpdate;
+    public event Action OnStartButtonActive;
+    public event Action OnSceneChange;
 
     public OfflineMatchSession()
     {
@@ -56,7 +71,6 @@ public class OfflineMatchSession : IMatchSession
     {
         roomState.selectedStageIndex = stageIndex;
         roomState.isStageLocked = isLocked;
-
         EvaluateRoomState();
     }
 
@@ -64,11 +78,43 @@ public class OfflineMatchSession : IMatchSession
     {
     }
 
+    public void SendStartRequest(int playerId)
+    {
+        if (!isStartButtonReady) return;
+
+        OnSceneChange?.Invoke();
+    }
+
+    public void UpdateSession(float deltaTime)
+    {
+        if (isCountdownActive)
+        {
+            countdownTimer -= deltaTime;
+            if (countdownTimer <= 0f)
+            {
+                isCountdownActive = false;
+                isStartButtonReady = true;
+                OnStartButtonActive?.Invoke();
+            }
+        }
+    }
+
     private void EvaluateRoomState()
     {
         if (roomState.IsAllReadyToStart())
         {
-            GameFlowManager.Instance.OnReceiveSceneChangeCommand("MainScene");
+            if (!isCountdownActive && !isStartButtonReady)
+            {
+                isCountdownActive = true;
+                countdownTimer = 3f;
+                OnCountdownUpdate?.Invoke(true);
+            }
+        }
+        else
+        {
+            isCountdownActive = false;
+            isStartButtonReady = false;
+            OnCountdownUpdate?.Invoke(false);
         }
     }
 }
@@ -77,9 +123,20 @@ public class OnlineClientSession : IMatchSession
 {
     private RoomStateModel roomState;
 
+    public event Action<bool> OnCountdownUpdate;
+    public event Action OnStartButtonActive;
+    public event Action OnSceneChange;
+
     public OnlineClientSession()
     {
         roomState = new RoomStateModel();
+
+        if (NetworkSessionManager.Instance != null)
+        {
+            NetworkSessionManager.Instance.OnCountdownUpdateReceived += HandleNetworkCountdown;
+            NetworkSessionManager.Instance.OnStartButtonActiveReceived += HandleNetworkStartActive;
+            NetworkSessionManager.Instance.OnSceneChangeReceived += HandleNetworkSceneChange;
+        }
     }
 
     public RoomStateModel GetRoomState()
@@ -99,5 +156,29 @@ public class OnlineClientSession : IMatchSession
     public void SyncRemoteState(RoomStateModel remoteState)
     {
         roomState = remoteState;
+    }
+
+    public void SendStartRequest(int playerId)
+    {
+        NetworkSessionManager.Instance.SendStartRequest();
+    }
+
+    public void UpdateSession(float deltaTime)
+    {
+    }
+
+    private void HandleNetworkCountdown(bool isStarted)
+    {
+        OnCountdownUpdate?.Invoke(isStarted);
+    }
+
+    private void HandleNetworkStartActive()
+    {
+        OnStartButtonActive?.Invoke();
+    }
+
+    private void HandleNetworkSceneChange()
+    {
+        OnSceneChange?.Invoke();
     }
 }

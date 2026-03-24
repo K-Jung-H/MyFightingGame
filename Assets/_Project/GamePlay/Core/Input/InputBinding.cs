@@ -33,14 +33,14 @@ public class InputBinding
     {
         return new InputBinding
         {
-            upKey = Key.UpArrow,
-            downKey = Key.DownArrow,
-            leftKey = Key.LeftArrow,
-            rightKey = Key.RightArrow,
-            lpKey = Key.U,
-            rpKey = Key.I,
-            lkKey = Key.J,
-            rkKey = Key.K,
+            upKey = Key.W,
+            downKey = Key.S,
+            leftKey = Key.A,
+            rightKey = Key.D,
+            lpKey = Key.T,
+            rpKey = Key.Y,
+            lkKey = Key.G,
+            rkKey = Key.H,
             pauseKey = Key.Escape,
             selectKey = Key.Space
         };
@@ -50,14 +50,14 @@ public class InputBinding
     {
         return new InputBinding
         {
-            upKey = Key.W,
-            downKey = Key.S,
-            leftKey = Key.A,
-            rightKey = Key.D,
-            lpKey = Key.T,
-            rpKey = Key.Y,
-            lkKey = Key.G,
-            rkKey = Key.H,
+            upKey = Key.UpArrow,
+            downKey = Key.DownArrow,
+            leftKey = Key.LeftArrow,
+            rightKey = Key.RightArrow,
+            lpKey = Key.I,
+            rpKey = Key.O,
+            lkKey = Key.K,
+            rkKey = Key.L,
             pauseKey = Key.Escape,
             selectKey = Key.Space
         };

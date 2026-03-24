@@ -10,6 +10,11 @@ public class ServerRoom
     public RoomStateModel stateModel;
     public bool isP1Ready;
     public bool isP2Ready;
+    public bool isCountdownStarted;
+    public bool isCountdownFinished;
+    public float countdownTimer;
+    public bool isP1StartRequested;
+    public bool isP2StartRequested;
 
     public ServerRoom(NetworkConnection p1Conn, NetworkConnection p2Conn)
     {
@@ -19,6 +24,11 @@ public class ServerRoom
         stateModel.isStageLocked = true;
         isP1Ready = false;
         isP2Ready = false;
+        isCountdownStarted = false;
+        isCountdownFinished = false;
+        countdownTimer = 3f;
+        isP1StartRequested = false;
+        isP2StartRequested = false;
     }
 }
 
@@ -71,6 +81,8 @@ public class DummyMatchServer : MonoBehaviour
                 }
             }
         }
+
+        UpdateRoomTimers();
     }
 
     public void StartServer()
@@ -102,9 +114,28 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
+    private void UpdateRoomTimers()
+    {
+        foreach (ServerRoom room in activeRooms)
+        {
+            if (room.isCountdownStarted)
+            {
+                room.countdownTimer -= Time.deltaTime;
+                
+                if (room.countdownTimer <= 0f)
+                {
+                    room.isCountdownStarted = false;
+                    room.isCountdownFinished = true;
+                    BroadcastStartButtonActive(room);
+                }
+            }
+        }
+    }
+
     private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
     {
         byte packetType = stream.ReadByte();
+        
         if (packetType == NetworkPacketType.SelectUpdate)
         {
             int playerIdx = stream.ReadInt();
@@ -129,6 +160,34 @@ public class DummyMatchServer : MonoBehaviour
                 BroadcastSelectState(room);
 
                 if (room.stateModel.IsAllReadyToStart())
+                {
+                    if (!room.isCountdownStarted && !room.isCountdownFinished)
+                    {
+                        room.isCountdownStarted = true;
+                        room.countdownTimer = 3f;
+                        BroadcastCountdownState(room, true);
+                    }
+                }
+                else
+                {
+                    room.isCountdownStarted = false;
+                    room.isCountdownFinished = false;
+                    room.countdownTimer = 3f;
+                    room.isP1StartRequested = false;
+                    room.isP2StartRequested = false;
+                    BroadcastCountdownState(room, false);
+                }
+            }
+        }
+        else if (packetType == NetworkPacketType.StartRequest)
+        {
+            ServerRoom room = FindRoomByConnection(conn);
+            if (room != null && room.isCountdownFinished)
+            {
+                if (conn == room.p1) room.isP1StartRequested = true;
+                else if (conn == room.p2) room.isP2StartRequested = true;
+
+                if (room.isP1StartRequested && room.isP2StartRequested)
                 {
                     BroadcastSceneChange(room);
                 }
@@ -193,6 +252,33 @@ public class DummyMatchServer : MonoBehaviour
         writer.WriteByte((byte)(room.stateModel.isP1CharacterLocked ? 1 : 0));
         writer.WriteInt(room.stateModel.p2CharacterIndex);
         writer.WriteByte((byte)(room.stateModel.isP2CharacterLocked ? 1 : 0));
+        driver.EndSend(writer);
+    }
+
+    private void BroadcastCountdownState(ServerRoom room, bool isStarted)
+    {
+        if (room.p1.IsCreated) SendCountdownState(room.p1, isStarted);
+        if (room.p2.IsCreated) SendCountdownState(room.p2, isStarted);
+    }
+
+    private void SendCountdownState(NetworkConnection conn, bool isStarted)
+    {
+        driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        writer.WriteByte(NetworkPacketType.CountdownUpdate);
+        writer.WriteByte((byte)(isStarted ? 1 : 0));
+        driver.EndSend(writer);
+    }
+
+    private void BroadcastStartButtonActive(ServerRoom room)
+    {
+        if (room.p1.IsCreated) SendStartButtonActive(room.p1);
+        if (room.p2.IsCreated) SendStartButtonActive(room.p2);
+    }
+
+    private void SendStartButtonActive(NetworkConnection conn)
+    {
+        driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        writer.WriteByte(NetworkPacketType.StartButtonActive);
         driver.EndSend(writer);
     }
 

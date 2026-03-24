@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -40,12 +41,26 @@ public class CharacterSelectManager : MonoBehaviour
     public PlayerSelectContext p1Context;
     public PlayerSelectContext p2Context;
 
+    [Header("Start Sequence UI")]
+    public TextMeshProUGUI countdownText;
+    public GameObject startButtonObject;
+    public TextMeshProUGUI startButtonText;
+    public Color normalStartColor = Color.white;
+    public Color pressedStartColor = Color.yellow;
+
     private CharacterSelectTile[] gridTiles;
     private int gridColumns;
     private int character3DLayer;
     private bool isMatchStarted;
     private bool isLobbyReady = false;
     private bool isEventsSubscribed = false;
+    private bool isLocalCountdownActive;
+    private float localCountdownTimer;
+    private bool isStartButtonReady;
+    private int lastDisplayedCountdown = -1;
+
+    private Action OnConnectionEstablishedAction;
+    private Action<int, bool, int, bool> OnSelectBroadcastAction;
 
     private void Start()
     {
@@ -77,10 +92,20 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        IMatchSession session = GameFlowManager.Instance?.GetCurrentSession();
+        if (session != null)
+        {
+            session.OnCountdownUpdate -= HandleCountdownUpdate;
+            session.OnStartButtonActive -= HandleStartButtonActive;
+            session.OnSceneChange -= HandleSceneChangeCommand;
+        }
+
         if (NetworkSessionManager.Instance != null)
         {
-            NetworkSessionManager.Instance.OnSelectBroadcastReceived -= HandleNetworkSelectBroadcast;
-            NetworkSessionManager.Instance.OnSceneChangeReceived -= HandleSceneChangeCommand;
+            if (OnConnectionEstablishedAction != null)
+                NetworkSessionManager.Instance.OnConnectionEstablished -= OnConnectionEstablishedAction;
+            if (OnSelectBroadcastAction != null)
+                NetworkSessionManager.Instance.OnSelectBroadcastReceived -= OnSelectBroadcastAction;
         }
     }
 
@@ -104,6 +129,26 @@ public class CharacterSelectManager : MonoBehaviour
             isEventsSubscribed = true;
         }
 
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        if (session != null)
+        {
+            session.UpdateSession(Time.deltaTime);
+        }
+
+        if (isLocalCountdownActive)
+        {
+            localCountdownTimer -= Time.deltaTime;
+            if (countdownText != null)
+            {
+                int currentSeconds = Mathf.CeilToInt(localCountdownTimer);
+                if (currentSeconds != lastDisplayedCountdown)
+                {
+                    lastDisplayedCountdown = currentSeconds;
+                    countdownText.text = currentSeconds.ToString();
+                }
+            }
+        }
+
         if (isMatchStarted || !isLobbyReady) return;
 
         if (currentMode == ConnectionMode.Offline)
@@ -121,6 +166,14 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void SubscribeToFlowEvents(ConnectionMode mode)
     {
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        if (session != null)
+        {
+            session.OnCountdownUpdate += HandleCountdownUpdate;
+            session.OnStartButtonActive += HandleStartButtonActive;
+            session.OnSceneChange += HandleSceneChangeCommand;
+        }
+
         if (mode == ConnectionMode.Offline)
         {
             isLobbyReady = true;
@@ -129,9 +182,11 @@ public class CharacterSelectManager : MonoBehaviour
         {
             if (NetworkSessionManager.Instance != null)
             {
-                NetworkSessionManager.Instance.OnConnectionEstablished += () => isLobbyReady = true;
-                NetworkSessionManager.Instance.OnSelectBroadcastReceived += HandleNetworkSelectBroadcast;
-                NetworkSessionManager.Instance.OnSceneChangeReceived += HandleSceneChangeCommand;
+                OnConnectionEstablishedAction = () => isLobbyReady = true;
+                OnSelectBroadcastAction = HandleNetworkSelectBroadcast;
+
+                NetworkSessionManager.Instance.OnConnectionEstablished += OnConnectionEstablishedAction;
+                NetworkSessionManager.Instance.OnSelectBroadcastReceived += OnSelectBroadcastAction;
             }
         }
     }
@@ -140,9 +195,40 @@ public class CharacterSelectManager : MonoBehaviour
     {
         if (Keyboard.current == null) return;
 
-        if (GetLockInput(context))
+        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
+        bool isOfflineMode = currentMode == ConnectionMode.Offline;
+
+        bool isSelectPressed = GetSelectInput(context);
+        bool isLockInput = isOfflineMode ? GetOfflineLockInput(context) : isSelectPressed;
+        bool isUnlockInput = isOfflineMode ? GetOfflineUnlockInput(context) : isSelectPressed;
+
+        if (isStartButtonReady)
         {
-            context.isLocked = !context.isLocked;
+            if (isSelectPressed)
+            {
+                if (startButtonText != null)
+                {
+                    startButtonText.color = pressedStartColor;
+                }
+                
+                IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+                if (session != null)
+                {
+                    session.SendStartRequest(playerId);
+                }
+            }
+            return;
+        }
+
+        if (!context.isLocked && isLockInput)
+        {
+            context.isLocked = true;
+            UpdateLockUI(context);
+            NotifyStateToManager(playerId, context);
+        }
+        else if (context.isLocked && isUnlockInput)
+        {
+            context.isLocked = false;
             UpdateLockUI(context);
             NotifyStateToManager(playerId, context);
         }
@@ -209,6 +295,45 @@ public class CharacterSelectManager : MonoBehaviour
         else if (playerId == 2) MatchDataManager.P2CharacterData = characterRoster[index].inGameData;
     }
 
+    private void HandleCountdownUpdate(bool isStarted)
+    {
+        isLocalCountdownActive = isStarted;
+        localCountdownTimer = 3f;
+        isStartButtonReady = false;
+        lastDisplayedCountdown = -1;
+
+        if (countdownText != null) 
+        {
+            countdownText.gameObject.SetActive(isStarted);
+        }
+        
+        if (startButtonObject != null)
+        {
+            startButtonObject.SetActive(false);
+        }
+    }
+
+    private void HandleStartButtonActive()
+    {
+        isLocalCountdownActive = false;
+        isStartButtonReady = true;
+
+        if (countdownText != null) 
+        {
+            countdownText.gameObject.SetActive(false);
+        }
+        
+        if (startButtonObject != null)
+        {
+            startButtonObject.SetActive(true);
+        }
+        
+        if (startButtonText != null)
+        {
+            startButtonText.color = normalStartColor;
+        }
+    }
+
     private void HandleSceneChangeCommand()
     {
         if (isMatchStarted) return;
@@ -216,15 +341,30 @@ public class CharacterSelectManager : MonoBehaviour
         GameFlowManager.Instance.OnReceiveSceneChangeCommand("MainScene");
     }
 
-    private bool GetLockInput(PlayerSelectContext context)
+    private bool GetSelectInput(PlayerSelectContext context)
     {
-        return Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
+        if (context.inputBinding.selectKey == Key.None) return false;
+        return Keyboard.current[context.inputBinding.selectKey].wasPressedThisFrame;
+    }
+
+    private bool GetOfflineLockInput(PlayerSelectContext context)
+    {
+        bool lpPressed = context.inputBinding.lpKey != Key.None && Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
+        bool rpPressed = context.inputBinding.rpKey != Key.None && Keyboard.current[context.inputBinding.rpKey].wasPressedThisFrame;
+        return lpPressed || rpPressed;
+    }
+
+    private bool GetOfflineUnlockInput(PlayerSelectContext context)
+    {
+        bool lkPressed = context.inputBinding.lkKey != Key.None && Keyboard.current[context.inputBinding.lkKey].wasPressedThisFrame;
+        bool rkPressed = context.inputBinding.rkKey != Key.None && Keyboard.current[context.inputBinding.rkKey].wasPressedThisFrame;
+        return lkPressed || rkPressed;
     }
 
     private int GetMovementInput(PlayerSelectContext context)
     {
-        if (Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame) return -1;
-        if (Keyboard.current[context.inputBinding.rightKey].wasPressedThisFrame) return 1;
+        if (context.inputBinding.leftKey != Key.None && Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame) return -1;
+        if (context.inputBinding.rightKey != Key.None && Keyboard.current[context.inputBinding.rightKey].wasPressedThisFrame) return 1;
         return 0;
     }
 
@@ -279,7 +419,7 @@ public class CharacterSelectManager : MonoBehaviour
             {
                 anim.runtimeAnimatorController = sharedSelectAnimator;
                 anim.SetBool("IsMirrored", context.isMirrored);
-                context.lastIdleIndex = (maxRandomIdles > 1) ? Random.Range(0, maxRandomIdles) : 0;
+                context.lastIdleIndex = (maxRandomIdles > 1) ? UnityEngine.Random.Range(0, maxRandomIdles) : 0;
                 anim.Play("Selecting_Idle_" + context.lastIdleIndex, 0, 0f);
             }
         }
