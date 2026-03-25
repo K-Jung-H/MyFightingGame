@@ -16,10 +16,10 @@ public class ServerRoom
     public bool isP1StartRequested;
     public bool isP2StartRequested;
 
-    public ServerRoom(NetworkConnection p1Conn, NetworkConnection p2Conn)
+    public ServerRoom()
     {
-        p1 = p1Conn;
-        p2 = p2Conn;
+        p1 = default;
+        p2 = default;
         stateModel = new RoomStateModel();
         stateModel.isStageLocked = true;
         isP1Ready = false;
@@ -30,14 +30,23 @@ public class ServerRoom
         isP1StartRequested = false;
         isP2StartRequested = false;
     }
+
+    public bool IsFull()
+    {
+        return p1.IsCreated && p2.IsCreated;
+    }
+
+    public bool IsEmpty()
+    {
+        return !p1.IsCreated && !p2.IsCreated;
+    }
 }
 
 public class DummyMatchServer : MonoBehaviour
 {
     private NetworkDriver driver;
     private NativeList<NetworkConnection> connections;
-    private List<ServerRoom> activeRooms;
-    private NetworkConnection waitingPlayer;
+    private ServerRoom currentRoom;
 
     private void OnDestroy()
     {
@@ -85,6 +94,26 @@ public class DummyMatchServer : MonoBehaviour
         UpdateRoomTimers();
     }
 
+    private void OnGUI()
+    {
+        if (currentRoom == null) return;
+
+        GUI.Box(new Rect(10, 10, 300, 250), "Server Room Status");
+        
+        GUI.Label(new Rect(20, 40, 280, 20), $"P1 Connected: {currentRoom.p1.IsCreated}");
+        GUI.Label(new Rect(20, 60, 280, 20), $"P2 Connected: {currentRoom.p2.IsCreated}");
+        
+        GUI.Label(new Rect(20, 90, 280, 20), $"P1 Side: {(currentRoom.stateModel.p1PreferredSide == 0 ? "Left" : "Right")}");
+        GUI.Label(new Rect(20, 110, 280, 20), $"P2 Side: {(currentRoom.stateModel.p2PreferredSide == 0 ? "Left" : "Right")}");
+        
+        GUI.Label(new Rect(20, 140, 280, 20), $"P1 Char Index: {currentRoom.stateModel.p1CharacterIndex} (Locked: {currentRoom.stateModel.isP1CharacterLocked})");
+        GUI.Label(new Rect(20, 160, 280, 20), $"P2 Char Index: {currentRoom.stateModel.p2CharacterIndex} (Locked: {currentRoom.stateModel.isP2CharacterLocked})");
+        
+        GUI.Label(new Rect(20, 190, 280, 20), $"Countdown: {(currentRoom.isCountdownStarted ? currentRoom.countdownTimer.ToString("F1") : (currentRoom.isCountdownFinished ? "Finished" : "Wait"))}");
+        
+        GUI.Label(new Rect(20, 220, 280, 20), $"P1 Start: {currentRoom.isP1StartRequested} / P2 Start: {currentRoom.isP2StartRequested}");
+    }
+
     public void StartServer()
     {
         driver = NetworkDriver.Create();
@@ -94,40 +123,41 @@ public class DummyMatchServer : MonoBehaviour
         
         driver.Listen();
         connections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
-        activeRooms = new List<ServerRoom>();
-        waitingPlayer = default;
+        currentRoom = new ServerRoom();
     }
 
     private void HandleNewConnection(NetworkConnection conn)
     {
-        if (waitingPlayer == default)
+        if (!currentRoom.p1.IsCreated)
         {
-            waitingPlayer = conn;
+            currentRoom.p1 = conn;
+            SendSlotId(conn, 0);
+        }
+        else if (!currentRoom.p2.IsCreated)
+        {
+            currentRoom.p2 = conn;
+            SendSlotId(conn, 1);
         }
         else
         {
-            ServerRoom newRoom = new ServerRoom(waitingPlayer, conn);
-            activeRooms.Add(newRoom);
-            waitingPlayer = default;
-
-            BroadcastSelectState(newRoom);
+            driver.Disconnect(conn);
+            return;
         }
+
+        BroadcastSelectState(currentRoom);
     }
 
     private void UpdateRoomTimers()
     {
-        foreach (ServerRoom room in activeRooms)
+        if (currentRoom != null && currentRoom.isCountdownStarted)
         {
-            if (room.isCountdownStarted)
+            currentRoom.countdownTimer -= Time.deltaTime;
+            
+            if (currentRoom.countdownTimer <= 0f)
             {
-                room.countdownTimer -= Time.deltaTime;
-                
-                if (room.countdownTimer <= 0f)
-                {
-                    room.isCountdownStarted = false;
-                    room.isCountdownFinished = true;
-                    BroadcastStartButtonActive(room);
-                }
+                currentRoom.isCountdownStarted = false;
+                currentRoom.isCountdownFinished = true;
+                BroadcastStartButtonActive(currentRoom);
             }
         }
     }
@@ -143,53 +173,62 @@ public class DummyMatchServer : MonoBehaviour
             byte isLockedByte = stream.ReadByte();
             bool isLocked = isLockedByte == 1;
 
-            ServerRoom room = FindRoomByConnection(conn);
-            if (room != null)
+            if (currentRoom != null)
             {
-                if (conn == room.p1) 
+                if (conn == currentRoom.p1) 
                 {
-                    room.stateModel.p1CharacterIndex = charIdx;
-                    room.stateModel.isP1CharacterLocked = isLocked;
+                    currentRoom.stateModel.p1CharacterIndex = charIdx;
+                    currentRoom.stateModel.isP1CharacterLocked = isLocked;
                 }
-                else if (conn == room.p2) 
+                else if (conn == currentRoom.p2) 
                 {
-                    room.stateModel.p2CharacterIndex = charIdx;
-                    room.stateModel.isP2CharacterLocked = isLocked;
+                    currentRoom.stateModel.p2CharacterIndex = charIdx;
+                    currentRoom.stateModel.isP2CharacterLocked = isLocked;
                 }
 
-                BroadcastSelectState(room);
+                BroadcastSelectState(currentRoom);
 
-                if (room.stateModel.IsAllReadyToStart())
+                if (currentRoom.stateModel.IsAllReadyToStart())
                 {
-                    if (!room.isCountdownStarted && !room.isCountdownFinished)
+                    if (!currentRoom.isCountdownStarted && !currentRoom.isCountdownFinished)
                     {
-                        room.isCountdownStarted = true;
-                        room.countdownTimer = 3f;
-                        BroadcastCountdownState(room, true);
+                        currentRoom.isCountdownStarted = true;
+                        currentRoom.countdownTimer = 3f;
+                        BroadcastCountdownState(currentRoom, true);
                     }
                 }
                 else
                 {
-                    room.isCountdownStarted = false;
-                    room.isCountdownFinished = false;
-                    room.countdownTimer = 3f;
-                    room.isP1StartRequested = false;
-                    room.isP2StartRequested = false;
-                    BroadcastCountdownState(room, false);
+                    currentRoom.isCountdownStarted = false;
+                    currentRoom.isCountdownFinished = false;
+                    currentRoom.countdownTimer = 3f;
+                    currentRoom.isP1StartRequested = false;
+                    currentRoom.isP2StartRequested = false;
+                    BroadcastCountdownState(currentRoom, false);
                 }
+            }
+        }
+        else if (packetType == NetworkPacketType.SideUpdate)
+        {
+            int side = stream.ReadInt();
+            if (currentRoom != null)
+            {
+                if (conn == currentRoom.p1) currentRoom.stateModel.p1PreferredSide = side;
+                else if (conn == currentRoom.p2) currentRoom.stateModel.p2PreferredSide = side;
+                
+                BroadcastSelectState(currentRoom);
             }
         }
         else if (packetType == NetworkPacketType.StartRequest)
         {
-            ServerRoom room = FindRoomByConnection(conn);
-            if (room != null && room.isCountdownFinished)
+            if (currentRoom != null && currentRoom.isCountdownFinished)
             {
-                if (conn == room.p1) room.isP1StartRequested = true;
-                else if (conn == room.p2) room.isP2StartRequested = true;
+                if (conn == currentRoom.p1) currentRoom.isP1StartRequested = true;
+                else if (conn == currentRoom.p2) currentRoom.isP2StartRequested = true;
 
-                if (room.isP1StartRequested && room.isP2StartRequested)
+                if (currentRoom.isP1StartRequested && currentRoom.isP2StartRequested)
                 {
-                    BroadcastSceneChange(room);
+                    BroadcastSceneChange(currentRoom);
                 }
             }
         }
@@ -201,41 +240,58 @@ public class DummyMatchServer : MonoBehaviour
 
     private void ProcessHandshake(NetworkConnection conn)
     {
-        ServerRoom room = FindRoomByConnection(conn);
-        if (room != null)
+        if (currentRoom != null)
         {
-            if (conn == room.p1) room.isP1Ready = true;
-            else if (conn == room.p2) room.isP2Ready = true;
+            if (conn == currentRoom.p1) currentRoom.isP1Ready = true;
+            else if (conn == currentRoom.p2) currentRoom.isP2Ready = true;
 
-            if (room.isP1Ready && room.isP2Ready)
+            if (currentRoom.isP1Ready && currentRoom.isP2Ready)
             {
-                BroadcastGameStart(room);
+                BroadcastGameStart(currentRoom);
             }
         }
     }
 
     private void HandleDisconnect(NetworkConnection conn)
     {
-        if (waitingPlayer == conn)
+        if (currentRoom == null) return;
+
+        bool isMatched = false;
+
+        if (conn == currentRoom.p1)
         {
-            waitingPlayer = default;
-            return;
+            currentRoom.p1 = default;
+            currentRoom.stateModel.isP1CharacterLocked = false;
+            currentRoom.isP1Ready = false;
+            currentRoom.isP1StartRequested = false;
+            isMatched = true;
         }
-        
-        ServerRoom room = FindRoomByConnection(conn);
-        if (room != null)
+        else if (conn == currentRoom.p2)
         {
-            activeRooms.Remove(room);
+            currentRoom.p2 = default;
+            currentRoom.stateModel.isP2CharacterLocked = false;
+            currentRoom.isP2Ready = false;
+            currentRoom.isP2StartRequested = false;
+            isMatched = true;
+        }
+
+        if (isMatched)
+        {
+            currentRoom.isCountdownStarted = false;
+            currentRoom.isCountdownFinished = false;
+            currentRoom.countdownTimer = 3f;
+            
+            BroadcastCountdownState(currentRoom, false);
+            BroadcastSelectState(currentRoom);
         }
     }
 
-    private ServerRoom FindRoomByConnection(NetworkConnection conn)
+    private void SendSlotId(NetworkConnection conn, int slotId)
     {
-        foreach (var room in activeRooms)
-        {
-            if (room.p1 == conn || room.p2 == conn) return room;
-        }
-        return null;
+        driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        writer.WriteByte(NetworkPacketType.AssignSlot);
+        writer.WriteInt(slotId);
+        driver.EndSend(writer);
     }
 
     private void BroadcastSelectState(ServerRoom room)
@@ -250,8 +306,10 @@ public class DummyMatchServer : MonoBehaviour
         writer.WriteByte(NetworkPacketType.SelectBroadcast);
         writer.WriteInt(room.stateModel.p1CharacterIndex);
         writer.WriteByte((byte)(room.stateModel.isP1CharacterLocked ? 1 : 0));
+        writer.WriteInt(room.stateModel.p1PreferredSide);
         writer.WriteInt(room.stateModel.p2CharacterIndex);
         writer.WriteByte((byte)(room.stateModel.isP2CharacterLocked ? 1 : 0));
+        writer.WriteInt(room.stateModel.p2PreferredSide);
         driver.EndSend(writer);
     }
 

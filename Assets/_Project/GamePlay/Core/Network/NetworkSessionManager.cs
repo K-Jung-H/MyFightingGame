@@ -17,6 +17,8 @@ public static class NetworkPacketType
     public const byte CountdownUpdate = 15;
     public const byte StartButtonActive = 16;
     public const byte StartRequest = 17;
+    public const byte AssignSlot = 18;
+    public const byte SideUpdate = 19;
 }
 
 public class NetworkBufferContext
@@ -44,16 +46,18 @@ public class NetworkSessionManager : MonoBehaviour
 {
     public static NetworkSessionManager Instance { get; private set; }
 
-    private NetworkDriver driver;
+    private NetworkDriver serverDriver;
+    private NetworkDriver p2pDriver;
     private NetworkConnection serverConnection;
     private NetworkConnection peerConnection;
+    
     private bool isInitialized;
     private bool isConnected;
     private bool isHostingPeer;
     private const int REDUNDANCY_COUNT = 15;
     private NetworkBufferContext bufferContext;
 
-    public event Action<int, bool, int, bool> OnSelectBroadcastReceived;
+    public event Action<int, bool, int, int, bool, int> OnSelectBroadcastReceived;
     public event Action<bool> OnCountdownUpdateReceived;
     public event Action OnStartButtonActiveReceived;
 
@@ -61,6 +65,7 @@ public class NetworkSessionManager : MonoBehaviour
     public event Action OnSceneChangeReceived;
     public event Action OnGameStartReceived;
     public event Action<string> OnPeerAddressReceived;
+    public event Action<int> OnSlotAssignedReceived;
 
     public bool GetIsConnected() => isConnected;
 
@@ -83,59 +88,80 @@ public class NetworkSessionManager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        if (isInitialized && driver.IsCreated)
-        {
-            if (serverConnection.IsCreated) driver.Disconnect(serverConnection);
-            if (peerConnection.IsCreated) driver.Disconnect(peerConnection);
-            driver.ScheduleUpdate().Complete();
-        }
+        CleanupDrivers();
     }
 
     private void OnDestroy()
     {
-        if (driver.IsCreated)
+        CleanupDrivers();
+    }
+
+    private void CleanupDrivers()
+    {
+        if (serverDriver.IsCreated)
         {
-            driver.Dispose();
+            if (serverConnection.IsCreated) serverDriver.Disconnect(serverConnection);
+            serverDriver.ScheduleUpdate().Complete();
+            serverDriver.Dispose();
+        }
+
+        if (p2pDriver.IsCreated)
+        {
+            if (peerConnection.IsCreated) p2pDriver.Disconnect(peerConnection);
+            p2pDriver.ScheduleUpdate().Complete();
+            p2pDriver.Dispose();
         }
     }
 
-    public void InitializeNetwork(string serverIp, bool isHost)
+    public void InitializeNetwork(string serverIp)
     {
         if (isInitialized) return;
 
-        driver = NetworkDriver.Create();
-        
-        if (isHost)
-        {
-            NetworkEndpoint p2pEndpoint = NetworkEndpoint.AnyIpv4.WithPort(9001);
-            driver.Bind(p2pEndpoint);
-            driver.Listen();
-            isHostingPeer = true;
-        }
-
-        NetworkEndpoint endpoint = NetworkEndpoint.Parse(serverIp, 9000);
-        serverConnection = driver.Connect(endpoint);
+        serverDriver = NetworkDriver.Create();
+        NetworkEndpoint endpoint = NetworkEndpoint.Parse(serverIp, (ushort)9000);
+        serverConnection = serverDriver.Connect(endpoint);
         
         isInitialized = true;
+    }
+
+    public void StartP2PListen(ushort port = 9001)
+    {
+        if (isHostingPeer) return;
+        
+        p2pDriver = NetworkDriver.Create();
+        NetworkEndpoint p2pEndpoint = NetworkEndpoint.AnyIpv4.WithPort(port);
+        p2pDriver.Bind(p2pEndpoint);
+        p2pDriver.Listen();
+        isHostingPeer = true;
     }
 
     public void ConnectToPeer(string peerIp)
     {
         if (isHostingPeer) return;
-        NetworkEndpoint endpoint = NetworkEndpoint.Parse(peerIp, 9001);
-        peerConnection = driver.Connect(endpoint);
+        
+        p2pDriver = NetworkDriver.Create();
+        NetworkEndpoint endpoint = NetworkEndpoint.Parse(peerIp, (ushort)9001);
+        peerConnection = p2pDriver.Connect(endpoint);
     }
 
     public void UpdateNetwork()
     {
         if (!isInitialized) return;
 
-        driver.ScheduleUpdate().Complete();
+        if (serverDriver.IsCreated)
+        {
+            serverDriver.ScheduleUpdate().Complete();
+        }
 
-        if (isHostingPeer && !peerConnection.IsCreated)
+        if (p2pDriver.IsCreated)
+        {
+            p2pDriver.ScheduleUpdate().Complete();
+        }
+
+        if (isHostingPeer && p2pDriver.IsCreated && !peerConnection.IsCreated)
         {
             NetworkConnection c;
-            while ((c = driver.Accept()) != default)
+            while ((c = p2pDriver.Accept()) != default)
             {
                 peerConnection = c;
                 isConnected = true;
@@ -145,104 +171,20 @@ public class NetworkSessionManager : MonoBehaviour
         ProcessEvents();
     }
 
-    public void SendSelectUpdate(int playerIndex, int characterIndex, bool isLocked)
-    {
-        if (!serverConnection.IsCreated) return;
-
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
-        if (sendStatus == 0)
-        {
-            writer.WriteByte(NetworkPacketType.SelectUpdate);
-            writer.WriteInt(playerIndex);
-            writer.WriteInt(characterIndex);
-            writer.WriteByte((byte)(isLocked ? 1 : 0));
-            driver.EndSend(writer);
-        }
-    }
-
-    public void SendHandshake()
-    {
-        if (!serverConnection.IsCreated) return;
-
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
-        if (sendStatus == 0)
-        {
-            writer.WriteByte(NetworkPacketType.Handshake);
-            driver.EndSend(writer);
-        }
-    }
-
-    public void SendLocalInput(int currentTick, ushort localInput)
-    {
-        if (!peerConnection.IsCreated) return;
-
-        bufferContext.localInputHistory[currentTick] = localInput;
-
-        int startTick = Mathf.Max(0, currentTick - REDUNDANCY_COUNT + 1);
-        byte count = (byte)(currentTick - startTick + 1);
-
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, peerConnection, out DataStreamWriter writer);
-        if (sendStatus == 0)
-        {
-            writer.WriteByte(NetworkPacketType.Input);
-            writer.WriteInt(startTick);
-            writer.WriteByte(count);
-
-            for (int t = startTick; t <= currentTick; t++)
-            {
-                ushort savedInput = bufferContext.localInputHistory.TryGetValue(t, out var val) ? val : (ushort)0;
-                writer.WriteUShort(savedInput);
-            }
-
-            driver.EndSend(writer);
-        }
-
-        bufferContext.localInputHistory.Remove(currentTick - REDUNDANCY_COUNT);
-    }
-
-    public void SendSyncHash(int tick, ulong hash)
-    {
-        if (!peerConnection.IsCreated) return;
-
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, peerConnection, out DataStreamWriter writer);
-        if (sendStatus == 0)
-        {
-            writer.WriteByte(NetworkPacketType.Hash);
-            writer.WriteInt(tick);
-            writer.WriteULong(hash);
-            driver.EndSend(writer);
-        }
-    }
-
-    public bool TryGetRemoteInput(int targetTick, out ushort remoteInput)
-    {
-        return bufferContext.remoteInputBuffer.TryGetValue(targetTick, out remoteInput);
-    }
-
-    public bool TryGetRemoteHash(int targetTick, out ulong hash)
-    {
-        return bufferContext.remoteHashBuffer.TryGetValue(targetTick, out hash);
-    }
-
-    public void ClearBuffer()
-    {
-        bufferContext.Clear();
-    }
-
     private void ProcessEvents()
     {
-        if (serverConnection.IsCreated)
+        if (serverDriver.IsCreated && serverConnection.IsCreated)
         {
-            ProcessConnectionEvents(serverConnection, true);
+            ProcessConnectionEvents(serverDriver, serverConnection, true);
         }
 
-        if (peerConnection.IsCreated)
+        if (p2pDriver.IsCreated && peerConnection.IsCreated)
         {
-            ProcessConnectionEvents(peerConnection, false);
+            ProcessConnectionEvents(p2pDriver, peerConnection, false);
         }
     }
 
-    private void ProcessConnectionEvents(NetworkConnection conn, bool isServerSource)
+    private void ProcessConnectionEvents(NetworkDriver driver, NetworkConnection conn, bool isServerSource)
     {
         DataStreamReader stream;
         NetworkEvent.Type cmd;
@@ -286,9 +228,11 @@ public class NetworkSessionManager : MonoBehaviour
         {
             int p1Idx = stream.ReadInt();
             bool p1Lock = stream.ReadByte() == 1;
+            int p1Side = stream.ReadInt();
             int p2Idx = stream.ReadInt();
             bool p2Lock = stream.ReadByte() == 1;
-            OnSelectBroadcastReceived?.Invoke(p1Idx, p1Lock, p2Idx, p2Lock);
+            int p2Side = stream.ReadInt();
+            OnSelectBroadcastReceived?.Invoke(p1Idx, p1Lock, p1Side, p2Idx, p2Lock, p2Side);
         }
         else if (packetType == NetworkPacketType.SceneChange)
         {
@@ -296,7 +240,6 @@ public class NetworkSessionManager : MonoBehaviour
         }
         else if (packetType == NetworkPacketType.GameStart)
         {
-            Debug.Log($"[Client] Received Packet: {packetType}");
             FixedString64Bytes peerIp = stream.ReadFixedString64();
             OnPeerAddressReceived?.Invoke(peerIp.ToString());
             OnGameStartReceived?.Invoke();
@@ -309,6 +252,11 @@ public class NetworkSessionManager : MonoBehaviour
         else if (packetType == NetworkPacketType.StartButtonActive)
         {
             OnStartButtonActiveReceived?.Invoke();
+        }
+        else if (packetType == NetworkPacketType.AssignSlot)
+        {
+            int assignedSlot = stream.ReadInt();
+            OnSlotAssignedReceived?.Invoke(assignedSlot);
         }
     }
 
@@ -336,14 +284,112 @@ public class NetworkSessionManager : MonoBehaviour
         }
     }
 
+    public void SendSelectUpdate(int playerIndex, int characterIndex, bool isLocked)
+    {
+        if (!serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.SelectUpdate);
+            writer.WriteInt(playerIndex);
+            writer.WriteInt(characterIndex);
+            writer.WriteByte((byte)(isLocked ? 1 : 0));
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendSideUpdate(int side)
+    {
+        if (!serverConnection.IsCreated) return;
+        
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.SideUpdate);
+            writer.WriteInt(side);
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendHandshake()
+    {
+        if (!serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.Handshake);
+            serverDriver.EndSend(writer);
+        }
+    }
+
     public void SendStartRequest()
     {
         if (!serverConnection.IsCreated) return;
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
         if (sendStatus == 0)
         {
             writer.WriteByte(NetworkPacketType.StartRequest);
-            driver.EndSend(writer);
+            serverDriver.EndSend(writer);
         }
+    }
+
+    public void SendLocalInput(int currentTick, ushort localInput)
+    {
+        if (!peerConnection.IsCreated) return;
+
+        bufferContext.localInputHistory[currentTick] = localInput;
+
+        int startTick = Mathf.Max(0, currentTick - REDUNDANCY_COUNT + 1);
+        byte count = (byte)(currentTick - startTick + 1);
+
+        int sendStatus = p2pDriver.BeginSend(NetworkPipeline.Null, peerConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.Input);
+            writer.WriteInt(startTick);
+            writer.WriteByte(count);
+
+            for (int t = startTick; t <= currentTick; t++)
+            {
+                ushort savedInput = bufferContext.localInputHistory.TryGetValue(t, out var val) ? val : (ushort)0;
+                writer.WriteUShort(savedInput);
+            }
+
+            p2pDriver.EndSend(writer);
+        }
+
+        bufferContext.localInputHistory.Remove(currentTick - REDUNDANCY_COUNT);
+    }
+
+    public void SendSyncHash(int tick, ulong hash)
+    {
+        if (!peerConnection.IsCreated) return;
+
+        int sendStatus = p2pDriver.BeginSend(NetworkPipeline.Null, peerConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.Hash);
+            writer.WriteInt(tick);
+            writer.WriteULong(hash);
+            p2pDriver.EndSend(writer);
+        }
+    }
+
+    public bool TryGetRemoteInput(int targetTick, out ushort remoteInput)
+    {
+        return bufferContext.remoteInputBuffer.TryGetValue(targetTick, out remoteInput);
+    }
+
+    public bool TryGetRemoteHash(int targetTick, out ulong hash)
+    {
+        return bufferContext.remoteHashBuffer.TryGetValue(targetTick, out hash);
+    }
+
+    public void ClearBuffer()
+    {
+        bufferContext.Clear();
     }
 }

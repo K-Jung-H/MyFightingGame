@@ -22,7 +22,7 @@ MonoBehaviour:
     - Main Editor|0_deploy
     m_Role: 2
     m_PlayerTag: 
-    m_InitialScene: {fileID: 102900000, guid: bdabc10261cf05f4097e412fe3dd03d6, type: 3}
+    m_InitialScene: {fileID: 102900000, guid: ae5d815aa04214a4491c0b477da0990a, type: 3}
   m_EditorInstances:
   - Name: Player 2
     <CorrespondingNodeId>k__BackingField: Player 2|1_run

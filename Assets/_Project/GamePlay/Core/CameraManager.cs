@@ -39,6 +39,12 @@ public class CameraManager : MonoBehaviour
         playerTwo = p2.transform;
     }
 
+    // Phase 4: 외부(GameLoopManager)에서 진영 데이터에 따라 카메라 반전을 명령하는 메서드
+    public void SetCameraFlip(bool isFlipped)
+    {
+        isReverseView = isFlipped;
+    }
+
     public void TriggerEventZoom(float multiplier, float duration)
     {
         StopAllCoroutines();
@@ -80,6 +86,7 @@ public class CameraManager : MonoBehaviour
         Vector3 directionP1ToP2 = positionP2 - positionP1;
         directionP1ToP2.y = 0f;
 
+        // isReverseView 값에 따라 카메라가 바라보는 기준 각도를 180도(90도 -> -90도) 반전합니다.
         float targetAngle = Mathf.Atan2(directionP1ToP2.x, directionP1ToP2.z) * Mathf.Rad2Deg;
         targetAngle += isReverseView ? -90f : 90f;
 

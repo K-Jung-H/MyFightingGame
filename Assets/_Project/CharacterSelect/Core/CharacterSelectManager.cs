@@ -60,7 +60,7 @@ public class CharacterSelectManager : MonoBehaviour
     private int lastDisplayedCountdown = -1;
 
     private Action OnConnectionEstablishedAction;
-    private Action<int, bool, int, bool> OnSelectBroadcastAction;
+    private Action<int, bool, int, int, bool, int> OnSelectBroadcastAction;
 
     private void Start()
     {
@@ -158,9 +158,18 @@ public class CharacterSelectManager : MonoBehaviour
         }
         else
         {
-            int localId = (currentMode == ConnectionMode.OnlineHost) ? 1 : 2;
-            PlayerSelectContext localCtx = (localId == 1) ? p1Context : p2Context;
-            HandleLocalInput(localId, localCtx);
+            if (session != null)
+            {
+                int localSlot = session.GetLocalPlayerSlot();
+                if (localSlot == 0)
+                {
+                    HandleLocalInput(1, p1Context);
+                }
+                else if (localSlot == 1)
+                {
+                    HandleLocalInput(2, p2Context);
+                }
+            }
         }
     }
 
@@ -174,18 +183,13 @@ public class CharacterSelectManager : MonoBehaviour
             session.OnSceneChange += HandleSceneChangeCommand;
         }
 
-        if (mode == ConnectionMode.Offline)
+        if (mode == ConnectionMode.Offline || mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient)
         {
             isLobbyReady = true;
-        }
-        else if (mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient)
-        {
-            if (NetworkSessionManager.Instance != null)
-            {
-                OnConnectionEstablishedAction = () => isLobbyReady = true;
-                OnSelectBroadcastAction = HandleNetworkSelectBroadcast;
 
-                NetworkSessionManager.Instance.OnConnectionEstablished += OnConnectionEstablishedAction;
+            if ((mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient) && NetworkSessionManager.Instance != null)
+            {
+                OnSelectBroadcastAction = HandleNetworkSelectBroadcast;
                 NetworkSessionManager.Instance.OnSelectBroadcastReceived += OnSelectBroadcastAction;
             }
         }
@@ -261,7 +265,7 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
-    private void HandleNetworkSelectBroadcast(int p1Idx, bool p1Lock, int p2Idx, bool p2Lock)
+    private void HandleNetworkSelectBroadcast(int p1Idx, bool p1Lock, int p1Side, int p2Idx, bool p2Lock, int p2Side)
     {
         UpdateRemoteState(p1Context, p1Idx, p1Lock, 1);
         UpdateRemoteState(p2Context, p2Idx, p2Lock, 2);
@@ -338,7 +342,7 @@ public class CharacterSelectManager : MonoBehaviour
     {
         if (isMatchStarted) return;
         isMatchStarted = true;
-        GameFlowManager.Instance.OnReceiveSceneChangeCommand("MainScene");
+        GameFlowManager.Instance.OnReceiveSceneChangeCommand("GamePlayScene");
     }
 
     private bool GetSelectInput(PlayerSelectContext context)

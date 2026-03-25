@@ -194,6 +194,7 @@ MonoBehaviour:
   debugRollbackInterval: 30
   maxRollbackFrames: 7
   inputDelayFrames: 2
+  postMatchDelaySeconds: 3
 --- !u!4 &22342366
 Transform:
   m_ObjectHideFlags: 0
@@ -796,7 +797,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 140}
+  m_AnchoredPosition: {x: 0, y: 170}
   m_SizeDelta: {x: 60, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &508090641

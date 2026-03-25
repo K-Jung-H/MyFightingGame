@@ -67,24 +67,13 @@ public class GameLoopManager : MonoBehaviour
     private bool isRoundOver;
     private bool isResimulating;
     private bool isWaitingForGameStart;
+    private bool isCameraFlipped;
     private FPVector3 sharedDepthAxis;
 
     private Dictionary<int, ulong> localHashBuffer;
     private int lastHashedTick;
     private bool isDesyncDetected;
     private int postMatchDelayTicks;
-
-    public bool GetIsStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
-    public bool GetIsDesyncDetected() => isDesyncDetected;
-    public int GetCurrentTick() => currentTick;
-    public RoundTimerManager GetRoundTimer() => roundTimer;
-    
-    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
-    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
-    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
-    public PlayerController GetPlayerOneController() => playerOne.controller;
-    public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
     private void Awake()
     {
@@ -113,9 +102,19 @@ public class GameLoopManager : MonoBehaviour
 
     private void Start()
     {
+        DetermineCameraFlipState();
+
         bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
         if (isOnline)
         {
+            IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+            int localSlot = session.GetLocalPlayerSlot();
+
+            if (localSlot == 1)
+            {
+                NetworkSessionManager.Instance.StartP2PListen();
+            }
+
             NetworkSessionManager.Instance.SendHandshake();
         }
     }
@@ -142,12 +141,43 @@ public class GameLoopManager : MonoBehaviour
 
         if (isOnline)
         {
+            if (!NetworkSessionManager.Instance.GetIsConnected()) return;
+
             ProcessOnlineTick();
             VerifySyncState();
         }
         else
         {
             ProcessOfflineTick();
+        }
+    }
+
+    public bool GetIsStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
+    public bool GetIsDesyncDetected() => isDesyncDetected;
+    public int GetCurrentTick() => currentTick;
+    public RoundTimerManager GetRoundTimer() => roundTimer;
+    public PlayerState_Type GetP1State() => playerOne.controller != null ? playerOne.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP1Pos() => playerOne.controller != null ? playerOne.controller.GetPosition() : Vector3.zero;
+    public PlayerState_Type GetP2State() => playerTwo.controller != null ? playerTwo.controller.GetStateMachine().GetCurrentState() : PlayerState_Type.Idle;
+    public Vector3 GetP2Pos() => playerTwo.controller != null ? playerTwo.controller.GetPosition() : Vector3.zero;
+    public PlayerController GetPlayerOneController() => playerOne.controller;
+    public PlayerController GetPlayerTwoController() => playerTwo.controller;
+
+    private void DetermineCameraFlipState()
+    {
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        if (session != null)
+        {
+            int localSlot = session.GetLocalPlayerSlot();
+            RoomStateModel roomState = session.GetRoomState();
+            
+            int mySide = (localSlot == 0) ? roomState.p1PreferredSide : roomState.p2PreferredSide;
+            isCameraFlipped = (localSlot == 0 && mySide == 1) || (localSlot == 1 && mySide == 0);
+
+            if (cameraManager != null)
+            {
+                cameraManager.SetCameraFlip(isCameraFlipped);
+            }
         }
     }
 
@@ -204,7 +234,10 @@ public class GameLoopManager : MonoBehaviour
 
     private void HandlePeerConnection(string peerIp)
     {
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        int localSlot = session.GetLocalPlayerSlot();
+
+        if (localSlot == 0)
         {
             NetworkSessionManager.Instance.ConnectToPeer(peerIp);
         }
@@ -212,8 +245,9 @@ public class GameLoopManager : MonoBehaviour
 
     private void ProcessOnlineTick()
     {
-        bool isP1Local = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineHost;
-        int localPlayerIndex = isP1Local ? 0 : 1;
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        int localPlayerIndex = session.GetLocalPlayerSlot();
+        bool isP1Local = (localPlayerIndex == 0);
 
         VerifyRemoteInputsAndRollback(isP1Local);
         BroadcastSyncHashes();
@@ -270,10 +304,7 @@ public class GameLoopManager : MonoBehaviour
 
     private void UpdateLocalInput(bool isP1Local, int localIdx)
     {
-        bool isP1OnRight = cameraManager.IsPlayerOneOnRightSide();
-        bool isFacingRight = isP1Local ? !isP1OnRight : isP1OnRight;
-
-        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localIdx, isFacingRight);
+        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localIdx, isCameraFlipped);
         int targetTick = currentTick + inputDelayFrames;
         
         if (isP1Local) p1InputBuffer[targetTick % ROLLBACK_WINDOW] = physicalInput.flags;
@@ -407,7 +438,6 @@ public class GameLoopManager : MonoBehaviour
 
         isRoundOver = true;
     }
-
 
     private void ProcessPostMatchDelay()
     {

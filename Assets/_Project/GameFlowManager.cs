@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 
 public enum ConnectionMode
 {
@@ -10,18 +11,36 @@ public enum ConnectionMode
     DedicatedServer
 }
 
+public enum GameSceneType
+{
+    Start,
+    GameModeSelect,
+    OnlineMatching,
+    OnlineMatchedRoom,
+    CharacterSelect,
+    GamePlay,
+    Server
+}
+
 public class GameFlowManager : MonoBehaviour
 {
     public static GameFlowManager Instance { get; private set; }
-    
+
     public ConnectionMode currentMode = ConnectionMode.None;
-    
-    [SerializeField] private string gameplaySceneName = "GameplayScene";
+    public GameSceneType currentScene = GameSceneType.Start;
+
+    [SerializeField] private string startSceneName = "StartScene";
+    [SerializeField] private string gameModeSelectSceneName = "GameModeSelectScene";
+    [SerializeField] private string onlineMatchingSceneName = "OnlineMatchingScene";
+    [SerializeField] private string onlineMatchedRoomSceneName = "OnlineMatchedRoomScene";
+    [SerializeField] private string characterSelectSceneName = "CharacterSelectScene";
+    [SerializeField] private string gamePlaySceneName = "GamePlayScene";
     [SerializeField] private string serverSceneName = "EmptyServerScene";
-    
+
     private IMatchSession currentSession;
     private DummyMatchServer dummyServer;
     private bool isFlowInitialized;
+    private int selectedPreferredSide = 0;
 
     private void Awake()
     {
@@ -34,14 +53,37 @@ public class GameFlowManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private void Update()
+    {
+        if (currentScene != GameSceneType.GamePlay && currentScene != GameSceneType.Server)
+        {
+            if (NetworkSessionManager.Instance != null)
+            {
+                NetworkSessionManager.Instance.UpdateNetwork();
+            }
+        }
+    }
+
     private void OnGUI()
     {
-        if (isFlowInitialized)
+        if (isFlowInitialized && currentScene != GameSceneType.OnlineMatching && currentScene != GameSceneType.Start)
         {
             DrawStatusGUI();
-            return;
+            if (currentScene == GameSceneType.Server) return;
         }
-        DrawConnectionGUI();
+
+        if (currentScene == GameSceneType.Start)
+        {
+            DrawStartGUI();
+        }
+        else if (currentScene == GameSceneType.GameModeSelect)
+        {
+            DrawModeSelectGUI();
+        }
+        else if (currentScene == GameSceneType.OnlineMatching)
+        {
+            DrawOnlineMatchingGUI();
+        }
     }
 
     public IMatchSession GetCurrentSession()
@@ -49,60 +91,136 @@ public class GameFlowManager : MonoBehaviour
         return currentSession;
     }
 
-    public void InitializeMatchFlow(ConnectionMode mode)
+    public void OnReceiveSceneChangeCommand(string targetScene)
     {
-        if (isFlowInitialized || mode == ConnectionMode.None) return;
-        
-        currentMode = mode;
-        isFlowInitialized = true;
+        if (targetScene == "GamePlayScene" || targetScene == gamePlaySceneName)
+        {
+            ChangeScene(GameSceneType.GamePlay);
+        }
+    }
 
-        if (currentMode == ConnectionMode.Offline)
+    public void ChangeScene(GameSceneType targetSceneType)
+    {
+        currentScene = targetSceneType;
+
+        if (currentScene == GameSceneType.Start)
         {
-            currentSession = new OfflineMatchSession();
-            SceneManager.LoadScene(gameplaySceneName);
+            SceneManager.LoadScene(startSceneName);
         }
-        else if (currentMode == ConnectionMode.OnlineHost)
+        else if (currentScene == GameSceneType.GameModeSelect)
         {
-            StartLocalServer();
-            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", true);
-            currentSession = new OnlineClientSession();
-            SceneManager.LoadScene(gameplaySceneName);
+            SceneManager.LoadScene(gameModeSelectSceneName);
         }
-        else if (currentMode == ConnectionMode.OnlineClient)
+        else if (currentScene == GameSceneType.OnlineMatching)
         {
-            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1", false);
-            currentSession = new OnlineClientSession();
-            SceneManager.LoadScene(gameplaySceneName);
+            SceneManager.LoadScene(onlineMatchingSceneName);
         }
-        else if (currentMode == ConnectionMode.DedicatedServer)
+        else if (currentScene == GameSceneType.OnlineMatchedRoom)
         {
-            StartLocalServer();
+            SceneManager.LoadScene(onlineMatchedRoomSceneName);
+        }
+        else if (currentScene == GameSceneType.CharacterSelect)
+        {
+            SceneManager.LoadScene(characterSelectSceneName);
+        }
+        else if (currentScene == GameSceneType.GamePlay)
+        {
+            SceneManager.LoadScene(gamePlaySceneName);
+        }
+        else if (currentScene == GameSceneType.Server)
+        {
             SceneManager.LoadScene(serverSceneName);
         }
     }
 
-    public void OnReceiveSceneChangeCommand(string sceneName)
+    private void DrawStartGUI()
     {
-        SceneManager.LoadScene(sceneName);
+        float width = 250f;
+        float height = 50f;
+        float spacing = 15f;
+        float startX = (Screen.width - width) * 0.5f;
+        float startY = (Screen.height - (height * 2f + spacing)) * 0.5f;
+
+        if (GUI.Button(new Rect(startX, startY, width, height), "Play Game (Player)"))
+        {
+            ChangeScene(GameSceneType.GameModeSelect);
+        }
+
+        if (GUI.Button(new Rect(startX, startY + height + spacing, width, height), "Run Dedicated Server"))
+        {
+            currentMode = ConnectionMode.DedicatedServer;
+            isFlowInitialized = true;
+            
+            dummyServer = gameObject.AddComponent<DummyMatchServer>();
+            dummyServer.StartServer();
+            ChangeScene(GameSceneType.Server);
+        }
     }
 
-    private void StartLocalServer()
+    private void DrawModeSelectGUI()
     {
-        GameObject serverObj = new GameObject("DummyServer");
-        DontDestroyOnLoad(serverObj);
+        float width = 200f;
+        float height = 50f;
+        float spacing = 15f;
+        float startX = (Screen.width - width) * 0.5f;
+        float startY = (Screen.height - (height * 2f + spacing)) * 0.5f;
+
+        if (GUI.Button(new Rect(startX, startY, width, height), "Offline Mode"))
+        {
+            currentMode = ConnectionMode.Offline;
+            isFlowInitialized = true;
+            currentSession = new OfflineMatchSession();
+            currentSession.SendSideUpdate(0);
+            ChangeScene(GameSceneType.CharacterSelect);
+        }
+
+        if (GUI.Button(new Rect(startX, startY + height + spacing, width, height), "Online Client"))
+        {
+            currentMode = ConnectionMode.OnlineClient;
+            ChangeScene(GameSceneType.OnlineMatching);
+        }
+    }
+
+    private void DrawOnlineMatchingGUI()
+    {
+        float width = 200f;
+        float height = 50f;
+        float spacing = 15f;
+        float startX = (Screen.width - width) * 0.5f;
+        float startY = (Screen.height - (height * 2f + spacing * 2f)) * 0.5f;
+
+        selectedPreferredSide = GUI.Toolbar(new Rect(startX, startY, width, 30f), selectedPreferredSide, new string[] { "Left Side", "Right Side" });
+
+        if (GUI.Button(new Rect(startX, startY + 70f, width, height), "Select Side & Connect"))
+        {
+            isFlowInitialized = true;
+            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1");
+            SetupOnlineClientSession();
+        }
+    }
+
+    private void SetupOnlineClientSession()
+    {
+        currentSession = new OnlineClientSession();
         
-        dummyServer = serverObj.AddComponent<DummyMatchServer>();
-        dummyServer.StartServer();
+        Action onConnected = null;
+        onConnected = () => 
+        {
+            currentSession.SendSideUpdate(selectedPreferredSide);
+            ChangeScene(GameSceneType.CharacterSelect);
+            NetworkSessionManager.Instance.OnConnectionEstablished -= onConnected;
+        };
+        
+        NetworkSessionManager.Instance.OnConnectionEstablished += onConnected;
     }
 
     private void DrawStatusGUI()
     {
         float debugWidth = 300f;
-        float debugHeight = 50f;
-        string modeStr = $"Mode: {currentMode}";
+        float debugHeight = 30f;
         
-        bool hasNetworkSession = NetworkSessionManager.Instance != null;
-        bool isConnected = hasNetworkSession && NetworkSessionManager.Instance.GetIsConnected();
+        string modeStr = currentMode.ToString();
+        bool isConnected = currentSession != null && NetworkSessionManager.Instance.GetIsConnected();
         
         string netStatus = "";
         if (currentMode == ConnectionMode.DedicatedServer)
@@ -115,34 +233,5 @@ public class GameFlowManager : MonoBehaviour
         }
         
         GUI.Label(new Rect(10f, 10f, debugWidth, debugHeight), $"{modeStr} | {netStatus}");
-    }
-
-    private void DrawConnectionGUI()
-    {
-        float width = 200f;
-        float height = 50f;
-        float spacing = 15f;
-        float startX = (Screen.width - width) * 0.5f;
-        float startY = (Screen.height - (height * 4f + spacing * 3f)) * 0.5f;
-
-        if (GUI.Button(new Rect(startX, startY, width, height), "Offline Mode"))
-        {
-            InitializeMatchFlow(ConnectionMode.Offline);
-        }
-
-        if (GUI.Button(new Rect(startX, startY + height + spacing, width, height), "Start as Host"))
-        {
-            InitializeMatchFlow(ConnectionMode.OnlineHost);
-        }
-
-        if (GUI.Button(new Rect(startX, startY + (height + spacing) * 2f, width, height), "Start as Client"))
-        {
-            InitializeMatchFlow(ConnectionMode.OnlineClient);
-        }
-
-        if (GUI.Button(new Rect(startX, startY + (height + spacing) * 3f, width, height), "Start Dedicated Server"))
-        {
-            InitializeMatchFlow(ConnectionMode.DedicatedServer);
-        }
     }
 }

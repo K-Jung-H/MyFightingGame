@@ -6,11 +6,26 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/StartScene.unity
+    guid: ae5d815aa04214a4491c0b477da0990a
+  - enabled: 1
+    path: Assets/Scenes/GameModeSelectScene.unity
+    guid: 5488acc0caa0d0b4fa9d28ed343058dc
+  - enabled: 1
+    path: Assets/Scenes/OnlineMatchedRoomScene.unity
+    guid: a6da62fe7f58d8d409a74ca2e7844210
+  - enabled: 1
+    path: Assets/Scenes/OnlineMatchingScene.unity
+    guid: 771abf5479f9f8b45bd2131318e23bba
+  - enabled: 1
     path: Assets/Scenes/CharacterSelectScene.unity
     guid: bdabc10261cf05f4097e412fe3dd03d6
   - enabled: 1
-    path: Assets/Scenes/MainScene.unity
+    path: Assets/Scenes/GamePlayScene.unity
     guid: de8dfda1479047747a5b0dd55ed522af
+  - enabled: 1
+    path: Assets/Scenes/ServerScene.unity
+    guid: 4b38e0731d5c6e5468d75cb09477d6fa
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: 073f19bed605c3946aad7530686fcf68, type: 2}
