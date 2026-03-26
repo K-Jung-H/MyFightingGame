@@ -13,11 +13,11 @@ public class DebugHUD : MonoBehaviour
     private Queue<string> p2InputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
 
-    private bool isShowAllHUD = true;
-    private bool isShowServer = true;
-    private bool isShowNetworkDetails = true;
-    private bool isShowP1 = true;
-    private bool isShowP2 = true;
+    private bool isShowAllHUD = false;
+    private bool isShowServer = false;
+    private bool isShowNetworkDetails = false;
+    private bool isShowP1 = false;
+    private bool isShowP2 = false;
 
     private int p1CurrentHealth;
     private int p1MaxHealth;
@@ -30,6 +30,11 @@ public class DebugHUD : MonoBehaviour
     private void Start()
     {
         networkSession = NetworkSessionManager.Instance;
+        
+        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
+        isShowAllHUD = isOnline;
+        isShowServer = isOnline;
+        
         TryConnectControllers();
     }
 
@@ -102,7 +107,13 @@ public class DebugHUD : MonoBehaviour
 
     private void OnGUI()
     {
-        isShowAllHUD = GUI.Toggle(new Rect(10f, 50f, 150f, 20f), isShowAllHUD, " Toggle All Debug HUD");
+        Vector2 refRes = GameFlowManager.Instance.GetReferenceResolution();
+        Vector3 scale = new Vector3(Screen.width / refRes.x, Screen.height / refRes.y, 1f);
+        float minScale = Mathf.Min(scale.x, scale.y);
+        scale = new Vector3(minScale, minScale, 1f);
+        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
+
+        isShowAllHUD = GUI.Toggle(new Rect(10f, 250f, 150f, 20f), isShowAllHUD, " Toggle All Debug HUD");
 
         if (!isShowAllHUD) return;
 
@@ -116,11 +127,11 @@ public class DebugHUD : MonoBehaviour
         }
 
         float panelWidth = 280f;
-        float bottomY = Screen.height - 30f;
+        float bottomY = refRes.y - 30f;
 
         float p1StartX = 10f;
-        float serverStartX = (Screen.width - panelWidth) / 2f;
-        float p2StartX = Screen.width - panelWidth - 10f;
+        float serverStartX = (refRes.x - panelWidth) / 2f;
+        float p2StartX = refRes.x - panelWidth - 10f;
 
         DrawServerStatusPanel(serverStartX, bottomY, panelWidth);
         DrawP1DebugPanel(p1StartX, bottomY, panelWidth);
@@ -175,9 +186,24 @@ public class DebugHUD : MonoBehaviour
             GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Connection: {(isConnected ? "Connected" : "Disconnected")}");
             currentY += 15f;
 
-            bool isStalling = gameLoopManager.GetIsStalling();
-            GUI.color = isStalling ? Color.yellow : Color.green;
-            GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Lockstep: {(isStalling ? "STALLED" : "Running")}");
+            bool isHardStalling = gameLoopManager.GetIsHardStalling();
+            bool isSoftStalling = gameLoopManager.GetIsSoftStalling();
+
+            string lockstepStatus = "Running";
+            GUI.color = Color.green;
+
+            if (isHardStalling)
+            {
+                lockstepStatus = "HARD STALLED";
+                GUI.color = Color.red;
+            }
+            else if (isSoftStalling)
+            {
+                lockstepStatus = "SOFT STALLED";
+                GUI.color = Color.yellow;
+            }
+
+            GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Lockstep: {lockstepStatus}");
             currentY += 15f;
 
             bool isDesync = gameLoopManager.GetIsDesyncDetected();

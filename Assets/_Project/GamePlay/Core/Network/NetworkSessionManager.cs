@@ -20,8 +20,6 @@ public static class NetworkPacketType
     public const byte SideUpdate = 19;
     public const byte P2PPing = 20;
     public const byte P2PPong = 21;
-    public const byte ServerPing = 22;
-    public const byte ServerPong = 23;
     public const byte ReportDisconnect = 24;
     public const byte MatchAborted = 25;
 }
@@ -52,7 +50,6 @@ public class NetworkSessionManager : MonoBehaviour
     public static NetworkSessionManager Instance { get; private set; }
 
     [SerializeField] private float p2pPingInterval = 0.5f;
-    [SerializeField] private float serverPingInterval = 3.0f;
     [SerializeField] private float p2pTimeoutLimit = 7.0f;
 
     private NetworkDriver serverDriver;
@@ -64,13 +61,12 @@ public class NetworkSessionManager : MonoBehaviour
     private bool isConnected;
     private bool isHostingPeer;
     private bool isP2PDisconnected;
-    private bool requiresSessionReset;
+    private bool isSessionResetRequired;
     private const int REDUNDANCY_COUNT = 15;
     private NetworkBufferContext bufferContext;
 
     private float lastP2PPingSendTime;
     public float lastP2PPacketReceiveTime;
-    private float lastServerPingSendTime;
     public float lastServerPacketReceiveTime;
     private int currentPingMs;
 
@@ -118,22 +114,19 @@ public class NetworkSessionManager : MonoBehaviour
     {
         if (isInitialized) return;
 
-        serverDriver = NetworkDriver.Create();
+        serverDriver = CreateConfiguredDriver();
         NetworkEndpoint endpoint = NetworkEndpoint.Parse(serverIp, (ushort)9000);
         serverConnection = serverDriver.Connect(endpoint);
         
         lastServerPacketReceiveTime = 0f;
-        lastServerPingSendTime = 0f;
-        
         isInitialized = true;
-        Debug.Log("[Network] Initializing connection to Dedicated Server...");
     }
 
     public void StartP2PListen(ushort port = 9001)
     {
         if (isHostingPeer) return;
         
-        p2pDriver = NetworkDriver.Create();
+        p2pDriver = CreateConfiguredDriver();
         NetworkEndpoint p2pEndpoint = NetworkEndpoint.AnyIpv4.WithPort(port);
         p2pDriver.Bind(p2pEndpoint);
         p2pDriver.Listen();
@@ -141,25 +134,23 @@ public class NetworkSessionManager : MonoBehaviour
         
         lastP2PPacketReceiveTime = 0f;
         lastP2PPingSendTime = 0f;
-        Debug.Log("[Network] Started listening for P2P connection.");
     }
 
     public void ConnectToPeer(string peerIp)
     {
         if (isHostingPeer) return;
         
-        p2pDriver = NetworkDriver.Create();
+        p2pDriver = CreateConfiguredDriver();
         NetworkEndpoint endpoint = NetworkEndpoint.Parse(peerIp, (ushort)9001);
         peerConnection = p2pDriver.Connect(endpoint);
         
         lastP2PPacketReceiveTime = 0f;
         lastP2PPingSendTime = 0f;
-        Debug.Log($"[Network] Connecting to P2P peer at {peerIp}...");
     }
 
     public void UpdateNetwork()
     {
-        if (requiresSessionReset)
+        if (isSessionResetRequired)
         {
             ExecuteSessionReset();
             return;
@@ -188,7 +179,6 @@ public class NetworkSessionManager : MonoBehaviour
                 float currentTime = Time.realtimeSinceStartup;
                 lastP2PPacketReceiveTime = currentTime;
                 lastP2PPingSendTime = currentTime;
-                Debug.Log("[Network] P2P Peer connected to local host.");
             }
         }
 
@@ -198,23 +188,7 @@ public class NetworkSessionManager : MonoBehaviour
 
     public void ResetNetworkSession()
     {
-        Debug.Log("[Network] Network Session Reset Requested.");
-        requiresSessionReset = true;
-    }
-
-    private void ExecuteSessionReset()
-    {
-        CleanupDrivers();
-        isInitialized = false;
-        isConnected = false;
-        isHostingPeer = false;
-        isP2PDisconnected = false;
-        requiresSessionReset = false;
-        serverConnection = default;
-        peerConnection = default;
-        currentPingMs = 0;
-        bufferContext.Clear();
-        Debug.Log("[Network] Network Session completely reset.");
+        isSessionResetRequired = true;
     }
 
     public void SendSelectUpdate(int playerIndex, int characterIndex, bool isLocked)
@@ -326,6 +300,20 @@ public class NetworkSessionManager : MonoBehaviour
         bufferContext.Clear();
     }
 
+    private void ExecuteSessionReset()
+    {
+        CleanupDrivers();
+        isInitialized = false;
+        isConnected = false;
+        isHostingPeer = false;
+        isP2PDisconnected = false;
+        isSessionResetRequired = false;
+        serverConnection = default;
+        peerConnection = default;
+        currentPingMs = 0;
+        bufferContext.Clear();
+    }
+
     private void CleanupDrivers()
     {
         if (serverDriver.IsCreated)
@@ -373,14 +361,11 @@ public class NetworkSessionManager : MonoBehaviour
                 float currentTime = Time.realtimeSinceStartup;
                 if (isServerSource)
                 {
-                    Debug.Log("[Network] Server connection established.");
                     lastServerPacketReceiveTime = currentTime;
-                    lastServerPingSendTime = currentTime;
                     OnConnectionEstablished?.Invoke();
                 }
                 else
                 {
-                    Debug.Log("[Network] P2P connection established.");
                     lastP2PPacketReceiveTime = currentTime;
                     lastP2PPingSendTime = currentTime;
                     isConnected = true; 
@@ -396,13 +381,11 @@ public class NetworkSessionManager : MonoBehaviour
             {
                 if (isServerSource)
                 {
-                    Debug.LogError("[Network] Lost connection to Dedicated Server.");
                     serverConnection = default;
                     OnMatchAbortedReceived?.Invoke(GameSceneType.Start);
                 }
                 else
                 {
-                    Debug.LogWarning("[Network] P2P Peer Explicitly Disconnected.");
                     isConnected = false;
                     peerConnection = default;
                     if (!isP2PDisconnected)
@@ -452,19 +435,9 @@ public class NetworkSessionManager : MonoBehaviour
             int assignedSlot = stream.ReadInt();
             OnSlotAssignedReceived?.Invoke(assignedSlot);
         }
-        else if (packetType == NetworkPacketType.ServerPing)
-        {
-            float sentTime = stream.ReadFloat();
-            SendPong(true, sentTime);
-        }
-        else if (packetType == NetworkPacketType.ServerPong)
-        {
-            float sentTime = stream.ReadFloat();
-        }
         else if (packetType == NetworkPacketType.MatchAborted)
         {
             int sceneTypeInt = stream.ReadInt();
-            Debug.Log($"[Network] Match Aborted command received from server. Target Scene: {(GameSceneType)sceneTypeInt}");
             OnMatchAbortedReceived?.Invoke((GameSceneType)sceneTypeInt);
         }
     }
@@ -495,14 +468,23 @@ public class NetworkSessionManager : MonoBehaviour
         }
         else if (packetType == NetworkPacketType.P2PPing)
         {
-            float sentTime = stream.ReadFloat();
-            SendPong(false, sentTime);
+            uint sentTimeMs = stream.ReadUInt();
+            SendPong(sentTimeMs);
         }
         else if (packetType == NetworkPacketType.P2PPong)
         {
-            float sentTime = stream.ReadFloat();
-            float rtt = (Time.realtimeSinceStartup - sentTime) * 1000f;
-            currentPingMs = Mathf.RoundToInt(rtt);
+            uint sentTimeMs = stream.ReadUInt();
+            uint rtt = GetCurrentTimeMs() - sentTimeMs;
+            
+            if (currentPingMs == 0)
+            {
+                currentPingMs = (int)rtt;
+            }
+            else
+            {
+                currentPingMs = Mathf.RoundToInt(currentPingMs * 0.8f + rtt * 0.2f);
+            }
+            
             OnPingUpdated?.Invoke(currentPingMs);
         }
     }
@@ -510,18 +492,6 @@ public class NetworkSessionManager : MonoBehaviour
     private void ProcessPingTimers()
     {
         float currentTime = Time.realtimeSinceStartup;
-
-        if (lastServerPacketReceiveTime > 0f)
-        {
-            if (currentTime - lastServerPingSendTime > serverPingInterval)
-            {
-                if (serverDriver.IsCreated && serverConnection.IsCreated)
-                {
-                    SendPing(true);
-                }
-                lastServerPingSendTime = currentTime;
-            }
-        }
 
         if (isConnected && !isP2PDisconnected && lastP2PPacketReceiveTime > 0f)
         {
@@ -533,48 +503,45 @@ public class NetworkSessionManager : MonoBehaviour
             {
                 if (p2pDriver.IsCreated && peerConnection.IsCreated)
                 {
-                    SendPing(false);
+                    SendPing();
                 }
                 lastP2PPingSendTime = currentTime;
             }
         }
     }
 
-    private void SendPing(bool isServer)
+    private void SendPing()
     {
-        NetworkDriver driver = isServer ? serverDriver : p2pDriver;
-        NetworkConnection conn = isServer ? serverConnection : peerConnection;
-        byte packetType = isServer ? NetworkPacketType.ServerPing : NetworkPacketType.P2PPing;
-
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        int sendStatus = p2pDriver.BeginSend(NetworkPipeline.Null, peerConnection, out DataStreamWriter writer);
         if (sendStatus == 0)
         {
-            writer.WriteByte(packetType);
-            writer.WriteFloat(Time.realtimeSinceStartup);
-            driver.EndSend(writer);
+            writer.WriteByte(NetworkPacketType.P2PPing);
+            writer.WriteUInt(GetCurrentTimeMs());
+            p2pDriver.EndSend(writer);
         }
     }
 
-    private void SendPong(bool isServer, float receivedTime)
+    private void SendPong(uint receivedTimeMs)
     {
-        NetworkDriver driver = isServer ? serverDriver : p2pDriver;
-        NetworkConnection conn = isServer ? serverConnection : peerConnection;
-        byte packetType = isServer ? NetworkPacketType.ServerPong : NetworkPacketType.P2PPong;
-
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        int sendStatus = p2pDriver.BeginSend(NetworkPipeline.Null, peerConnection, out DataStreamWriter writer);
         if (sendStatus == 0)
         {
-            writer.WriteByte(packetType);
-            writer.WriteFloat(receivedTime);
-            driver.EndSend(writer);
+            writer.WriteByte(NetworkPacketType.P2PPong);
+            writer.WriteUInt(receivedTimeMs);
+            p2pDriver.EndSend(writer);
         }
     }
 
     private void HandleP2PTimeout()
     {
-        Debug.LogError("[Network] P2P Connection Lost! Sending Report to Server...");
         isP2PDisconnected = true;
         SendReportDisconnect();
+        
+        if (p2pDriver.IsCreated && peerConnection.IsCreated)
+        {
+            p2pDriver.Disconnect(peerConnection);
+        }
+        peerConnection = default;
     }
 
     private void SendReportDisconnect()
@@ -586,5 +553,20 @@ public class NetworkSessionManager : MonoBehaviour
             writer.WriteByte(NetworkPacketType.ReportDisconnect);
             serverDriver.EndSend(writer);
         }
+    }
+
+    private uint GetCurrentTimeMs()
+    {
+        return (uint)(Time.realtimeSinceStartupAsDouble * 1000.0);
+    }
+
+    private NetworkDriver CreateConfiguredDriver()
+    {
+        NetworkSettings settings = new NetworkSettings();
+        settings.WithNetworkConfigParameters(
+            disconnectTimeoutMS: 5000,
+            heartbeatTimeoutMS: 500
+        );
+        return NetworkDriver.Create(settings);
     }
 }

@@ -68,6 +68,7 @@ public class GameLoopManager : MonoBehaviour
     private bool isResimulating;
     private bool isWaitingForGameStart;
     private bool isCameraFlipped;
+    private bool isSoftStalling;
     private FPVector3 sharedDepthAxis;
 
     private Dictionary<int, ulong> localHashBuffer;
@@ -90,6 +91,7 @@ public class GameLoopManager : MonoBehaviour
         NetworkSessionManager.Instance.OnPeerAddressReceived += HandlePeerConnection;
         NetworkSessionManager.Instance.OnGameStartReceived += HandleGameStartCommand;
         NetworkSessionManager.Instance.OnPingUpdated += HandlePingUpdate;
+        NetworkSessionManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
 
         bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
         if (isOnline)
@@ -131,6 +133,7 @@ public class GameLoopManager : MonoBehaviour
             NetworkSessionManager.Instance.OnPeerAddressReceived -= HandlePeerConnection;
             NetworkSessionManager.Instance.OnGameStartReceived -= HandleGameStartCommand;
             NetworkSessionManager.Instance.OnPingUpdated -= HandlePingUpdate;
+            NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
         }
     }
 
@@ -162,20 +165,32 @@ public class GameLoopManager : MonoBehaviour
     {
         if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline) return;
 
+        Vector2 refRes = GameFlowManager.Instance.GetReferenceResolution();
+        Vector3 scale = new Vector3(Screen.width / refRes.x, Screen.height / refRes.y, 1f);
+        float minScale = Mathf.Min(scale.x, scale.y);
+        scale = new Vector3(minScale, minScale, 1f);
+        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
+
         int rollbackFrames = Mathf.Max(0, currentTick - latestConfirmedTick);
         
         GUI.contentColor = Color.white;
-        GUI.Label(new Rect(10, 50, 200, 20), $"Ping: {currentPingMs} ms");
-        GUI.Label(new Rect(10, 70, 200, 20), $"Rollback: {rollbackFrames} F");
+        GUI.Label(new Rect(10, 180, 200, 20), $"Ping: {currentPingMs} ms");
+        GUI.Label(new Rect(10, 200, 200, 20), $"Rollback: {rollbackFrames} F");
         
-        if (GetIsStalling())
+        if (GetIsHardStalling())
         {
             GUI.contentColor = Color.red;
-            GUI.Label(new Rect(10, 90, 200, 20), "WAITING FOR NETWORK...");
+            GUI.Label(new Rect(10, 220, 200, 20), "WAITING FOR NETWORK (HARD STALL)...");
+        }
+        else if (GetIsSoftStalling())
+        {
+            GUI.contentColor = Color.yellow;
+            GUI.Label(new Rect(10, 220, 200, 20), "SYNCING TIME (SOFT STALL)...");
         }
     }
 
-    public bool GetIsStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
+    public bool GetIsHardStalling() => (currentTick - latestConfirmedTick) > maxRollbackFrames;
+    public bool GetIsSoftStalling() => isSoftStalling;
     public bool GetIsDesyncDetected() => isDesyncDetected;
     public int GetCurrentTick() => currentTick;
     public RoundTimerManager GetRoundTimer() => roundTimer;
@@ -204,6 +219,12 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    private void HandleMatchAborted(GameSceneType targetScene)
+    {
+        isSimulationRunning = false;
+        isRoundOver = true;
+    }
+
     private void HandleGameStartCommand()
     {
         isWaitingForGameStart = false;
@@ -221,6 +242,7 @@ public class GameLoopManager : MonoBehaviour
         isRoundOver = false;
         isDesyncDetected = false;
         isResimulating = false;
+        isSoftStalling = false;
         lastHashedTick = -1;
         latestConfirmedTick = 0;
         currentPingMs = 0;
@@ -286,8 +308,19 @@ public class GameLoopManager : MonoBehaviour
         VerifyRemoteInputsAndRollback(isP1Local);
         BroadcastSyncHashes();
 
-        if (currentTick - latestConfirmedTick > maxRollbackFrames)
+        int currentRollback = currentTick - latestConfirmedTick;
+        isSoftStalling = false;
+
+        if (currentRollback > maxRollbackFrames)
         {
+            ResendLastInput(isP1Local);
+            return;
+        }
+
+        bool isTimeSyncRequired = ShouldApplyTimeSync(currentRollback);
+        if (isTimeSyncRequired)
+        {
+            isSoftStalling = true;
             ResendLastInput(isP1Local);
             return;
         }
@@ -297,6 +330,24 @@ public class GameLoopManager : MonoBehaviour
 
         ProcessTick(new PlayerInput { flags = p1InputBuffer[currentTick % ROLLBACK_WINDOW] }, 
                     new PlayerInput { flags = p2InputBuffer[currentTick % ROLLBACK_WINDOW] });
+    }
+
+    private bool ShouldApplyTimeSync(int currentRollback)
+    {
+        float oneWayPingMs = currentPingMs / 2f;
+        int oneWayFrames = Mathf.RoundToInt(oneWayPingMs / (1000f / 60f));
+        int expectedRollback = Mathf.Max(0, oneWayFrames - inputDelayFrames);
+        int timeSyncThreshold = expectedRollback + 2;
+
+        bool isOverThreshold = currentRollback > timeSyncThreshold;
+        bool isSkipFrame = currentTick % 3 == 0;
+
+        if (isOverThreshold && isSkipFrame)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private void VerifyRemoteInputsAndRollback(bool isP1Local)

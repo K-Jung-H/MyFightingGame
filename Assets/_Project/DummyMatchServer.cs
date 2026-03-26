@@ -7,8 +7,6 @@ public class ServerRoom
 {
     public NetworkConnection p1;
     public NetworkConnection p2;
-    public float p1HeartbeatTime;
-    public float p2HeartbeatTime;
     public RoomStateModel stateModel;
     public bool isP1Ready;
     public bool isP2Ready;
@@ -22,8 +20,6 @@ public class ServerRoom
     {
         p1 = default;
         p2 = default;
-        p1HeartbeatTime = 0f;
-        p2HeartbeatTime = 0f;
         stateModel = new RoomStateModel();
         stateModel.isStageLocked = true;
         isP1Ready = false;
@@ -52,7 +48,11 @@ public class DummyMatchServer : MonoBehaviour
     private NativeList<NetworkConnection> connections;
     private ServerRoom currentRoom;
     private bool isMatchActive;
-    private const float SERVER_TIMEOUT_LIMIT = 10.0f;
+    
+    private bool isResetPending;
+    private float resetDelayTimer;
+    private List<string> serverLogs = new List<string>();
+    private const int MAX_LOG_LINES = 15;
 
     private void Update()
     {
@@ -83,7 +83,6 @@ public class DummyMatchServer : MonoBehaviour
                 }
                 else if (cmd == NetworkEvent.Type.Disconnect)
                 {
-                    Debug.Log("[Server] Explicit disconnect event received from a client.");
                     HandleDisconnect(connections[i]);
                     connections[i] = default;
                 }
@@ -91,27 +90,42 @@ public class DummyMatchServer : MonoBehaviour
         }
 
         UpdateRoomTimers();
-        CheckHeartbeatTimeouts();
+
+        if (isResetPending)
+        {
+            resetDelayTimer -= Time.deltaTime;
+            if (resetDelayTimer <= 0f)
+            {
+                ExecuteServerReset();
+            }
+        }
     }
 
     private void OnGUI()
     {
         if (currentRoom == null) return;
 
-        GUI.Box(new Rect(10, 10, 300, 250), "Server Room Status");
+        GUI.Box(new Rect(10, 10, 350, 250), "Server Room Status");
         
-        GUI.Label(new Rect(20, 40, 280, 20), $"P1 Connected: {currentRoom.p1.IsCreated}");
-        GUI.Label(new Rect(20, 60, 280, 20), $"P2 Connected: {currentRoom.p2.IsCreated}");
+        GUI.Label(new Rect(20, 40, 330, 20), $"P1 Connected: {currentRoom.p1.IsCreated} | Ready: {currentRoom.isP1Ready}");
+        GUI.Label(new Rect(20, 60, 330, 20), $"P2 Connected: {currentRoom.p2.IsCreated} | Ready: {currentRoom.isP2Ready}");
         
-        GUI.Label(new Rect(20, 90, 280, 20), $"P1 Side: {(currentRoom.stateModel.p1PreferredSide == 0 ? "Left" : "Right")}");
-        GUI.Label(new Rect(20, 110, 280, 20), $"P2 Side: {(currentRoom.stateModel.p2PreferredSide == 0 ? "Left" : "Right")}");
+        GUI.Label(new Rect(20, 90, 330, 20), $"P1 Side: {(currentRoom.stateModel.p1PreferredSide == 0 ? "Left" : "Right")}");
+        GUI.Label(new Rect(20, 110, 330, 20), $"P2 Side: {(currentRoom.stateModel.p2PreferredSide == 0 ? "Left" : "Right")}");
         
-        GUI.Label(new Rect(20, 140, 280, 20), $"P1 Char Index: {currentRoom.stateModel.p1CharacterIndex} (Locked: {currentRoom.stateModel.isP1CharacterLocked})");
-        GUI.Label(new Rect(20, 160, 280, 20), $"P2 Char Index: {currentRoom.stateModel.p2CharacterIndex} (Locked: {currentRoom.stateModel.isP2CharacterLocked})");
+        GUI.Label(new Rect(20, 140, 330, 20), $"P1 Char Index: {currentRoom.stateModel.p1CharacterIndex} (Locked: {currentRoom.stateModel.isP1CharacterLocked})");
+        GUI.Label(new Rect(20, 160, 330, 20), $"P2 Char Index: {currentRoom.stateModel.p2CharacterIndex} (Locked: {currentRoom.stateModel.isP2CharacterLocked})");
         
-        GUI.Label(new Rect(20, 190, 280, 20), $"Countdown: {(currentRoom.isCountdownStarted ? currentRoom.countdownTimer.ToString("F1") : (currentRoom.isCountdownFinished ? "Finished" : "Wait"))}");
-        
-        GUI.Label(new Rect(20, 220, 280, 20), $"P1 Start: {currentRoom.isP1StartRequested} / P2 Start: {currentRoom.isP2StartRequested}");
+        GUI.Label(new Rect(20, 190, 330, 20), $"Countdown: {(currentRoom.isCountdownStarted ? currentRoom.countdownTimer.ToString("F1") : (currentRoom.isCountdownFinished ? "Finished" : "Wait"))}");
+        GUI.Label(new Rect(20, 220, 330, 20), $"P1 Start: {currentRoom.isP1StartRequested} / P2 Start: {currentRoom.isP2StartRequested}");
+
+        GUI.Box(new Rect(370, 10, 400, 300), "Server Event Logs");
+        float logY = 35;
+        for (int i = 0; i < serverLogs.Count; i++)
+        {
+            GUI.Label(new Rect(380, logY, 380, 20), serverLogs[i]);
+            logY += 16;
+        }
     }
 
     private void OnDestroy()
@@ -123,14 +137,34 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
+    private void LogEvent(string msg)
+    {
+        Debug.Log($"[Server] {msg}");
+        serverLogs.Add(msg);
+        if (serverLogs.Count > MAX_LOG_LINES)
+        {
+            serverLogs.RemoveAt(0);
+        }
+    }
+
+    private NetworkDriver CreateConfiguredDriver()
+    {
+        NetworkSettings settings = new NetworkSettings();
+        settings.WithNetworkConfigParameters(
+            disconnectTimeoutMS: 5000,
+            heartbeatTimeoutMS: 500
+        );
+        return NetworkDriver.Create(settings);
+    }
+
     public void StartServer()
     {
-        driver = NetworkDriver.Create();
+        driver = CreateConfiguredDriver();
         NetworkEndpoint endpoint = NetworkEndpoint.AnyIpv4.WithPort(9000);
         
         if (driver.Bind(endpoint) != 0)
         {
-            Debug.LogError("[Server] Failed to bind port 9000.");
+            LogEvent("Failed to bind port 9000.");
             return;
         }
         
@@ -139,13 +173,13 @@ public class DummyMatchServer : MonoBehaviour
         currentRoom = new ServerRoom();
         isMatchActive = false;
         
-        Debug.Log("[Server] Dedicated Server started successfully on port 9000.");
+        LogEvent("Dedicated Server started on port 9000.");
     }
 
     public void SetMatchActive(bool active)
     {
         isMatchActive = active;
-        Debug.Log($"[Server] Match active state changed to: {active}");
+        LogEvent($"Match active state changed to: {active}");
     }
 
     private void CleanupConnections()
@@ -165,20 +199,18 @@ public class DummyMatchServer : MonoBehaviour
         if (!currentRoom.p1.IsCreated)
         {
             currentRoom.p1 = conn;
-            currentRoom.p1HeartbeatTime = Time.realtimeSinceStartup;
-            Debug.Log("[Server] P1 connected. Assigned to Slot 0.");
+            LogEvent("P1 connected. Assigned to Slot 0.");
             SendSlotId(conn, 0);
         }
         else if (!currentRoom.p2.IsCreated)
         {
             currentRoom.p2 = conn;
-            currentRoom.p2HeartbeatTime = Time.realtimeSinceStartup;
-            Debug.Log("[Server] P2 connected. Assigned to Slot 1.");
+            LogEvent("P2 connected. Assigned to Slot 1.");
             SendSlotId(conn, 1);
         }
         else
         {
-            Debug.Log("[Server] Room is full. Rejecting new connection.");
+            LogEvent("Room is full. Rejecting new connection.");
             driver.Disconnect(conn);
             return;
         }
@@ -196,7 +228,7 @@ public class DummyMatchServer : MonoBehaviour
             {
                 currentRoom.isCountdownStarted = false;
                 currentRoom.isCountdownFinished = true;
-                Debug.Log("[Server] Countdown finished. Broadcast StartButtonActive.");
+                LogEvent("Countdown finished. Broadcast StartButtonActive.");
                 BroadcastStartButtonActive(currentRoom);
             }
         }
@@ -206,13 +238,13 @@ public class DummyMatchServer : MonoBehaviour
     {
         byte packetType = stream.ReadByte();
         
-        if (currentRoom != null)
+        if (packetType == 22) 
         {
-            if (conn == currentRoom.p1) currentRoom.p1HeartbeatTime = Time.realtimeSinceStartup;
-            else if (conn == currentRoom.p2) currentRoom.p2HeartbeatTime = Time.realtimeSinceStartup;
+            float sentTime = stream.ReadFloat();
+            LogEvent($"Received ServerPing from {(conn == currentRoom.p1 ? "P1" : "P2")}");
+            SendServerPong(conn, sentTime);
         }
-        
-        if (packetType == NetworkPacketType.SelectUpdate)
+        else if (packetType == NetworkPacketType.SelectUpdate)
         {
             int playerIdx = stream.ReadInt();
             int charIdx = stream.ReadInt();
@@ -225,11 +257,13 @@ public class DummyMatchServer : MonoBehaviour
                 {
                     currentRoom.stateModel.p1CharacterIndex = charIdx;
                     currentRoom.stateModel.isP1CharacterLocked = isLocked;
+                    LogEvent($"P1 Character Update: Idx {charIdx}, Locked: {isLocked}");
                 }
                 else if (conn == currentRoom.p2) 
                 {
                     currentRoom.stateModel.p2CharacterIndex = charIdx;
                     currentRoom.stateModel.isP2CharacterLocked = isLocked;
+                    LogEvent($"P2 Character Update: Idx {charIdx}, Locked: {isLocked}");
                 }
 
                 BroadcastSelectState(currentRoom);
@@ -240,7 +274,7 @@ public class DummyMatchServer : MonoBehaviour
                     {
                         currentRoom.isCountdownStarted = true;
                         currentRoom.countdownTimer = 3f;
-                        Debug.Log("[Server] Both players locked. Starting 3-second countdown.");
+                        LogEvent("Both players locked. Starting countdown.");
                         BroadcastCountdownState(currentRoom, true);
                     }
                 }
@@ -263,6 +297,7 @@ public class DummyMatchServer : MonoBehaviour
                 if (conn == currentRoom.p1) currentRoom.stateModel.p1PreferredSide = side;
                 else if (conn == currentRoom.p2) currentRoom.stateModel.p2PreferredSide = side;
                 
+                LogEvent($"{(conn == currentRoom.p1 ? "P1" : "P2")} Side Update: {(side == 0 ? "Left" : "Right")}");
                 BroadcastSelectState(currentRoom);
             }
         }
@@ -273,9 +308,11 @@ public class DummyMatchServer : MonoBehaviour
                 if (conn == currentRoom.p1) currentRoom.isP1StartRequested = true;
                 else if (conn == currentRoom.p2) currentRoom.isP2StartRequested = true;
 
+                LogEvent($"Start requested by {(conn == currentRoom.p1 ? "P1" : "P2")}");
+
                 if (currentRoom.isP1StartRequested && currentRoom.isP2StartRequested)
                 {
-                    Debug.Log("[Server] Both players requested start. Initiating SceneChange.");
+                    LogEvent("Both players requested start. Initiating SceneChange.");
                     BroadcastSceneChange(currentRoom);
                 }
             }
@@ -284,14 +321,9 @@ public class DummyMatchServer : MonoBehaviour
         {
             ProcessHandshake(conn);
         }
-        else if (packetType == NetworkPacketType.ServerPing)
-        {
-            float sentTime = stream.ReadFloat();
-            SendServerPong(conn, sentTime);
-        }
         else if (packetType == NetworkPacketType.ReportDisconnect)
         {
-            Debug.Log($"[Server] Received P2P Disconnect Report from {(conn == currentRoom.p1 ? "P1" : "P2")}");
+            LogEvent($"Received ReportDisconnect from {(conn == currentRoom.p1 ? "P1" : "P2")}");
             ResolveDisconnect(conn);
         }
     }
@@ -303,9 +335,11 @@ public class DummyMatchServer : MonoBehaviour
             if (conn == currentRoom.p1) currentRoom.isP1Ready = true;
             else if (conn == currentRoom.p2) currentRoom.isP2Ready = true;
 
+            LogEvent($"Handshake received from {(conn == currentRoom.p1 ? "P1" : "P2")}");
+
             if (currentRoom.isP1Ready && currentRoom.isP2Ready)
             {
-                Debug.Log("[Server] Handshake complete. Match is now active.");
+                LogEvent("Handshake complete. Broadcasting GameStart.");
                 SetMatchActive(true);
                 BroadcastGameStart(currentRoom);
             }
@@ -320,7 +354,7 @@ public class DummyMatchServer : MonoBehaviour
 
         if (conn == currentRoom.p1)
         {
-            Debug.Log("[Server] P1 explicitly disconnected.");
+            LogEvent("P1 Disconnected.");
             currentRoom.p1 = default;
             currentRoom.stateModel.isP1CharacterLocked = false;
             currentRoom.isP1Ready = false;
@@ -329,7 +363,7 @@ public class DummyMatchServer : MonoBehaviour
         }
         else if (conn == currentRoom.p2)
         {
-            Debug.Log("[Server] P2 explicitly disconnected.");
+            LogEvent("P2 Disconnected.");
             currentRoom.p2 = default;
             currentRoom.stateModel.isP2CharacterLocked = false;
             currentRoom.isP2Ready = false;
@@ -342,8 +376,9 @@ public class DummyMatchServer : MonoBehaviour
             if (isMatchActive)
             {
                 NetworkConnection survivor = (conn == currentRoom.p1) ? currentRoom.p2 : currentRoom.p1;
+                LogEvent("Match active. Broadcasting MatchAborted to survivor.");
                 BroadcastMatchAborted(survivor, (int)GameSceneType.OnlineMatchedRoom);
-                ResetServerState();
+                ScheduleServerReset();
                 return;
             }
 
@@ -352,6 +387,7 @@ public class DummyMatchServer : MonoBehaviour
             currentRoom.countdownTimer = 3f;
             isMatchActive = false;
             
+            LogEvent("Resetting lobby state due to disconnection.");
             BroadcastCountdownState(currentRoom, false);
             BroadcastSelectState(currentRoom);
         }
@@ -363,6 +399,18 @@ public class DummyMatchServer : MonoBehaviour
         writer.WriteByte(NetworkPacketType.AssignSlot);
         writer.WriteInt(slotId);
         driver.EndSend(writer);
+    }
+
+    private void SendServerPong(NetworkConnection conn, float receivedTime)
+    {
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(23);
+            writer.WriteFloat(receivedTime);
+            LogEvent($"Sending ServerPong to {(conn == currentRoom.p1 ? "P1" : "P2")}");
+            driver.EndSend(writer);
+        }
     }
 
     private void BroadcastSelectState(ServerRoom room)
@@ -439,58 +487,19 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    private void SendServerPong(NetworkConnection conn, float receivedTime)
-    {
-        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
-        if (sendStatus == 0)
-        {
-            writer.WriteByte(NetworkPacketType.ServerPong);
-            writer.WriteFloat(receivedTime);
-            driver.EndSend(writer);
-        }
-    }
-
-    private void CheckHeartbeatTimeouts()
-    {
-        if (!isMatchActive || currentRoom == null) return;
-
-        float currentTime = Time.realtimeSinceStartup;
-        
-        if (currentRoom.p1HeartbeatTime > 0f && (currentTime - currentRoom.p1HeartbeatTime > SERVER_TIMEOUT_LIMIT))
-        {
-            Debug.LogWarning("[Server] P1 Server Ping Timeout! Initiating Disconnect Resolution.");
-            ResolveDisconnect(currentRoom.p2); 
-            return;
-        }
-        
-        if (currentRoom.p2HeartbeatTime > 0f && (currentTime - currentRoom.p2HeartbeatTime > SERVER_TIMEOUT_LIMIT))
-        {
-            Debug.LogWarning("[Server] P2 Server Ping Timeout! Initiating Disconnect Resolution.");
-            ResolveDisconnect(currentRoom.p1);
-            return;
-        }
-    }
-
     private void ResolveDisconnect(NetworkConnection reporterConn)
     {
         isMatchActive = false;
         
         bool isP1Reporter = (reporterConn == currentRoom.p1);
         NetworkConnection suspectConn = isP1Reporter ? currentRoom.p2 : currentRoom.p1;
-        float suspectHeartbeat = isP1Reporter ? currentRoom.p2HeartbeatTime : currentRoom.p1HeartbeatTime;
         
-        float currentTime = Time.realtimeSinceStartup;
-        bool isSuspectDead = (currentTime - suspectHeartbeat) > SERVER_TIMEOUT_LIMIT;
+        int targetSceneInt = (int)GameSceneType.OnlineMatchedRoom;
 
-        Debug.Log($"[Server] Resolving match end. Reporter is {(isP1Reporter ? "P1" : "P2")}. Is Suspect Dead? {isSuspectDead}");
+        if (reporterConn.IsCreated) BroadcastMatchAborted(reporterConn, targetSceneInt);
+        if (suspectConn.IsCreated) BroadcastMatchAborted(suspectConn, targetSceneInt);
 
-        int reporterTargetScene = isSuspectDead ? (int)GameSceneType.OnlineMatchedRoom : (int)GameSceneType.OnlineMatching;
-        int suspectTargetScene = (int)GameSceneType.OnlineMatching;
-
-        if (reporterConn.IsCreated) BroadcastMatchAborted(reporterConn, reporterTargetScene);
-        if (suspectConn.IsCreated) BroadcastMatchAborted(suspectConn, suspectTargetScene);
-
-        ResetServerState();
+        ScheduleServerReset();
     }
 
     private void BroadcastMatchAborted(NetworkConnection conn, int targetSceneInt)
@@ -506,9 +515,16 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    private void ResetServerState()
+    private void ScheduleServerReset()
     {
-        Debug.Log("[Server] Resetting Server State and clearing connections.");
+        LogEvent("Scheduling server reset in 0.5 seconds.");
+        isResetPending = true;
+        resetDelayTimer = 0.5f;
+    }
+
+    private void ExecuteServerReset()
+    {
+        LogEvent("Executing full server reset.");
         for (int i = 0; i < connections.Length; i++)
         {
             if (connections[i].IsCreated)
@@ -520,5 +536,6 @@ public class DummyMatchServer : MonoBehaviour
         connections.Clear();
         currentRoom = new ServerRoom();
         isMatchActive = false;
+        isResetPending = false;
     }
 }

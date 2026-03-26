@@ -29,6 +29,8 @@ public class GameFlowManager : MonoBehaviour
     public ConnectionMode currentMode = ConnectionMode.None;
     public GameSceneType currentScene = GameSceneType.Start;
 
+    [SerializeField] private Vector2 referenceResolution = new Vector2(1920f, 1080f);
+    
     [SerializeField] private string startSceneName = "StartScene";
     [SerializeField] private string gameModeSelectSceneName = "GameModeSelectScene";
     [SerializeField] private string onlineMatchingSceneName = "OnlineMatchingScene";
@@ -66,6 +68,11 @@ public class GameFlowManager : MonoBehaviour
 
     private void OnGUI()
     {
+        Vector3 scale = new Vector3(Screen.width / referenceResolution.x, Screen.height / referenceResolution.y, 1f);
+        float minScale = Mathf.Min(scale.x, scale.y);
+        scale = new Vector3(minScale, minScale, 1f);
+        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
+
         if (isFlowInitialized && currentScene != GameSceneType.OnlineMatching && currentScene != GameSceneType.Start)
         {
             DrawStatusGUI();
@@ -97,6 +104,11 @@ public class GameFlowManager : MonoBehaviour
     public IMatchSession GetCurrentSession()
     {
         return currentSession;
+    }
+
+    public Vector2 GetReferenceResolution()
+    {
+        return referenceResolution;
     }
 
     public void OnReceiveSceneChangeCommand(string targetScene)
@@ -146,8 +158,8 @@ public class GameFlowManager : MonoBehaviour
         float width = 250f;
         float height = 50f;
         float spacing = 15f;
-        float startX = (Screen.width - width) * 0.5f;
-        float startY = (Screen.height - (height * 2f + spacing)) * 0.5f;
+        float startX = (referenceResolution.x - width) * 0.5f;
+        float startY = (referenceResolution.y - (height * 2f + spacing)) * 0.5f;
 
         if (GUI.Button(new Rect(startX, startY, width, height), "Play Game (Player)"))
         {
@@ -170,8 +182,8 @@ public class GameFlowManager : MonoBehaviour
         float width = 200f;
         float height = 50f;
         float spacing = 15f;
-        float startX = (Screen.width - width) * 0.5f;
-        float startY = (Screen.height - (height * 2f + spacing)) * 0.5f;
+        float startX = (referenceResolution.x - width) * 0.5f;
+        float startY = (referenceResolution.y - (height * 2f + spacing)) * 0.5f;
 
         if (GUI.Button(new Rect(startX, startY, width, height), "Offline Mode"))
         {
@@ -194,8 +206,8 @@ public class GameFlowManager : MonoBehaviour
         float width = 200f;
         float height = 50f;
         float spacing = 15f;
-        float startX = (Screen.width - width) * 0.5f;
-        float startY = (Screen.height - (height * 2f + spacing * 2f)) * 0.5f;
+        float startX = (referenceResolution.x - width) * 0.5f;
+        float startY = (referenceResolution.y - (height * 2f + spacing * 2f)) * 0.5f;
 
         selectedPreferredSide = GUI.Toolbar(new Rect(startX, startY, width, 30f), selectedPreferredSide, new string[] { "Left Side", "Right Side" });
 
@@ -242,7 +254,7 @@ public class GameFlowManager : MonoBehaviour
     private void DrawStatusGUI()
     {
         float debugWidth = 300f;
-        float debugHeight = 30f;
+        float debugHeight = 20f;
         
         string modeStr = currentMode.ToString();
         bool isConnected = currentSession != null && NetworkSessionManager.Instance.GetIsConnected();
@@ -257,6 +269,6 @@ public class GameFlowManager : MonoBehaviour
             netStatus = isConnected ? "[Server Connected]" : "[Connecting...]";
         }
         
-        GUI.Label(new Rect(10f, 10f, debugWidth, debugHeight), $"{modeStr} | {netStatus}");
+        GUI.Label(new Rect(10f, 160f, debugWidth, debugHeight), $"{modeStr} | {netStatus}");
     }
 }
