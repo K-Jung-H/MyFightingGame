@@ -74,6 +74,7 @@ public class GameLoopManager : MonoBehaviour
     private int lastHashedTick;
     private bool isDesyncDetected;
     private int postMatchDelayTicks;
+    private int currentPingMs;
 
     private void Awake()
     {
@@ -88,6 +89,7 @@ public class GameLoopManager : MonoBehaviour
 
         NetworkSessionManager.Instance.OnPeerAddressReceived += HandlePeerConnection;
         NetworkSessionManager.Instance.OnGameStartReceived += HandleGameStartCommand;
+        NetworkSessionManager.Instance.OnPingUpdated += HandlePingUpdate;
 
         bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
         if (isOnline)
@@ -108,14 +110,17 @@ public class GameLoopManager : MonoBehaviour
         if (isOnline)
         {
             IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-            int localSlot = session.GetLocalPlayerSlot();
-
-            if (localSlot == 1)
+            if (session != null)
             {
-                NetworkSessionManager.Instance.StartP2PListen();
-            }
+                int localSlot = session.GetLocalPlayerSlot();
 
-            NetworkSessionManager.Instance.SendHandshake();
+                if (localSlot == 1)
+                {
+                    NetworkSessionManager.Instance.StartP2PListen();
+                }
+
+                NetworkSessionManager.Instance.SendHandshake();
+            }
         }
     }
 
@@ -125,6 +130,7 @@ public class GameLoopManager : MonoBehaviour
         {
             NetworkSessionManager.Instance.OnPeerAddressReceived -= HandlePeerConnection;
             NetworkSessionManager.Instance.OnGameStartReceived -= HandleGameStartCommand;
+            NetworkSessionManager.Instance.OnPingUpdated -= HandlePingUpdate;
         }
     }
 
@@ -149,6 +155,23 @@ public class GameLoopManager : MonoBehaviour
         else
         {
             ProcessOfflineTick();
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline) return;
+
+        int rollbackFrames = Mathf.Max(0, currentTick - latestConfirmedTick);
+        
+        GUI.contentColor = Color.white;
+        GUI.Label(new Rect(10, 50, 200, 20), $"Ping: {currentPingMs} ms");
+        GUI.Label(new Rect(10, 70, 200, 20), $"Rollback: {rollbackFrames} F");
+        
+        if (GetIsStalling())
+        {
+            GUI.contentColor = Color.red;
+            GUI.Label(new Rect(10, 90, 200, 20), "WAITING FOR NETWORK...");
         }
     }
 
@@ -187,6 +210,11 @@ public class GameLoopManager : MonoBehaviour
         InitializeMatch(true);
     }
 
+    private void HandlePingUpdate(int ping)
+    {
+        currentPingMs = ping;
+    }
+
     private void InitializeMatch(bool isNetworkReset)
     {
         currentTick = 0;
@@ -195,6 +223,7 @@ public class GameLoopManager : MonoBehaviour
         isResimulating = false;
         lastHashedTick = -1;
         latestConfirmedTick = 0;
+        currentPingMs = 0;
 
         postMatchDelayTicks = Mathf.RoundToInt(postMatchDelaySeconds * 60f);
 
@@ -235,17 +264,22 @@ public class GameLoopManager : MonoBehaviour
     private void HandlePeerConnection(string peerIp)
     {
         IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        int localSlot = session.GetLocalPlayerSlot();
-
-        if (localSlot == 0)
+        if (session != null)
         {
-            NetworkSessionManager.Instance.ConnectToPeer(peerIp);
+            int localSlot = session.GetLocalPlayerSlot();
+
+            if (localSlot == 0)
+            {
+                NetworkSessionManager.Instance.ConnectToPeer(peerIp);
+            }
         }
     }
 
     private void ProcessOnlineTick()
     {
         IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        if (session == null) return;
+
         int localPlayerIndex = session.GetLocalPlayerSlot();
         bool isP1Local = (localPlayerIndex == 0);
 
@@ -364,14 +398,8 @@ public class GameLoopManager : MonoBehaviour
             {
                 bool isHashMismatch = kvp.Value != remoteHash;
                 
-                if (isHashMismatch) 
-                {
-                    TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
-                }
-                else 
-                {
-                    isDesyncDetected = false;
-                }
+                if (isHashMismatch) TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
+                else isDesyncDetected = false;
                 
                 verifiedTicks.Add(kvp.Key);
             }
@@ -407,7 +435,10 @@ public class GameLoopManager : MonoBehaviour
             roundTimer.UpdateTick();
         }
         
-        simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref sharedDepthAxis, HandleHitSpark);
+        if (playerOne.controller != null && playerTwo.controller != null)
+        {
+            simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref sharedDepthAxis, HandleHitSpark);
+        }
 
         UpdateMatchState();
 
@@ -427,6 +458,8 @@ public class GameLoopManager : MonoBehaviour
 
     private void CheckRoundEndCondition()
     {
+        if (playerOne.controller == null || playerTwo.controller == null) return;
+
         int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
         int p2Hp = playerTwo.controller.GetCombat().GetCurrentHealth();
         int timeFrames = roundTimer.GetCurrentFrames();
@@ -459,6 +492,8 @@ public class GameLoopManager : MonoBehaviour
 
     private void ApplyFinalMatchResult()
     {
+        if (playerOne.controller == null || playerTwo.controller == null) return;
+
         int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
         int p2Hp = playerTwo.controller.GetCombat().GetCurrentHealth();
         int timeFrames = roundTimer.GetCurrentFrames();
@@ -542,7 +577,12 @@ public class GameLoopManager : MonoBehaviour
 
     private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
     {
-        if (context.characterData == null) return;
+        if (context.characterData == null)
+        {
+            Debug.LogError("[GameLoopManager] CharacterData is missing! Character initialization aborted.");
+            return;
+        }
+
         context.instance = Instantiate(context.characterData.characterPrefab, spawnPos, Quaternion.identity);
         context.renderer = context.instance.GetComponent<PlayerRenderer>();
         context.controller = new PlayerController();

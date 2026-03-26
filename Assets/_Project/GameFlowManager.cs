@@ -86,6 +86,14 @@ public class GameFlowManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (NetworkSessionManager.Instance != null)
+        {
+            NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
+        }
+    }
+
     public IMatchSession GetCurrentSession()
     {
         return currentSession;
@@ -195,6 +203,8 @@ public class GameFlowManager : MonoBehaviour
         {
             isFlowInitialized = true;
             NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1");
+            NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
+            NetworkSessionManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
             SetupOnlineClientSession();
         }
     }
@@ -212,6 +222,21 @@ public class GameFlowManager : MonoBehaviour
         };
         
         NetworkSessionManager.Instance.OnConnectionEstablished += onConnected;
+    }
+
+    private void HandleMatchAborted(GameSceneType targetScene)
+    {
+        currentSession = null;
+        isFlowInitialized = false;
+        
+        NetworkSessionManager.Instance.ResetNetworkSession();
+        
+        if (targetScene == GameSceneType.OnlineMatching)
+        {
+            currentMode = ConnectionMode.OnlineClient;
+        }
+        
+        ChangeScene(targetScene);
     }
 
     private void DrawStatusGUI()

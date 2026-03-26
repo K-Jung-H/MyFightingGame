@@ -7,6 +7,8 @@ public class ServerRoom
 {
     public NetworkConnection p1;
     public NetworkConnection p2;
+    public float p1HeartbeatTime;
+    public float p2HeartbeatTime;
     public RoomStateModel stateModel;
     public bool isP1Ready;
     public bool isP2Ready;
@@ -20,6 +22,8 @@ public class ServerRoom
     {
         p1 = default;
         p2 = default;
+        p1HeartbeatTime = 0f;
+        p2HeartbeatTime = 0f;
         stateModel = new RoomStateModel();
         stateModel.isStageLocked = true;
         isP1Ready = false;
@@ -47,21 +51,15 @@ public class DummyMatchServer : MonoBehaviour
     private NetworkDriver driver;
     private NativeList<NetworkConnection> connections;
     private ServerRoom currentRoom;
-
-    private void OnDestroy()
-    {
-        if (driver.IsCreated)
-        {
-            driver.Dispose();
-            connections.Dispose();
-        }
-    }
+    private bool isMatchActive;
+    private const float SERVER_TIMEOUT_LIMIT = 10.0f;
 
     private void Update()
     {
         if (!driver.IsCreated) return;
 
         driver.ScheduleUpdate().Complete();
+        CleanupConnections();
 
         NetworkConnection c;
         while ((c = driver.Accept()) != default)
@@ -85,6 +83,7 @@ public class DummyMatchServer : MonoBehaviour
                 }
                 else if (cmd == NetworkEvent.Type.Disconnect)
                 {
+                    Debug.Log("[Server] Explicit disconnect event received from a client.");
                     HandleDisconnect(connections[i]);
                     connections[i] = default;
                 }
@@ -92,6 +91,7 @@ public class DummyMatchServer : MonoBehaviour
         }
 
         UpdateRoomTimers();
+        CheckHeartbeatTimeouts();
     }
 
     private void OnGUI()
@@ -114,16 +114,50 @@ public class DummyMatchServer : MonoBehaviour
         GUI.Label(new Rect(20, 220, 280, 20), $"P1 Start: {currentRoom.isP1StartRequested} / P2 Start: {currentRoom.isP2StartRequested}");
     }
 
+    private void OnDestroy()
+    {
+        if (driver.IsCreated)
+        {
+            driver.Dispose();
+            connections.Dispose();
+        }
+    }
+
     public void StartServer()
     {
         driver = NetworkDriver.Create();
         NetworkEndpoint endpoint = NetworkEndpoint.AnyIpv4.WithPort(9000);
         
-        if (driver.Bind(endpoint) != 0) return;
+        if (driver.Bind(endpoint) != 0)
+        {
+            Debug.LogError("[Server] Failed to bind port 9000.");
+            return;
+        }
         
         driver.Listen();
         connections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
         currentRoom = new ServerRoom();
+        isMatchActive = false;
+        
+        Debug.Log("[Server] Dedicated Server started successfully on port 9000.");
+    }
+
+    public void SetMatchActive(bool active)
+    {
+        isMatchActive = active;
+        Debug.Log($"[Server] Match active state changed to: {active}");
+    }
+
+    private void CleanupConnections()
+    {
+        for (int i = 0; i < connections.Length; i++)
+        {
+            if (!connections[i].IsCreated)
+            {
+                connections.RemoveAtSwapBack(i);
+                i--;
+            }
+        }
     }
 
     private void HandleNewConnection(NetworkConnection conn)
@@ -131,15 +165,20 @@ public class DummyMatchServer : MonoBehaviour
         if (!currentRoom.p1.IsCreated)
         {
             currentRoom.p1 = conn;
+            currentRoom.p1HeartbeatTime = Time.realtimeSinceStartup;
+            Debug.Log("[Server] P1 connected. Assigned to Slot 0.");
             SendSlotId(conn, 0);
         }
         else if (!currentRoom.p2.IsCreated)
         {
             currentRoom.p2 = conn;
+            currentRoom.p2HeartbeatTime = Time.realtimeSinceStartup;
+            Debug.Log("[Server] P2 connected. Assigned to Slot 1.");
             SendSlotId(conn, 1);
         }
         else
         {
+            Debug.Log("[Server] Room is full. Rejecting new connection.");
             driver.Disconnect(conn);
             return;
         }
@@ -157,6 +196,7 @@ public class DummyMatchServer : MonoBehaviour
             {
                 currentRoom.isCountdownStarted = false;
                 currentRoom.isCountdownFinished = true;
+                Debug.Log("[Server] Countdown finished. Broadcast StartButtonActive.");
                 BroadcastStartButtonActive(currentRoom);
             }
         }
@@ -165,6 +205,12 @@ public class DummyMatchServer : MonoBehaviour
     private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
     {
         byte packetType = stream.ReadByte();
+        
+        if (currentRoom != null)
+        {
+            if (conn == currentRoom.p1) currentRoom.p1HeartbeatTime = Time.realtimeSinceStartup;
+            else if (conn == currentRoom.p2) currentRoom.p2HeartbeatTime = Time.realtimeSinceStartup;
+        }
         
         if (packetType == NetworkPacketType.SelectUpdate)
         {
@@ -194,6 +240,7 @@ public class DummyMatchServer : MonoBehaviour
                     {
                         currentRoom.isCountdownStarted = true;
                         currentRoom.countdownTimer = 3f;
+                        Debug.Log("[Server] Both players locked. Starting 3-second countdown.");
                         BroadcastCountdownState(currentRoom, true);
                     }
                 }
@@ -228,6 +275,7 @@ public class DummyMatchServer : MonoBehaviour
 
                 if (currentRoom.isP1StartRequested && currentRoom.isP2StartRequested)
                 {
+                    Debug.Log("[Server] Both players requested start. Initiating SceneChange.");
                     BroadcastSceneChange(currentRoom);
                 }
             }
@@ -235,6 +283,16 @@ public class DummyMatchServer : MonoBehaviour
         else if (packetType == NetworkPacketType.Handshake)
         {
             ProcessHandshake(conn);
+        }
+        else if (packetType == NetworkPacketType.ServerPing)
+        {
+            float sentTime = stream.ReadFloat();
+            SendServerPong(conn, sentTime);
+        }
+        else if (packetType == NetworkPacketType.ReportDisconnect)
+        {
+            Debug.Log($"[Server] Received P2P Disconnect Report from {(conn == currentRoom.p1 ? "P1" : "P2")}");
+            ResolveDisconnect(conn);
         }
     }
 
@@ -247,6 +305,8 @@ public class DummyMatchServer : MonoBehaviour
 
             if (currentRoom.isP1Ready && currentRoom.isP2Ready)
             {
+                Debug.Log("[Server] Handshake complete. Match is now active.");
+                SetMatchActive(true);
                 BroadcastGameStart(currentRoom);
             }
         }
@@ -260,6 +320,7 @@ public class DummyMatchServer : MonoBehaviour
 
         if (conn == currentRoom.p1)
         {
+            Debug.Log("[Server] P1 explicitly disconnected.");
             currentRoom.p1 = default;
             currentRoom.stateModel.isP1CharacterLocked = false;
             currentRoom.isP1Ready = false;
@@ -268,6 +329,7 @@ public class DummyMatchServer : MonoBehaviour
         }
         else if (conn == currentRoom.p2)
         {
+            Debug.Log("[Server] P2 explicitly disconnected.");
             currentRoom.p2 = default;
             currentRoom.stateModel.isP2CharacterLocked = false;
             currentRoom.isP2Ready = false;
@@ -277,9 +339,18 @@ public class DummyMatchServer : MonoBehaviour
 
         if (isMatched)
         {
+            if (isMatchActive)
+            {
+                NetworkConnection survivor = (conn == currentRoom.p1) ? currentRoom.p2 : currentRoom.p1;
+                BroadcastMatchAborted(survivor, (int)GameSceneType.OnlineMatchedRoom);
+                ResetServerState();
+                return;
+            }
+
             currentRoom.isCountdownStarted = false;
             currentRoom.isCountdownFinished = false;
             currentRoom.countdownTimer = 3f;
+            isMatchActive = false;
             
             BroadcastCountdownState(currentRoom, false);
             BroadcastSelectState(currentRoom);
@@ -366,5 +437,88 @@ public class DummyMatchServer : MonoBehaviour
         FixedString64Bytes peerIp = new FixedString64Bytes("127.0.0.1");
         writer.WriteFixedString64(peerIp);
         driver.EndSend(writer);
+    }
+
+    private void SendServerPong(NetworkConnection conn, float receivedTime)
+    {
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.ServerPong);
+            writer.WriteFloat(receivedTime);
+            driver.EndSend(writer);
+        }
+    }
+
+    private void CheckHeartbeatTimeouts()
+    {
+        if (!isMatchActive || currentRoom == null) return;
+
+        float currentTime = Time.realtimeSinceStartup;
+        
+        if (currentRoom.p1HeartbeatTime > 0f && (currentTime - currentRoom.p1HeartbeatTime > SERVER_TIMEOUT_LIMIT))
+        {
+            Debug.LogWarning("[Server] P1 Server Ping Timeout! Initiating Disconnect Resolution.");
+            ResolveDisconnect(currentRoom.p2); 
+            return;
+        }
+        
+        if (currentRoom.p2HeartbeatTime > 0f && (currentTime - currentRoom.p2HeartbeatTime > SERVER_TIMEOUT_LIMIT))
+        {
+            Debug.LogWarning("[Server] P2 Server Ping Timeout! Initiating Disconnect Resolution.");
+            ResolveDisconnect(currentRoom.p1);
+            return;
+        }
+    }
+
+    private void ResolveDisconnect(NetworkConnection reporterConn)
+    {
+        isMatchActive = false;
+        
+        bool isP1Reporter = (reporterConn == currentRoom.p1);
+        NetworkConnection suspectConn = isP1Reporter ? currentRoom.p2 : currentRoom.p1;
+        float suspectHeartbeat = isP1Reporter ? currentRoom.p2HeartbeatTime : currentRoom.p1HeartbeatTime;
+        
+        float currentTime = Time.realtimeSinceStartup;
+        bool isSuspectDead = (currentTime - suspectHeartbeat) > SERVER_TIMEOUT_LIMIT;
+
+        Debug.Log($"[Server] Resolving match end. Reporter is {(isP1Reporter ? "P1" : "P2")}. Is Suspect Dead? {isSuspectDead}");
+
+        int reporterTargetScene = isSuspectDead ? (int)GameSceneType.OnlineMatchedRoom : (int)GameSceneType.OnlineMatching;
+        int suspectTargetScene = (int)GameSceneType.OnlineMatching;
+
+        if (reporterConn.IsCreated) BroadcastMatchAborted(reporterConn, reporterTargetScene);
+        if (suspectConn.IsCreated) BroadcastMatchAborted(suspectConn, suspectTargetScene);
+
+        ResetServerState();
+    }
+
+    private void BroadcastMatchAborted(NetworkConnection conn, int targetSceneInt)
+    {
+        if (!conn.IsCreated) return;
+
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.MatchAborted);
+            writer.WriteInt(targetSceneInt);
+            driver.EndSend(writer);
+        }
+    }
+
+    private void ResetServerState()
+    {
+        Debug.Log("[Server] Resetting Server State and clearing connections.");
+        for (int i = 0; i < connections.Length; i++)
+        {
+            if (connections[i].IsCreated)
+            {
+                driver.Disconnect(connections[i]);
+            }
+        }
+        
+        connections.Clear();
+        currentRoom = new ServerRoom();
+        isMatchActive = false;
     }
 }
