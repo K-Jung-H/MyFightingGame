@@ -15,6 +15,7 @@ public enum GameSceneType
 {
     Start,
     GameModeSelect,
+    Training,
     OnlineMatching,
     OnlineMatchedRoom,
     CharacterSelect,
@@ -28,6 +29,7 @@ public class GameFlowManager : MonoBehaviour
 
     public ConnectionMode currentMode = ConnectionMode.None;
     public GameSceneType currentScene = GameSceneType.Start;
+    public GameSceneType previousScene = GameSceneType.Start;
 
     [SerializeField] private Vector2 referenceResolution = new Vector2(1920f, 1080f);
     
@@ -73,21 +75,14 @@ public class GameFlowManager : MonoBehaviour
         scale = new Vector3(minScale, minScale, 1f);
         GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
 
-        if (isFlowInitialized && currentScene != GameSceneType.OnlineMatching && currentScene != GameSceneType.Start)
+        bool isOnlineMode = (currentMode == ConnectionMode.OnlineClient || currentMode == ConnectionMode.OnlineHost);
+        if (isFlowInitialized && isOnlineMode)
         {
-            DrawStatusGUI();
+            DrawNetworkStatusGUI();
             if (currentScene == GameSceneType.Server) return;
         }
 
-        if (currentScene == GameSceneType.Start)
-        {
-            DrawStartGUI();
-        }
-        else if (currentScene == GameSceneType.GameModeSelect)
-        {
-            DrawModeSelectGUI();
-        }
-        else if (currentScene == GameSceneType.OnlineMatching)
+        if (currentScene == GameSceneType.OnlineMatching)
         {
             DrawOnlineMatchingGUI();
         }
@@ -121,6 +116,7 @@ public class GameFlowManager : MonoBehaviour
 
     public void ChangeScene(GameSceneType targetSceneType)
     {
+        previousScene = currentScene;
         currentScene = targetSceneType;
 
         if (currentScene == GameSceneType.Start)
@@ -153,52 +149,49 @@ public class GameFlowManager : MonoBehaviour
         }
     }
 
-    private void DrawStartGUI()
+    public void GoBack()
     {
-        float width = 250f;
-        float height = 50f;
-        float spacing = 15f;
-        float startX = (referenceResolution.x - width) * 0.5f;
-        float startY = (referenceResolution.y - (height * 2f + spacing)) * 0.5f;
-
-        if (GUI.Button(new Rect(startX, startY, width, height), "Play Game (Player)"))
+        if (currentScene != previousScene)
         {
-            ChangeScene(GameSceneType.GameModeSelect);
-        }
+            if (currentMode != ConnectionMode.None && previousScene == GameSceneType.GameModeSelect)
+            {
+                currentMode = ConnectionMode.None;
+                currentSession = null;
+                isFlowInitialized = false;
+            }
 
-        if (GUI.Button(new Rect(startX, startY + height + spacing, width, height), "Run Dedicated Server"))
-        {
-            currentMode = ConnectionMode.DedicatedServer;
-            isFlowInitialized = true;
-            
-            dummyServer = gameObject.AddComponent<DummyMatchServer>();
-            dummyServer.StartServer();
-            ChangeScene(GameSceneType.Server);
+            ChangeScene(previousScene);
         }
     }
 
-    private void DrawModeSelectGUI()
+    public void StartDedicatedServer()
     {
-        float width = 200f;
-        float height = 50f;
-        float spacing = 15f;
-        float startX = (referenceResolution.x - width) * 0.5f;
-        float startY = (referenceResolution.y - (height * 2f + spacing)) * 0.5f;
+        currentMode = ConnectionMode.DedicatedServer;
+        isFlowInitialized = true;
+            
+        dummyServer = gameObject.AddComponent<DummyMatchServer>();
+        dummyServer.StartServer();
+        ChangeScene(GameSceneType.Server);
+    }
 
-        if (GUI.Button(new Rect(startX, startY, width, height), "Offline Mode"))
-        {
-            currentMode = ConnectionMode.Offline;
-            isFlowInitialized = true;
-            currentSession = new OfflineMatchSession();
-            currentSession.SendSideUpdate(0);
-            ChangeScene(GameSceneType.CharacterSelect);
-        }
+    public void SelectTrainingMode()
+    {
+        Debug.Log("Training Mode Selected");
+    }
 
-        if (GUI.Button(new Rect(startX, startY + height + spacing, width, height), "Online Client"))
-        {
-            currentMode = ConnectionMode.OnlineClient;
-            ChangeScene(GameSceneType.OnlineMatching);
-        }
+    public void SelectOfflineMode()
+    {
+        currentMode = ConnectionMode.Offline;
+        isFlowInitialized = true;
+        currentSession = new OfflineMatchSession();
+        currentSession.SendSideUpdate(0);
+        ChangeScene(GameSceneType.CharacterSelect);
+    }
+
+    public void SelectOnlineMode()
+    {
+        currentMode = ConnectionMode.OnlineClient;
+        ChangeScene(GameSceneType.OnlineMatching);
     }
 
     private void DrawOnlineMatchingGUI()
@@ -251,10 +244,12 @@ public class GameFlowManager : MonoBehaviour
         ChangeScene(targetScene);
     }
 
-    private void DrawStatusGUI()
+    private void DrawNetworkStatusGUI()
     {
-        float debugWidth = 300f;
-        float debugHeight = 20f;
+        float boxWidth = 420f;
+        float boxHeight = 60f;
+        float startX = 10f;
+        float startY = 360f;
         
         string modeStr = currentMode.ToString();
         bool isConnected = currentSession != null && NetworkSessionManager.Instance.GetIsConnected();
@@ -268,7 +263,14 @@ public class GameFlowManager : MonoBehaviour
         {
             netStatus = isConnected ? "[Server Connected]" : "[Connecting...]";
         }
+
+        string displayText = $"{modeStr} | {netStatus}";
         
-        GUI.Label(new Rect(10f, 160f, debugWidth, debugHeight), $"{modeStr} | {netStatus}");
+        GUIStyle customLabelStyle = new GUIStyle(GUI.skin.label);
+        customLabelStyle.fontSize = 18;
+        customLabelStyle.alignment = TextAnchor.MiddleLeft;
+
+        GUI.Box(new Rect(startX, startY, boxWidth, boxHeight), "");
+        GUI.Label(new Rect(startX + 10f, startY + 5f, boxWidth - 20f, boxHeight - 10f), displayText, customLabelStyle);
     }
 }

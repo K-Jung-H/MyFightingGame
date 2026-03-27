@@ -64,6 +64,16 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void Start()
     {
+        // if (countdownText != null)
+        // {
+        //     countdownText.gameObject.SetActive(false);
+        // }
+
+        if (startButtonObject != null)
+        {
+            startButtonObject.SetActive(false);
+        }
+        
         character3DLayer = LayerMask.NameToLayer("Character3D");
         gridTiles = characterGridPanel.GetComponentsInChildren<CharacterSelectTile>();
 
@@ -77,6 +87,7 @@ public class CharacterSelectManager : MonoBehaviour
             {
                 gridTiles[i].SetupTile(characterRoster[i].portraitSprite);
             }
+            UpdateTileVisual(i);
         }
 
         p1Context.inputBinding = InputBinding.GetDefaultP1();
@@ -395,16 +406,47 @@ public class CharacterSelectManager : MonoBehaviour
     private void UpdateCharacterDisplay(PlayerSelectContext context)
     {
         CharacterSelectDataSO data = characterRoster[context.currentIndex];
+        
         if (context.illustrationImage != null)
         {
             context.illustrationImage.sprite = data.fullBodySprite;
-            Vector3 scale = context.illustrationImage.rectTransform.localScale;
-            scale.x = context.isMirrored ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
-            context.illustrationImage.rectTransform.localScale = scale;
+            ApplyPivotAndSize(context.illustrationImage, data.fullBodySprite, context.isMirrored);
         }
+        
         if (context.nameText != null) context.nameText.text = data.characterName;
+        
         if (context.loadCoroutine != null) StopCoroutine(context.loadCoroutine);
         context.loadCoroutine = StartCoroutine(SpawnModelRoutine(context, context.currentIndex));
+    }
+
+    private void ApplyPivotAndSize(Image img, Sprite sprite, bool isMirrored)
+    {
+        if (img == null || sprite == null) return;
+
+        RectTransform rt = img.rectTransform;
+        RectTransform parentRt = rt.parent.GetComponent<RectTransform>();
+
+        rt.anchorMin = new Vector2(0.5f, 0f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+
+        float normalizedPivotX = sprite.pivot.x / sprite.rect.width;
+        float normalizedPivotY = sprite.pivot.y / sprite.rect.height;
+        rt.pivot = new Vector2(normalizedPivotX, normalizedPivotY);
+
+        float parentHeight = parentRt.rect.height;
+        float actualHeight = parentHeight - 30f;
+        float targetWidth = actualHeight * (sprite.rect.width / sprite.rect.height);
+
+        rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+
+        rt.offsetMin = new Vector2(rt.offsetMin.x, 0f);
+        rt.offsetMax = new Vector2(rt.offsetMax.x, -30f);
+
+        rt.anchoredPosition = new Vector2(0f, rt.anchoredPosition.y);
+
+        Vector3 scale = rt.localScale;
+        scale.x = isMirrored ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+        rt.localScale = scale;
     }
 
     private IEnumerator SpawnModelRoutine(PlayerSelectContext context, int targetIndex)
