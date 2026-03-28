@@ -6,7 +6,6 @@ public enum ConnectionMode
 {
     None,
     Offline,
-    OnlineHost,
     OnlineClient,
     DedicatedServer
 }
@@ -44,7 +43,6 @@ public class GameFlowManager : MonoBehaviour
     private IMatchSession currentSession;
     private DummyMatchServer dummyServer;
     private bool isFlowInitialized;
-    private int selectedPreferredSide = 0;
 
     private void Awake()
     {
@@ -70,22 +68,13 @@ public class GameFlowManager : MonoBehaviour
 
     private void OnGUI()
     {
-        Vector3 scale = new Vector3(Screen.width / referenceResolution.x, Screen.height / referenceResolution.y, 1f);
-        float minScale = Mathf.Min(scale.x, scale.y);
-        scale = new Vector3(minScale, minScale, 1f);
-        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
-
-        bool isOnlineMode = (currentMode == ConnectionMode.OnlineClient || currentMode == ConnectionMode.OnlineHost);
+        bool isOnlineMode = (currentMode == ConnectionMode.OnlineClient);
         if (isFlowInitialized && isOnlineMode)
         {
             DrawNetworkStatusGUI();
             if (currentScene == GameSceneType.Server) return;
         }
-
-        if (currentScene == GameSceneType.OnlineMatching)
-        {
-            DrawOnlineMatchingGUI();
-        }
+   
     }
 
     private void OnDestroy()
@@ -194,36 +183,25 @@ public class GameFlowManager : MonoBehaviour
         ChangeScene(GameSceneType.OnlineMatching);
     }
 
-    private void DrawOnlineMatchingGUI()
+    public void StartOnlineMatch(int preferredSide, int keyBindIndex)
     {
-        float width = 200f;
-        float height = 50f;
-        float spacing = 15f;
-        float startX = (referenceResolution.x - width) * 0.5f;
-        float startY = (referenceResolution.y - (height * 2f + spacing * 2f)) * 0.5f;
-
-        selectedPreferredSide = GUI.Toolbar(new Rect(startX, startY, width, 30f), selectedPreferredSide, new string[] { "Left Side", "Right Side" });
-
-        if (GUI.Button(new Rect(startX, startY + 70f, width, height), "Select Side & Connect"))
-        {
-            isFlowInitialized = true;
-            NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1");
-            NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
-            NetworkSessionManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
-            SetupOnlineClientSession();
-        }
-    }
-
-    private void SetupOnlineClientSession()
-    {
+        isFlowInitialized = true;
+        
+        NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1");
+        NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
+        NetworkSessionManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
+        
         currentSession = new OnlineClientSession();
         
-        Action onConnected = null;
+        System.Action onConnected = null;
         onConnected = () => 
         {
-            currentSession.SendSideUpdate(selectedPreferredSide);
+            currentSession.SendSideUpdate(preferredSide);
             ChangeScene(GameSceneType.CharacterSelect);
-            NetworkSessionManager.Instance.OnConnectionEstablished -= onConnected;
+            if (NetworkSessionManager.Instance != null)
+            {
+                NetworkSessionManager.Instance.OnConnectionEstablished -= onConnected;
+            }
         };
         
         NetworkSessionManager.Instance.OnConnectionEstablished += onConnected;

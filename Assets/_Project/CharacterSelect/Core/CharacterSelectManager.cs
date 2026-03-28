@@ -64,10 +64,10 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void Start()
     {
-        // if (countdownText != null)
-        // {
-        //     countdownText.gameObject.SetActive(false);
-        // }
+        if (countdownText != null)
+        {
+            countdownText.text = "";
+        }
 
         if (startButtonObject != null)
         {
@@ -101,6 +101,40 @@ public class CharacterSelectManager : MonoBehaviour
         UpdateLockUI(p2Context);
     }
 
+    private void Update()
+    {
+        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
+        
+        UpdateNetworkState(currentMode);
+
+        if (!isEventsSubscribed)
+        {
+            if (currentMode == ConnectionMode.None) return;
+
+            SubscribeToFlowEvents(currentMode);
+            isEventsSubscribed = true;
+        }
+
+        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
+        if (session != null)
+        {
+            session.UpdateSession(Time.deltaTime);
+        }
+
+        UpdateCountdownUI();
+
+        if (isMatchStarted || !isLobbyReady) return;
+
+        if (currentMode == ConnectionMode.Offline)
+        {
+            ProcessOfflineModeInput();
+        }
+        else if (currentMode == ConnectionMode.OnlineClient)
+        {
+            ProcessOnlineModeInput(session);
+        }
+    }
+
     private void OnDestroy()
     {
         IMatchSession session = GameFlowManager.Instance?.GetCurrentSession();
@@ -120,66 +154,13 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void UpdateNetworkState(ConnectionMode mode)
     {
-        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
-        
-        if (currentMode == ConnectionMode.OnlineHost || currentMode == ConnectionMode.OnlineClient)
+        if (mode == ConnectionMode.OnlineClient)
         {
             if (NetworkSessionManager.Instance != null)
             {
                 NetworkSessionManager.Instance.UpdateNetwork();
-            }
-        }
-
-        if (!isEventsSubscribed)
-        {
-            if (currentMode == ConnectionMode.None) return;
-
-            SubscribeToFlowEvents(currentMode);
-            isEventsSubscribed = true;
-        }
-
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session != null)
-        {
-            session.UpdateSession(Time.deltaTime);
-        }
-
-        if (isLocalCountdownActive)
-        {
-            localCountdownTimer -= Time.deltaTime;
-            if (countdownText != null)
-            {
-                int currentSeconds = Mathf.CeilToInt(localCountdownTimer);
-                if (currentSeconds != lastDisplayedCountdown)
-                {
-                    lastDisplayedCountdown = currentSeconds;
-                    countdownText.text = currentSeconds.ToString();
-                }
-            }
-        }
-
-        if (isMatchStarted || !isLobbyReady) return;
-
-        if (currentMode == ConnectionMode.Offline)
-        {
-            HandleLocalInput(1, p1Context);
-            HandleLocalInput(2, p2Context);
-        }
-        else
-        {
-            if (session != null)
-            {
-                int localSlot = session.GetLocalPlayerSlot();
-                if (localSlot == 0)
-                {
-                    HandleLocalInput(1, p1Context);
-                }
-                else if (localSlot == 1)
-                {
-                    HandleLocalInput(2, p2Context);
-                }
             }
         }
     }
@@ -194,15 +175,53 @@ public class CharacterSelectManager : MonoBehaviour
             session.OnSceneChange += HandleSceneChangeCommand;
         }
 
-        if (mode == ConnectionMode.Offline || mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient)
+        if (mode == ConnectionMode.Offline || mode == ConnectionMode.OnlineClient)
         {
             isLobbyReady = true;
 
-            if ((mode == ConnectionMode.OnlineHost || mode == ConnectionMode.OnlineClient) && NetworkSessionManager.Instance != null)
+            if (mode == ConnectionMode.OnlineClient && NetworkSessionManager.Instance != null)
             {
                 OnSelectBroadcastAction = HandleNetworkSelectBroadcast;
                 NetworkSessionManager.Instance.OnSelectBroadcastReceived += OnSelectBroadcastAction;
             }
+        }
+    }
+
+    private void UpdateCountdownUI()
+    {
+        if (isLocalCountdownActive)
+        {
+            localCountdownTimer -= Time.deltaTime;
+            if (countdownText != null)
+            {
+                int currentSeconds = Mathf.CeilToInt(localCountdownTimer);
+                if (currentSeconds != lastDisplayedCountdown)
+                {
+                    lastDisplayedCountdown = currentSeconds;
+                    countdownText.text = currentSeconds.ToString();
+                }
+            }
+        }
+    }
+
+    private void ProcessOfflineModeInput()
+    {
+        HandleLocalInput(1, p1Context);
+        HandleLocalInput(2, p2Context);
+    }
+
+    private void ProcessOnlineModeInput(IMatchSession session)
+    {
+        if (session == null) return;
+
+        int localSlot = session.GetLocalPlayerSlot();
+        if (localSlot == 0)
+        {
+            HandleLocalInput(1, p1Context);
+        }
+        else if (localSlot == 1)
+        {
+            HandleLocalInput(2, p2Context);
         }
     }
 
@@ -317,9 +336,9 @@ public class CharacterSelectManager : MonoBehaviour
         isStartButtonReady = false;
         lastDisplayedCountdown = -1;
 
-        if (countdownText != null) 
+        if (countdownText != null && !isStarted) 
         {
-            countdownText.gameObject.SetActive(isStarted);
+            countdownText.text = "";
         }
         
         if (startButtonObject != null)
@@ -335,7 +354,7 @@ public class CharacterSelectManager : MonoBehaviour
 
         if (countdownText != null) 
         {
-            countdownText.gameObject.SetActive(false);
+            countdownText.text = "";
         }
         
         if (startButtonObject != null)
@@ -419,6 +438,28 @@ public class CharacterSelectManager : MonoBehaviour
         context.loadCoroutine = StartCoroutine(SpawnModelRoutine(context, context.currentIndex));
     }
 
+    private IEnumerator SpawnModelRoutine(PlayerSelectContext context, int targetIndex)
+    {
+        yield return new WaitForSeconds(modelLoadDelay);
+        if (context.currentIndex != targetIndex) yield break;
+        if (context.currentModel != null) Destroy(context.currentModel);
+
+        CharacterSelectDataSO data = characterRoster[targetIndex];
+        if (data.modelPrefab != null)
+        {
+            context.currentModel = Instantiate(data.modelPrefab, context.displayTransform.position, context.displayTransform.rotation, context.displayTransform);
+            SetLayerRecursively(context.currentModel, character3DLayer);
+            Animator anim = context.currentModel.GetComponentInChildren<Animator>();
+            if (anim != null && sharedSelectAnimator != null)
+            {
+                anim.runtimeAnimatorController = sharedSelectAnimator;
+                anim.SetBool("IsMirrored", context.isMirrored);
+                context.lastIdleIndex = (maxRandomIdles > 1) ? UnityEngine.Random.Range(0, maxRandomIdles) : 0;
+                anim.Play("Selecting_Idle_" + context.lastIdleIndex, 0, 0f);
+            }
+        }
+    }
+
     private void ApplyPivotAndSize(Image img, Sprite sprite, bool isMirrored)
     {
         if (img == null || sprite == null) return;
@@ -447,28 +488,6 @@ public class CharacterSelectManager : MonoBehaviour
         Vector3 scale = rt.localScale;
         scale.x = isMirrored ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
         rt.localScale = scale;
-    }
-
-    private IEnumerator SpawnModelRoutine(PlayerSelectContext context, int targetIndex)
-    {
-        yield return new WaitForSeconds(modelLoadDelay);
-        if (context.currentIndex != targetIndex) yield break;
-        if (context.currentModel != null) Destroy(context.currentModel);
-
-        CharacterSelectDataSO data = characterRoster[targetIndex];
-        if (data.modelPrefab != null)
-        {
-            context.currentModel = Instantiate(data.modelPrefab, context.displayTransform.position, context.displayTransform.rotation, context.displayTransform);
-            SetLayerRecursively(context.currentModel, character3DLayer);
-            Animator anim = context.currentModel.GetComponentInChildren<Animator>();
-            if (anim != null && sharedSelectAnimator != null)
-            {
-                anim.runtimeAnimatorController = sharedSelectAnimator;
-                anim.SetBool("IsMirrored", context.isMirrored);
-                context.lastIdleIndex = (maxRandomIdles > 1) ? UnityEngine.Random.Range(0, maxRandomIdles) : 0;
-                anim.Play("Selecting_Idle_" + context.lastIdleIndex, 0, 0f);
-            }
-        }
     }
 
     private void SetLayerRecursively(GameObject obj, int layer)

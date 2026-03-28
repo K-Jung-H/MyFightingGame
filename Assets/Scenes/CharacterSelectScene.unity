@@ -5034,7 +5034,7 @@ GameObject:
   - component: {fileID: 4664570653570398116}
   - component: {fileID: 2566516817352948849}
   m_Layer: 29
-  m_Name: P2_Character_Name
+  m_Name: Start_TMP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
