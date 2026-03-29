@@ -1,38 +1,24 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System;
 
-public class SearchResultCanvasController : MonoBehaviour
+public class SearchRoomCanvasController : MonoBehaviour
 {
-    public Transform contentTransform;
-    public GameObject roomListItemPrefab;
+    public TMP_InputField titleInput;
+    public Button titleSearchButton;
+    public TMP_InputField codeInput;
+    public Button codeSearchButton;
     public Button closeButton;
 
+    public event Action<string> OnTitleSearchRequested;
+    public event Action<string> OnCodeJoinRequested;
     public event Action OnCloseClicked;
-    public event Action<string, bool> OnJoinRoomClicked;
 
     private void Start()
     {
+        titleSearchButton.onClick.AddListener(() => OnTitleSearchRequested?.Invoke(titleInput.text));
+        codeSearchButton.onClick.AddListener(() => OnCodeJoinRequested?.Invoke(codeInput.text.ToUpper()));
         closeButton.onClick.AddListener(() => OnCloseClicked?.Invoke());
-    }
-
-    public void PopulateList(RoomMetadata[] rooms)
-    {
-        foreach (Transform child in contentTransform)
-        {
-            Destroy(child.gameObject);
-        }
-
-        foreach (var room in rooms)
-        {
-            GameObject obj = Instantiate(roomListItemPrefab, contentTransform);
-            RoomListItem item = obj.GetComponent<RoomListItem>();
-            
-            if (item != null)
-            {
-                item.Setup(room.RoomCode, room.RoomTitle, room.PlayerCount, 2);
-                item.joinButton.onClick.AddListener(() => OnJoinRoomClicked?.Invoke(room.RoomCode, room.HasPassword));
-            }
-        }
     }
 }
