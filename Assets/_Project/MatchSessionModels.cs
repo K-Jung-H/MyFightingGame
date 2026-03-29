@@ -1,5 +1,14 @@
 using System;
 
+
+public struct RoomMetadata
+{
+    public string RoomCode;
+    public string RoomTitle;
+    public byte PlayerCount;
+    public bool HasPassword;
+}
+
 public class RoomStateModel
 {
     public int p1CharacterIndex;

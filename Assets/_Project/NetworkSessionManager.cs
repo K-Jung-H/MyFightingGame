@@ -22,6 +22,13 @@ public static class NetworkPacketType
     public const byte P2PPong = 21;
     public const byte ReportDisconnect = 24;
     public const byte MatchAborted = 25;
+
+    public const byte CreateRoomRequest = 30;
+    public const byte CreateRoomResponse = 31;
+    public const byte SearchRoomRequest = 32;
+    public const byte SearchRoomResponse = 33;
+    public const byte JoinRoomRequest = 34;
+    public const byte JoinRoomResponse = 35;
 }
 
 public class NetworkBufferContext
@@ -189,6 +196,49 @@ public class NetworkSessionManager : MonoBehaviour
     public void ResetNetworkSession()
     {
         isSessionResetRequired = true;
+    }
+
+    public void SendCreateRoomRequest(string title, bool isPrivate, string password)
+    {
+        if (!serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.CreateRoomRequest);
+            writer.WriteFixedString64(new FixedString64Bytes(title));
+            writer.WriteByte((byte)(isPrivate ? 1 : 0));
+            writer.WriteFixedString64(new FixedString64Bytes(password));
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendSearchRoomRequest(byte searchType, string query)
+    {
+        if (!serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.SearchRoomRequest);
+            writer.WriteByte(searchType);
+            writer.WriteFixedString64(new FixedString64Bytes(query));
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendJoinRoomRequest(string roomCode, string password)
+    {
+        if (!serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.JoinRoomRequest);
+            writer.WriteFixedString64(new FixedString64Bytes(roomCode));
+            writer.WriteFixedString64(new FixedString64Bytes(password));
+            serverDriver.EndSend(writer);
+        }
     }
 
     public void SendSelectUpdate(int playerIndex, int characterIndex, bool isLocked)
