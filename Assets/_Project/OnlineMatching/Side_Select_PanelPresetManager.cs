@@ -16,8 +16,17 @@ public class Side_Select_PanelPresetManager : MonoBehaviour
     {
         if (presetDatabases == null || presetDatabases.Count == 0) return;
 
-        AssignPresetsToList(leftSideControllers);
-        AssignPresetsToList(rightSideControllers);
+        List<ImagePreset> availablePresets = new List<ImagePreset>();
+        foreach (PanelPresetDatabase database in presetDatabases)
+        {
+            if (database != null && database.presets != null)
+            {
+                availablePresets.AddRange(database.presets);
+            }
+        }
+
+        AssignUniquePresetsToList(leftSideControllers, availablePresets);
+        AssignUniquePresetsToList(rightSideControllers, availablePresets);
     }
 
     public void UpdateSideSelection(int selectedSide)
@@ -42,7 +51,7 @@ public class Side_Select_PanelPresetManager : MonoBehaviour
         }
     }
 
-    private void AssignPresetsToList(List<PresetImageController> controllers)
+    private void AssignUniquePresetsToList(List<PresetImageController> controllers, List<ImagePreset> availablePool)
     {
         if (controllers == null || controllers.Count == 0) return;
 
@@ -50,16 +59,18 @@ public class Side_Select_PanelPresetManager : MonoBehaviour
         {
             if (controller == null) continue;
 
-            int databaseIndex = Random.Range(0, presetDatabases.Count);
-            PanelPresetDatabase selectedDatabase = presetDatabases[databaseIndex];
+            if (availablePool.Count == 0)
+            {
+                Debug.LogWarning("모든 프리셋이 소진되어 더 이상 고유한 이미지를 할당할 수 없습니다.");
+                break;
+            }
 
-            if (selectedDatabase.presets == null || selectedDatabase.presets.Count == 0) continue;
-
-            int presetIndex = Random.Range(0, selectedDatabase.presets.Count);
-            ImagePreset selectedPreset = selectedDatabase.presets[presetIndex];
+            int randomIndex = Random.Range(0, availablePool.Count);
+            ImagePreset selectedPreset = availablePool[randomIndex];
+            
+            availablePool.RemoveAt(randomIndex);
 
             controller.SetupPreset(selectedPreset);
-            Debug.Log("test");
         }
     }
 }

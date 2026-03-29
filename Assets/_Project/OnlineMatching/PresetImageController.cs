@@ -7,12 +7,21 @@ public class PresetImageController : MonoBehaviour
     public Image shadowImage;
     public Image realImage;
     public float transitionDuration = 1f;
+    public float heightMargin = 30f;
 
     private Color initialShadowColor;
     private Coroutine transitionCoroutine;
     private bool isStateActive;
 
-public void SetupPreset(ImagePreset preset)
+    private void Awake()
+    {
+        if (shadowImage != null)
+        {
+            initialShadowColor = shadowImage.color;
+        }
+    }
+
+    public void SetupPreset(ImagePreset preset)
     {
         if (preset.shadowSprite == null || preset.realSprite == null)
         {
@@ -22,7 +31,7 @@ public void SetupPreset(ImagePreset preset)
         if (shadowImage != null)
         {
             shadowImage.sprite = preset.shadowSprite;
-            initialShadowColor = shadowImage.color;
+            ApplyPivotAndSize(shadowImage, preset.shadowSprite);
         }
         else
         {
@@ -32,6 +41,8 @@ public void SetupPreset(ImagePreset preset)
         if (realImage != null)
         {
             realImage.sprite = preset.realSprite;
+            ApplyPivotAndSize(realImage, preset.realSprite);
+
             Color startRealColor = realImage.color;
             startRealColor.a = 0f;
             realImage.color = startRealColor;
@@ -101,5 +112,33 @@ public void SetupPreset(ImagePreset preset)
             resetRealColor.a = 0f;
             realImage.color = resetRealColor;
         }
+    }
+
+    private void ApplyPivotAndSize(Image img, Sprite sprite)
+    {
+        if (img == null || sprite == null) return;
+
+        RectTransform rt = img.rectTransform;
+        RectTransform parentRt = rt.parent.GetComponent<RectTransform>();
+
+        if (parentRt == null) return;
+
+        rt.anchorMin = new Vector2(0.5f, 0f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+
+        float normalizedPivotX = sprite.pivot.x / sprite.rect.width;
+        float normalizedPivotY = sprite.pivot.y / sprite.rect.height;
+        rt.pivot = new Vector2(normalizedPivotX, normalizedPivotY);
+
+        float parentHeight = parentRt.rect.height;
+        float actualHeight = parentHeight - heightMargin;
+        float targetWidth = actualHeight * (sprite.rect.width / sprite.rect.height);
+
+        rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+
+        rt.offsetMin = new Vector2(rt.offsetMin.x, 0f);
+        rt.offsetMax = new Vector2(rt.offsetMax.x, -heightMargin);
+
+        rt.anchoredPosition = new Vector2(0f, rt.anchoredPosition.y);
     }
 }
