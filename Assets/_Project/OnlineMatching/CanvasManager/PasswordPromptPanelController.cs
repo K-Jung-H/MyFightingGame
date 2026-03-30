@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 
-public class PasswordPromptCanvasController : MonoBehaviour
+public class PasswordPromptPanelController : MonoBehaviour
 {
     public TMP_InputField passwordInput;
     public Button submitButton;

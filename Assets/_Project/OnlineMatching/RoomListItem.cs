@@ -4,30 +4,36 @@ using TMPro;
 
 public class RoomListItem : MonoBehaviour
 {
-    public TextMeshProUGUI roomCodeText;
-    public TextMeshProUGUI roomNameText;
-    public TextMeshProUGUI playerCountText;
-    public Button joinButton;
+    public TextMeshProUGUI textRoomName;
+    public TextMeshProUGUI textRoomCode;
+    public TextMeshProUGUI textRoomInfo;
+    public GameObject imageLockedPassword;
+    public GameObject imageSelectionFrame;
+    public Button btnSelect;
 
-    public string currentRoomCode { get; private set; }
-
-    public void Setup(string roomCode, string roomName, int currentPlayerCount, int maxPlayerCount)
+    public void Setup(string code, string title, int playerCount, int maxPlayers, bool hasPassword)
     {
-        currentRoomCode = roomCode;
+        if (textRoomName != null) textRoomName.text = title;
+        if (textRoomCode != null) textRoomCode.text = $"Code: {code}";
         
-        if (roomCodeText != null)
+        if (textRoomInfo != null) 
         {
-            roomCodeText.text = $"Code: {roomCode}";
+            textRoomInfo.text = $"Player: {playerCount} / {maxPlayers}\nNetwork Status: Good";
         }
         
-        if (roomNameText != null)
+        if (imageLockedPassword != null) 
         {
-            roomNameText.text = roomName;
+            imageLockedPassword.SetActive(hasPassword);
         }
-        
-        if (playerCountText != null)
+
+        SetSelected(false);
+    }
+
+    public void SetSelected(bool isSelected)
+    {
+        if (imageSelectionFrame != null)
         {
-            playerCountText.text = $"{currentPlayerCount} / {maxPlayerCount}";
+            imageSelectionFrame.SetActive(isSelected);
         }
     }
 }

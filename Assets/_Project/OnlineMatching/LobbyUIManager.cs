@@ -4,67 +4,119 @@ using System;
 public class LobbyUIManager : MonoBehaviour
 {
     public BaseLobbyCanvasController baseCanvas;
-    public CreateRoomCanvasController createRoomCanvas;
-    public SearchRoomCanvasController searchRoomCanvas;
-    public SearchResultCanvasController searchResultCanvas;
-    public PasswordPromptCanvasController passwordCanvas;
+    public CreateRoomPanelController createRoomPanel;
+    public RoomSearchPanelController searchPanel;
+    public PasswordPromptPanelController passwordPanel;
 
-    public event Action<string, bool, string> OnCreateRoomRequested;
+    public event Action<RoomCreateData> OnCreateRoomRequested;
     public event Action<string> OnTitleSearchRequested;
     public event Action<string> OnCodeJoinRequested;
     public event Action<string, string> OnJoinWithPasswordRequested;
 
     private void Start()
     {
-        baseCanvas.OnOpenCreateClicked += () => 
-        { 
-            createRoomCanvas.ClearInputs(); 
-            SwitchCanvas(createRoomCanvas.gameObject); 
-        };
-        baseCanvas.OnOpenJoinSearchClicked += () => SwitchCanvas(searchRoomCanvas.gameObject);
-
-        createRoomCanvas.OnSubmitRequested += (title, isPriv, pwd) => OnCreateRoomRequested?.Invoke(title, isPriv, pwd);
-        createRoomCanvas.OnCloseClicked += () => SwitchCanvas(null);
-
-        searchRoomCanvas.OnTitleSearchRequested += (title) => OnTitleSearchRequested?.Invoke(title);
-        searchRoomCanvas.OnCodeJoinRequested += (code) => OnCodeJoinRequested?.Invoke(code);
-        searchRoomCanvas.OnCloseClicked += () => SwitchCanvas(null);
-
-        searchResultCanvas.OnJoinRoomClicked += (code, hasPwd) =>
+        if (baseCanvas != null)
         {
-            if (hasPwd) passwordCanvas.OpenPrompt(code);
-            else OnJoinWithPasswordRequested?.Invoke(code, string.Empty);
-        };
-        searchResultCanvas.OnCloseClicked += () => SwitchCanvas(searchRoomCanvas.gameObject);
+            baseCanvas.OnOpenCreateClicked += OpenCreateRoomCanvas;
+            baseCanvas.OnOpenJoinSearchClicked += OpenSearchRoomCanvas;
+        }
 
-        passwordCanvas.OnSubmitRequested += (code, pwd) =>
+        if (createRoomPanel != null)
         {
-            OnJoinWithPasswordRequested?.Invoke(code, pwd);
-            passwordCanvas.ClosePrompt();
-        };
-        passwordCanvas.OnCloseClicked += () => passwordCanvas.ClosePrompt();
+            createRoomPanel.OnSubmitRequested += (data) => OnCreateRoomRequested?.Invoke(data);
+            createRoomPanel.OnCloseClicked += CloseAllOverlayCanvases;
+        }
 
+        if (searchPanel != null)
+        {
+            searchPanel.OnSearchRequested += HandleSearchRequested;
+            searchPanel.OnJoinRequested += HandleJoinRequested;
+            searchPanel.OnCloseClicked += CloseAllOverlayCanvases;
+        }
+
+        if (passwordPanel != null)
+        {
+            passwordPanel.OnSubmitRequested += (code, pwd) =>
+            {
+                OnJoinWithPasswordRequested?.Invoke(code, pwd);
+                passwordPanel.ClosePrompt();
+            };
+            passwordPanel.OnCloseClicked += () => passwordPanel.ClosePrompt();
+        }
+
+        SwitchCanvas(null);
+    }
+
+    private void HandleSearchRequested(byte searchType, string query)
+    {
+        if (searchType == 0)
+        {
+            OnTitleSearchRequested?.Invoke(query);
+        }
+        else if (searchType == 1)
+        {
+            OnCodeJoinRequested?.Invoke(query);
+        }
+    }
+
+    private void HandleJoinRequested(string roomCode, bool hasPassword)
+    {
+        if (hasPassword)
+        {
+            OpenPasswordPrompt(roomCode);
+        }
+        else
+        {
+            OnJoinWithPasswordRequested?.Invoke(roomCode, string.Empty);
+        }
+    }
+
+    public void OpenCreateRoomCanvas()
+    {
+        if (createRoomPanel != null)
+        {
+            createRoomPanel.ClearInputs();
+            SwitchCanvas(createRoomPanel.gameObject);
+        }
+    }
+
+    public void OpenSearchRoomCanvas()
+    {
+        if (searchPanel != null)
+        {
+            searchPanel.ClearPanel();
+            SwitchCanvas(searchPanel.gameObject);
+        }
+    }
+
+    public void CloseAllOverlayCanvases()
+    {
         SwitchCanvas(null);
     }
 
     private void SwitchCanvas(GameObject targetCanvas)
     {
-        createRoomCanvas.gameObject.SetActive(false);
-        searchRoomCanvas.gameObject.SetActive(false);
-        searchResultCanvas.gameObject.SetActive(false);
-        passwordCanvas.gameObject.SetActive(false);
+        if (createRoomPanel != null) createRoomPanel.gameObject.SetActive(false);
+        if (searchPanel != null) searchPanel.gameObject.SetActive(false);
+        if (passwordPanel != null) passwordPanel.gameObject.SetActive(false);
 
         if (targetCanvas != null) targetCanvas.SetActive(true);
     }
 
     public void ShowSearchResults(RoomMetadata[] rooms)
     {
-        SwitchCanvas(searchResultCanvas.gameObject);
-        searchResultCanvas.PopulateList(rooms);
+        if (searchPanel != null)
+        {
+            SwitchCanvas(searchPanel.gameObject);
+            searchPanel.PopulateList(rooms);
+        }
     }
 
     public void OpenPasswordPrompt(string roomCode)
     {
-        passwordCanvas.OpenPrompt(roomCode);
+        if (passwordPanel != null)
+        {
+            passwordPanel.OpenPrompt(roomCode);
+        }
     }
 }

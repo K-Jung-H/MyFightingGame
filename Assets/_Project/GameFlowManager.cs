@@ -183,30 +183,6 @@ public class GameFlowManager : MonoBehaviour
         ChangeScene(GameSceneType.OnlineMatching);
     }
 
-    public void StartOnlineMatch(int preferredSide, int keyBindIndex)
-    {
-        isFlowInitialized = true;
-        
-        NetworkSessionManager.Instance.InitializeNetwork("127.0.0.1");
-        NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
-        NetworkSessionManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
-        
-        currentSession = new OnlineClientSession();
-        
-        System.Action onConnected = null;
-        onConnected = () => 
-        {
-            currentSession.SendSideUpdate(preferredSide);
-            ChangeScene(GameSceneType.CharacterSelect);
-            if (NetworkSessionManager.Instance != null)
-            {
-                NetworkSessionManager.Instance.OnConnectionEstablished -= onConnected;
-            }
-        };
-        
-        NetworkSessionManager.Instance.OnConnectionEstablished += onConnected;
-    }
-
     private void HandleMatchAborted(GameSceneType targetScene)
     {
         currentSession = null;

@@ -75,6 +75,7 @@ public class DummyMatchServer : MonoBehaviour
 
         driver.ScheduleUpdate().Complete();
         CleanupConnections();
+        CleanupEmptyRooms();
 
         NetworkConnection c;
         while ((c = driver.Accept()) != default)
@@ -109,10 +110,23 @@ public class DummyMatchServer : MonoBehaviour
 
     private void OnGUI()
     {
-        GUI.Box(new Rect(10, 10, 350, 250), "Lobby Server Status");
-        
-        GUI.Label(new Rect(20, 40, 330, 20), $"Active Connections: {connectionToRoom.Count}");
-        GUI.Label(new Rect(20, 60, 330, 20), $"Active Rooms: {activeRooms.Count}");
+        GUI.Box(new Rect(10, 10, 350, 70), "Lobby Server Status");
+        GUI.Label(new Rect(20, 30, 350, 20), $"Active Connections: {connectionToRoom.Count}");
+        GUI.Label(new Rect(20, 50, 350, 20), $"Active Rooms: {activeRooms.Count}");
+
+        GUI.Box(new Rect(10, 90, 350, 220), "Active Rooms List");
+        float roomY = 110;
+        foreach (var kvp in activeRooms)
+        {
+            ServerRoom room = kvp.Value;
+            int playerCount = (room.p1.IsCreated ? 1 : 0) + (room.p2.IsCreated ? 1 : 0);
+            string passwordMark = room.HasPassword() ? "[P]" : "";
+            
+            GUI.Label(new Rect(20, roomY, 330, 20), $"[{room.roomCode}] {room.roomTitle} {passwordMark} ({playerCount}/2)");
+            
+            roomY += 20;
+            if (roomY > 280) break;
+        }
 
         GUI.Box(new Rect(370, 10, 400, 300), "Server Event Logs");
         float logY = 35;
@@ -130,37 +144,6 @@ public class DummyMatchServer : MonoBehaviour
             driver.Dispose();
             connections.Dispose();
         }
-    }
-
-    private void LogEvent(string msg)
-    {
-        Debug.Log($"[Server] {msg}");
-        serverLogs.Add(msg);
-        if (serverLogs.Count > MAX_LOG_LINES)
-        {
-            serverLogs.RemoveAt(0);
-        }
-    }
-
-    private string GenerateRoomCode()
-    {
-        string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        string code = "";
-        for(int i = 0; i < 5; i++) 
-        {
-            code += chars[UnityEngine.Random.Range(0, chars.Length)];
-        }
-        return code;
-    }
-
-    private NetworkDriver CreateConfiguredDriver()
-    {
-        NetworkSettings settings = new NetworkSettings();
-        settings.WithNetworkConfigParameters(
-            disconnectTimeoutMS: 5000,
-            heartbeatTimeoutMS: 500
-        );
-        return NetworkDriver.Create(settings);
     }
 
     public void StartServer()
@@ -187,6 +170,16 @@ public class DummyMatchServer : MonoBehaviour
         LogEvent($"Match active state changed to: {active}");
     }
 
+    private NetworkDriver CreateConfiguredDriver()
+    {
+        NetworkSettings settings = new NetworkSettings();
+        settings.WithNetworkConfigParameters(
+            disconnectTimeoutMS: 5000,
+            heartbeatTimeoutMS: 500
+        );
+        return NetworkDriver.Create(settings);
+    }
+
     private void CleanupConnections()
     {
         for (int i = 0; i < connections.Length; i++)
@@ -196,6 +189,25 @@ public class DummyMatchServer : MonoBehaviour
                 connections.RemoveAtSwapBack(i);
                 i--;
             }
+        }
+    }
+
+    private void CleanupEmptyRooms()
+    {
+        List<string> emptyRoomCodes = new List<string>();
+
+        foreach (var kvp in activeRooms)
+        {
+            if (kvp.Value.IsEmpty())
+            {
+                emptyRoomCodes.Add(kvp.Key);
+            }
+        }
+
+        foreach (string code in emptyRoomCodes)
+        {
+            LogEvent($"Room [{code}] is empty. Sweeping and destroying.");
+            activeRooms.Remove(code);
         }
     }
 
@@ -325,7 +337,10 @@ public class DummyMatchServer : MonoBehaviour
     {
         string title = stream.ReadFixedString64().ToString();
         bool isPrivate = stream.ReadByte() == 1;
+        bool usePassword = stream.ReadByte() == 1;
         string pwd = stream.ReadFixedString64().ToString();
+
+        string actualPassword = usePassword ? pwd : string.Empty;
 
         string newCode = GenerateRoomCode();
         while (activeRooms.ContainsKey(newCode))
@@ -333,18 +348,19 @@ public class DummyMatchServer : MonoBehaviour
             newCode = GenerateRoomCode();
         }
 
-        ServerRoom newRoom = new ServerRoom(newCode, title, isPrivate, pwd);
+        ServerRoom newRoom = new ServerRoom(newCode, title, isPrivate, actualPassword);
         newRoom.p1 = conn;
         
         activeRooms[newCode] = newRoom;
         connectionToRoom[conn] = newRoom;
 
-        LogEvent($"Created Room [{newCode}] Title: {title}, Private: {isPrivate}");
+        LogEvent($"Created Room [{newCode}] Title: {title}, Private: {isPrivate}, Password: {usePassword}");
 
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
-        writer.WriteByte(NetworkPacketType.CreateRoomResponse);
+        writer.WriteByte(NetworkPacketType.JoinRoomResponse);
         writer.WriteByte(1);
         writer.WriteFixedString64(new FixedString64Bytes(newCode));
+        writer.WriteByte(1); 
         driver.EndSend(writer);
 
         SendSlotId(conn, 0);
@@ -382,6 +398,7 @@ public class DummyMatchServer : MonoBehaviour
 
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
         writer.WriteByte(NetworkPacketType.SearchRoomResponse);
+        writer.WriteByte(searchType);
         writer.WriteInt(matches.Count);
 
         foreach (var r in matches)
@@ -431,7 +448,8 @@ public class DummyMatchServer : MonoBehaviour
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
         writer.WriteByte(NetworkPacketType.JoinRoomResponse);
         writer.WriteByte(success ? (byte)1 : (byte)0);
-        writer.WriteFixedString64(new FixedString64Bytes(reason));
+        writer.WriteFixedString64(new FixedString64Bytes(success ? code : reason));
+        writer.WriteByte(0); 
         driver.EndSend(writer);
 
         if (success)
@@ -645,5 +663,26 @@ public class DummyMatchServer : MonoBehaviour
         }
         
         activeRooms.Remove(room.roomCode);
+    }
+
+    private void LogEvent(string msg)
+    {
+        Debug.Log($"[Server] {msg}");
+        serverLogs.Add(msg);
+        if (serverLogs.Count > MAX_LOG_LINES)
+        {
+            serverLogs.RemoveAt(0);
+        }
+    }
+
+    private string GenerateRoomCode()
+    {
+        string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        string code = "";
+        for(int i = 0; i < 5; i++) 
+        {
+            code += chars[UnityEngine.Random.Range(0, chars.Length)];
+        }
+        return code;
     }
 }

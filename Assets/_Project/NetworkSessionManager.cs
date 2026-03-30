@@ -24,11 +24,10 @@ public static class NetworkPacketType
     public const byte MatchAborted = 25;
 
     public const byte CreateRoomRequest = 30;
-    public const byte CreateRoomResponse = 31;
-    public const byte SearchRoomRequest = 32;
-    public const byte SearchRoomResponse = 33;
-    public const byte JoinRoomRequest = 34;
-    public const byte JoinRoomResponse = 35;
+    public const byte SearchRoomRequest = 31;
+    public const byte SearchRoomResponse = 32;
+    public const byte JoinRoomRequest = 33;
+    public const byte JoinRoomResponse = 34;
 }
 
 public class NetworkBufferContext
@@ -87,6 +86,9 @@ public class NetworkSessionManager : MonoBehaviour
     public event Action<int> OnSlotAssignedReceived;
     public event Action<int> OnPingUpdated;
     public event Action<GameSceneType> OnMatchAbortedReceived;
+
+    public event Action<byte, RoomMetadata[]> OnSearchRoomResponseReceived;
+    public event Action<bool, string, bool> OnJoinRoomResponseReceived;
 
     private void Awake()
     {
@@ -198,7 +200,7 @@ public class NetworkSessionManager : MonoBehaviour
         isSessionResetRequired = true;
     }
 
-    public void SendCreateRoomRequest(string title, bool isPrivate, string password)
+    public void SendCreateRoomRequest(RoomCreateData data)
     {
         if (!serverConnection.IsCreated) return;
 
@@ -206,9 +208,10 @@ public class NetworkSessionManager : MonoBehaviour
         if (sendStatus == 0)
         {
             writer.WriteByte(NetworkPacketType.CreateRoomRequest);
-            writer.WriteFixedString64(new FixedString64Bytes(title));
-            writer.WriteByte((byte)(isPrivate ? 1 : 0));
-            writer.WriteFixedString64(new FixedString64Bytes(password));
+            writer.WriteFixedString64(new FixedString64Bytes(data.RoomName));
+            writer.WriteByte((byte)(data.IsPrivate ? 1 : 0));
+            writer.WriteByte((byte)(data.UsePassword ? 1 : 0));
+            writer.WriteFixedString64(new FixedString64Bytes(data.Password));
             serverDriver.EndSend(writer);
         }
     }
@@ -489,6 +492,31 @@ public class NetworkSessionManager : MonoBehaviour
         {
             int sceneTypeInt = stream.ReadInt();
             OnMatchAbortedReceived?.Invoke((GameSceneType)sceneTypeInt);
+        }
+        else if (packetType == NetworkPacketType.SearchRoomResponse)
+        {
+            byte searchType = stream.ReadByte();
+            int roomCount = stream.ReadInt();
+            RoomMetadata[] rooms = new RoomMetadata[roomCount];
+            
+            for (int i = 0; i < roomCount; i++)
+            {
+                rooms[i] = new RoomMetadata
+                {
+                    RoomCode = stream.ReadFixedString64().ToString(),
+                    RoomTitle = stream.ReadFixedString64().ToString(),
+                    PlayerCount = stream.ReadByte(),
+                    HasPassword = stream.ReadByte() == 1
+                };
+            }
+            OnSearchRoomResponseReceived?.Invoke(searchType, rooms);
+        }
+        else if (packetType == NetworkPacketType.JoinRoomResponse)
+        {
+            bool isJoinSuccess = stream.ReadByte() == 1;
+            string joinedRoomCode = stream.ReadFixedString64().ToString();
+            bool isRoomHost = stream.ReadByte() == 1;
+            OnJoinRoomResponseReceived?.Invoke(isJoinSuccess, joinedRoomCode, isRoomHost);
         }
     }
 
