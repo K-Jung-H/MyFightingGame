@@ -17,7 +17,7 @@ public class RoomSearchPanelController : MonoBehaviour
     public Button btnClose;
 
     private RoomListItem currentSelectedItem;
-    public GameObject objNoResult;
+    public GameObject noResultPrefab;
 
     public event Action<byte, string> OnSearchRequested;
     public event Action<string, bool> OnJoinRequested;
@@ -55,24 +55,28 @@ public class RoomSearchPanelController : MonoBehaviour
         selectedRoomCode = string.Empty;
         currentSelectedItem = null;
         btnEnter.interactable = false;
+        isPasswordRequired = false;
 
         if (rooms == null || rooms.Length == 0)
         {
-            if (objNoResult != null) objNoResult.SetActive(true);
+            if (noResultPrefab != null)
+            {
+                Instantiate(noResultPrefab, contentTransform);
+            }
             return;
         }
 
-        if (objNoResult != null) objNoResult.SetActive(false);
-
         foreach (var room in rooms)
         {
+            RoomMetadata currentRoom = room;
+            
             GameObject obj = Instantiate(roomListItemPrefab, contentTransform);
             RoomListItem item = obj.GetComponent<RoomListItem>();
             
             if (item != null)
             {
-                item.Setup(room.RoomCode, room.RoomTitle, room.PlayerCount, 2, room.HasPassword);
-                item.btnSelect.onClick.AddListener(() => OnRoomItemSelected(item, room.RoomCode, room.HasPassword));
+                item.Setup(currentRoom.RoomCode, currentRoom.RoomTitle, currentRoom.PlayerCount, 2, currentRoom.HasPassword);
+                item.btnSelect.onClick.AddListener(() => OnRoomItemSelected(item, currentRoom.RoomCode, currentRoom.HasPassword));
             }
         }
     }

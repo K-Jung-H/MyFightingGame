@@ -111,28 +111,30 @@ public class DummyMatchServer : MonoBehaviour
     private void OnGUI()
     {
         GUI.Box(new Rect(10, 10, 350, 70), "Lobby Server Status");
-        GUI.Label(new Rect(20, 30, 350, 20), $"Active Connections: {connectionToRoom.Count}");
-        GUI.Label(new Rect(20, 50, 350, 20), $"Active Rooms: {activeRooms.Count}");
+        GUI.Label(new Rect(20, 30, 330, 20), $"Active Connections: {connectionToRoom.Count}");
+        GUI.Label(new Rect(20, 50, 330, 20), $"Active Rooms: {activeRooms.Count}");
 
-        GUI.Box(new Rect(10, 90, 350, 220), "Active Rooms List");
+        GUI.Box(new Rect(10, 90, 500, 400), "Active Rooms List");
         float roomY = 110;
         foreach (var kvp in activeRooms)
         {
             ServerRoom room = kvp.Value;
             int playerCount = (room.p1.IsCreated ? 1 : 0) + (room.p2.IsCreated ? 1 : 0);
-            string passwordMark = room.HasPassword() ? "[P]" : "";
             
-            GUI.Label(new Rect(20, roomY, 330, 20), $"[{room.roomCode}] {room.roomTitle} {passwordMark} ({playerCount}/2)");
+            string privMark = room.isPrivate ? "[Private]" : "[Public]";
+            string pwdMark = room.HasPassword() ? $"[Pwd: {room.password}]" : "[No Pwd]";
+            
+            GUI.Label(new Rect(20, roomY, 480, 20), $"[{room.roomCode}] {room.roomTitle} | {privMark} | {pwdMark} | ({playerCount}/2)");
             
             roomY += 20;
-            if (roomY > 280) break;
+            if (roomY > 460) break;
         }
 
-        GUI.Box(new Rect(370, 10, 400, 300), "Server Event Logs");
+        GUI.Box(new Rect(520, 10, 450, 480), "Server Event Logs");
         float logY = 35;
         for (int i = 0; i < serverLogs.Count; i++)
         {
-            GUI.Label(new Rect(380, logY, 380, 20), serverLogs[i]);
+            GUI.Label(new Rect(530, logY, 430, 20), serverLogs[i]);
             logY += 16;
         }
     }
