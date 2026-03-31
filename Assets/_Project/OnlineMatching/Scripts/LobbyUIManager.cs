@@ -6,7 +6,7 @@ public class LobbyUIManager : MonoBehaviour
     public BaseLobbyCanvasController baseCanvas;
     public CreateRoomPanelController createRoomPanel;
     public RoomSearchPanelController searchPanel;
-    public PasswordPromptPanelController passwordPanel;
+    public PasswordPanelController passwordPanel;
 
     public event Action<RoomCreateData> OnCreateRoomRequested;
     public event Action<string> OnTitleSearchRequested;
@@ -39,7 +39,6 @@ public class LobbyUIManager : MonoBehaviour
             passwordPanel.OnSubmitRequested += (code, pwd) =>
             {
                 OnJoinWithPasswordRequested?.Invoke(code, pwd);
-                passwordPanel.ClosePrompt();
             };
             passwordPanel.OnCloseClicked += () => passwordPanel.ClosePrompt();
         }
@@ -70,7 +69,15 @@ public class LobbyUIManager : MonoBehaviour
             OnJoinWithPasswordRequested?.Invoke(roomCode, string.Empty);
         }
     }
-
+    
+    public void HandlePasswordFailure()
+    {
+        if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
+        {
+            passwordPanel.ShowError();
+        }
+    }
+    
     public void OpenCreateRoomCanvas()
     {
         if (createRoomPanel != null)

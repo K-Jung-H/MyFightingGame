@@ -102,6 +102,11 @@ public class OnlineMatchingManager : MonoBehaviour
         else
         {
             Debug.LogWarning($"방 진입 실패 사유: {roomCodeOrReason}");
+            
+            if (lobbyUI != null)
+            {
+                lobbyUI.HandlePasswordFailure();
+            }
         }
     }
 
