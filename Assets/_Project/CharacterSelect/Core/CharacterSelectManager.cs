@@ -51,28 +51,17 @@ public class CharacterSelectManager : MonoBehaviour
     private CharacterSelectTile[] gridTiles;
     private int gridColumns;
     private int character3DLayer;
-    private bool isMatchStarted;
-    private bool isLobbyReady = false;
-    private bool isEventsSubscribed = false;
+    private bool isLobbyReady;
     private bool isLocalCountdownActive;
     private float localCountdownTimer;
     private bool isStartButtonReady;
     private int lastDisplayedCountdown = -1;
-
-    private Action OnConnectionEstablishedAction;
-    private Action<int, bool, int, int, bool, int> OnSelectBroadcastAction;
+    private bool isStartRequestSent;
 
     private void Start()
     {
-        if (countdownText != null)
-        {
-            countdownText.text = "";
-        }
-
-        if (startButtonObject != null)
-        {
-            startButtonObject.SetActive(false);
-        }
+        if (countdownText != null) countdownText.text = "";
+        if (startButtonObject != null) startButtonObject.SetActive(false);
         
         character3DLayer = LayerMask.NameToLayer("Character3D");
         gridTiles = characterGridPanel.GetComponentsInChildren<CharacterSelectTile>();
@@ -99,100 +88,96 @@ public class CharacterSelectManager : MonoBehaviour
         UpdateCharacterDisplay(p2Context);
         UpdateLockUI(p1Context);
         UpdateLockUI(p2Context);
+
+        SubscribeToStateEvents();
+        SyncInitialRoomState();
+        isLobbyReady = true;
     }
 
     private void Update()
     {
-        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
-        
-        UpdateNetworkState(currentMode);
-
-        if (!isEventsSubscribed)
-        {
-            if (currentMode == ConnectionMode.None) return;
-
-            SubscribeToFlowEvents(currentMode);
-            isEventsSubscribed = true;
-        }
-
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session != null)
-        {
-            session.UpdateSession(Time.deltaTime);
-        }
+        if (!isLobbyReady) return;
 
         UpdateCountdownUI();
 
-        if (isMatchStarted || !isLobbyReady) return;
-
+        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
+        
         if (currentMode == ConnectionMode.Offline)
         {
             ProcessOfflineModeInput();
+            EvaluateOfflineState();
         }
         else if (currentMode == ConnectionMode.OnlineClient)
         {
-            ProcessOnlineModeInput(session);
+            ProcessOnlineModeInput();
         }
     }
 
     private void OnDestroy()
     {
-        IMatchSession session = GameFlowManager.Instance?.GetCurrentSession();
-        if (session != null)
-        {
-            session.OnCountdownUpdate -= HandleCountdownUpdate;
-            session.OnStartButtonActive -= HandleStartButtonActive;
-            session.OnSceneChange -= HandleSceneChangeCommand;
-        }
-
-        if (NetworkSessionManager.Instance != null)
-        {
-            if (OnConnectionEstablishedAction != null)
-                NetworkSessionManager.Instance.OnConnectionEstablished -= OnConnectionEstablishedAction;
-            if (OnSelectBroadcastAction != null)
-                NetworkSessionManager.Instance.OnSelectBroadcastReceived -= OnSelectBroadcastAction;
-        }
+        UnsubscribeFromStateEvents();
     }
 
-    private void UpdateNetworkState(ConnectionMode mode)
+    /*
+     * 룸 매니저의 상태 동기화 및 서버 주도 흐름 제어 이벤트를 구독합니다.
+     */
+    private void SubscribeToStateEvents()
     {
-        if (mode == ConnectionMode.OnlineClient)
+        if (RoomStateManager.Instance != null)
         {
-            if (NetworkSessionManager.Instance != null)
-            {
-                NetworkSessionManager.Instance.UpdateNetwork();
-            }
+            RoomStateManager.Instance.OnCharacterSelectUpdated += HandleCharacterSelectUpdated;
+            RoomStateManager.Instance.OnCountdownUpdated += HandleCountdownUpdated;
+            RoomStateManager.Instance.OnStartButtonActivated += HandleStartButtonActivated;
         }
     }
 
-    private void SubscribeToFlowEvents(ConnectionMode mode)
+    /*
+     * 씬 파괴 시 이벤트 구독을 해제하여 메모리 누수를 방지합니다.
+     */
+    private void UnsubscribeFromStateEvents()
     {
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session != null)
+        if (RoomStateManager.Instance != null)
         {
-            session.OnCountdownUpdate += HandleCountdownUpdate;
-            session.OnStartButtonActive += HandleStartButtonActive;
-            session.OnSceneChange += HandleSceneChangeCommand;
-        }
-
-        if (mode == ConnectionMode.Offline || mode == ConnectionMode.OnlineClient)
-        {
-            isLobbyReady = true;
-
-            if (mode == ConnectionMode.OnlineClient && NetworkSessionManager.Instance != null)
-            {
-                OnSelectBroadcastAction = HandleNetworkSelectBroadcast;
-                NetworkSessionManager.Instance.OnSelectBroadcastReceived += OnSelectBroadcastAction;
-            }
+            RoomStateManager.Instance.OnCharacterSelectUpdated -= HandleCharacterSelectUpdated;
+            RoomStateManager.Instance.OnCountdownUpdated -= HandleCountdownUpdated;
+            RoomStateManager.Instance.OnStartButtonActivated -= HandleStartButtonActivated;
         }
     }
 
+    /*
+     * 씬 진입 직후 룸 매니저에 캐싱된 현재 캐릭터 선택 상태를 UI에 즉시 동기화합니다.
+     */
+    private void SyncInitialRoomState()
+    {
+        if (RoomStateManager.Instance != null && GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        {
+            RoomStateModel model = RoomStateManager.Instance.roomModel;
+            HandleCharacterSelectUpdated(
+                model.p1CharacterIndex, model.isP1CharacterLocked, model.p1PreferredSide,
+                model.p2CharacterIndex, model.isP2CharacterLocked, model.p2PreferredSide
+            );
+        }
+    }
+
+    /*
+     * 서버의 명령 또는 오프라인 자체 판정에 의해 활성화된 카운트다운 타이머의 UI를 갱신합니다.
+     */
     private void UpdateCountdownUI()
     {
         if (isLocalCountdownActive)
         {
             localCountdownTimer -= Time.deltaTime;
-            if (countdownText != null)
+            
+            if (localCountdownTimer <= 0f)
+            {
+                isLocalCountdownActive = false;
+                
+                if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
+                {
+                    HandleStartButtonActivated();
+                }
+            }
+            else if (countdownText != null)
             {
                 int currentSeconds = Mathf.CeilToInt(localCountdownTimer);
                 if (currentSeconds != lastDisplayedCountdown)
@@ -204,17 +189,42 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
+    /*
+     * 오프라인 모드일 때 자체적으로 양측의 준비 상태를 확인하여 카운트다운을 시작하거나 취소합니다.
+     */
+    private void EvaluateOfflineState()
+    {
+        if (p1Context.isLocked && p2Context.isLocked)
+        {
+            if (!isLocalCountdownActive && !isStartButtonReady)
+            {
+                HandleCountdownUpdated(true);
+            }
+        }
+        else
+        {
+            HandleCountdownUpdated(false);
+        }
+    }
+
+    /*
+     * 오프라인 모드일 때 양측 플레이어의 입력을 동시에 처리합니다.
+     */
     private void ProcessOfflineModeInput()
     {
         HandleLocalInput(1, p1Context);
         HandleLocalInput(2, p2Context);
     }
 
-    private void ProcessOnlineModeInput(IMatchSession session)
+    /*
+     * 온라인 모드일 때 룸 매니저로부터 할당받은 권한(슬롯)에 맞는 입력만 처리합니다.
+     */
+    private void ProcessOnlineModeInput()
     {
-        if (session == null) return;
+        if (RoomStateManager.Instance == null) return;
 
-        int localSlot = session.GetLocalPlayerSlot();
+        int localSlot = RoomStateManager.Instance.GetLocalPlayerSlot(); 
+        
         if (localSlot == 0)
         {
             HandleLocalInput(1, p1Context);
@@ -225,6 +235,9 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
+    /*
+     * 로컬 키보드 입력을 처리하여 커서를 움직이거나 락인/락인해제/게임시작 상태를 전송합니다.
+     */
     private void HandleLocalInput(int playerId, PlayerSelectContext context)
     {
         if (Keyboard.current == null) return;
@@ -238,17 +251,18 @@ public class CharacterSelectManager : MonoBehaviour
 
         if (isStartButtonReady)
         {
-            if (isSelectPressed)
+            if (isSelectPressed && !isStartRequestSent)
             {
-                if (startButtonText != null)
-                {
-                    startButtonText.color = pressedStartColor;
-                }
+                isStartRequestSent = true;
+                if (startButtonText != null) startButtonText.color = pressedStartColor;
                 
-                IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-                if (session != null)
+                if (isOfflineMode)
                 {
-                    session.SendStartRequest(playerId);
+                    GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
+                }
+                else if (ServerNetworkManager.Instance != null)
+                {
+                    ServerNetworkManager.Instance.SendStartRequest();
                 }
             }
             return;
@@ -258,13 +272,13 @@ public class CharacterSelectManager : MonoBehaviour
         {
             context.isLocked = true;
             UpdateLockUI(context);
-            NotifyStateToManager(playerId, context);
+            NotifyStateToServer(playerId, context);
         }
         else if (context.isLocked && isUnlockInput)
         {
             context.isLocked = false;
             UpdateLockUI(context);
-            NotifyStateToManager(playerId, context);
+            NotifyStateToServer(playerId, context);
         }
 
         if (context.isLocked) return;
@@ -277,30 +291,38 @@ public class CharacterSelectManager : MonoBehaviour
             
             UpdateCharacterDisplay(context);
             UpdateSpecificTiles(oldIndex, context.currentIndex);
-            NotifyStateToManager(playerId, context);
+            NotifyStateToServer(playerId, context);
         }
     }
 
-    private void NotifyStateToManager(int playerId, PlayerSelectContext context)
+    /*
+     * 변경된 캐릭터 픽 상태를 로컬 매니저에 저장하고, 온라인일 경우 서버로 전송합니다.
+     */
+    private void NotifyStateToServer(int playerId, PlayerSelectContext context)
     {
         if (context.isLocked)
         {
             SaveCharacterData(playerId, context.currentIndex);
         }
 
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session != null)
+        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient && ServerNetworkManager.Instance != null)
         {
-            session.UpdateCharacterSelect(playerId, context.currentIndex, context.isLocked);
+            ServerNetworkManager.Instance.SendSelectUpdate(playerId, context.currentIndex, context.isLocked);
         }
     }
 
-    private void HandleNetworkSelectBroadcast(int p1Idx, bool p1Lock, int p1Side, int p2Idx, bool p2Lock, int p2Side)
+    /*
+     * 룸 매니저로부터 양측의 캐릭터 선택 동기화 이벤트를 수신하여 적용합니다.
+     */
+    private void HandleCharacterSelectUpdated(int p1Idx, bool p1Lock, int p1Side, int p2Idx, bool p2Lock, int p2Side)
     {
         UpdateRemoteState(p1Context, p1Idx, p1Lock, 1);
         UpdateRemoteState(p2Context, p2Idx, p2Lock, 2);
     }
 
+    /*
+     * 원격에서 전달된 커서 위치와 락인 상태를 로컬 UI에 강제로 덮어씌웁니다.
+     */
     private void UpdateRemoteState(PlayerSelectContext context, int newIdx, bool newLock, int playerId)
     {
         if (context.currentIndex != newIdx)
@@ -323,78 +345,78 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
+    /*
+     * 서버(또는 로컬 판정)의 지시에 따라 카운트다운 타이머의 작동 여부를 설정합니다.
+     */
+    private void HandleCountdownUpdated(bool isStarted)
+    {
+        isLocalCountdownActive = isStarted;
+        isStartButtonReady = false;
+        lastDisplayedCountdown = -1;
+
+        if (isStarted)
+        {
+            localCountdownTimer = 3f;
+        }
+
+        if (countdownText != null && !isStarted) countdownText.text = "";
+        if (startButtonObject != null) startButtonObject.SetActive(false);
+    }
+
+    /*
+     * 서버의 지시에 따라 게임 시작 버튼을 활성화하고 입력을 대기합니다.
+     */
+    private void HandleStartButtonActivated()
+    {
+        isLocalCountdownActive = false;
+        isStartButtonReady = true;
+
+        if (countdownText != null) countdownText.text = "";
+        if (startButtonObject != null) startButtonObject.SetActive(true);
+        if (startButtonText != null) startButtonText.color = normalStartColor;
+    }
+
+    /*
+     * 픽이 완료된 캐릭터의 게임용 데이터를 전역 데이터베이스에 캐싱합니다.
+     */
     private void SaveCharacterData(int playerId, int index)
     {
         if (playerId == 1) MatchDataManager.P1CharacterData = characterRoster[index].inGameData;
         else if (playerId == 2) MatchDataManager.P2CharacterData = characterRoster[index].inGameData;
     }
 
-    private void HandleCountdownUpdate(bool isStarted)
-    {
-        isLocalCountdownActive = isStarted;
-        localCountdownTimer = 3f;
-        isStartButtonReady = false;
-        lastDisplayedCountdown = -1;
-
-        if (countdownText != null && !isStarted) 
-        {
-            countdownText.text = "";
-        }
-        
-        if (startButtonObject != null)
-        {
-            startButtonObject.SetActive(false);
-        }
-    }
-
-    private void HandleStartButtonActive()
-    {
-        isLocalCountdownActive = false;
-        isStartButtonReady = true;
-
-        if (countdownText != null) 
-        {
-            countdownText.text = "";
-        }
-        
-        if (startButtonObject != null)
-        {
-            startButtonObject.SetActive(true);
-        }
-        
-        if (startButtonText != null)
-        {
-            startButtonText.color = normalStartColor;
-        }
-    }
-
-    private void HandleSceneChangeCommand()
-    {
-        if (isMatchStarted) return;
-        isMatchStarted = true;
-        GameFlowManager.Instance.OnReceiveSceneChangeCommand("GamePlayScene");
-    }
-
+    /*
+     * 확인(Select) 키 입력 여부를 반환합니다.
+     */
     private bool GetSelectInput(PlayerSelectContext context)
     {
         if (context.inputBinding.selectKey == Key.None) return false;
         return Keyboard.current[context.inputBinding.selectKey].wasPressedThisFrame;
     }
 
+    /*
+     * 오프라인 픽 잠금(LP, RP) 키 입력 여부를 반환합니다.
+     */
     private bool GetOfflineLockInput(PlayerSelectContext context)
     {
-        bool lpPressed = context.inputBinding.lpKey != Key.None && Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
-        bool rpPressed = context.inputBinding.rpKey != Key.None && Keyboard.current[context.inputBinding.rpKey].wasPressedThisFrame;
-        return lpPressed || rpPressed;
+        bool isLpPressed = context.inputBinding.lpKey != Key.None && Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
+        bool isRpPressed = context.inputBinding.rpKey != Key.None && Keyboard.current[context.inputBinding.rpKey].wasPressedThisFrame;
+        return isLpPressed || isRpPressed;
     }
 
+    /*
+     * 오프라인 픽 잠금 해제(LK, RK) 키 입력 여부를 반환합니다.
+     */
     private bool GetOfflineUnlockInput(PlayerSelectContext context)
     {
-        bool lkPressed = context.inputBinding.lkKey != Key.None && Keyboard.current[context.inputBinding.lkKey].wasPressedThisFrame;
-        bool rkPressed = context.inputBinding.rkKey != Key.None && Keyboard.current[context.inputBinding.rkKey].wasPressedThisFrame;
-        return lkPressed || rkPressed;
+        bool isLkPressed = context.inputBinding.lkKey != Key.None && Keyboard.current[context.inputBinding.lkKey].wasPressedThisFrame;
+        bool isRkPressed = context.inputBinding.rkKey != Key.None && Keyboard.current[context.inputBinding.rkKey].wasPressedThisFrame;
+        return isLkPressed || isRkPressed;
     }
 
+    /*
+     * 좌우 방향키 입력에 따른 이동 값을 반환합니다.
+     */
     private int GetMovementInput(PlayerSelectContext context)
     {
         if (context.inputBinding.leftKey != Key.None && Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame) return -1;
@@ -402,18 +424,27 @@ public class CharacterSelectManager : MonoBehaviour
         return 0;
     }
 
+    /*
+     * 락인 여부에 따라 텍스트 문구와 자물쇠 아이콘을 갱신합니다.
+     */
     private void UpdateLockUI(PlayerSelectContext context)
     {
         if (context.statusText != null) context.statusText.text = context.isLocked ? "Ready" : "Selecting";
         if (context.lockIconObject != null) context.lockIconObject.SetActive(context.isLocked);
     }
 
+    /*
+     * 이전 타일과 이동 후 타일의 선택 시각 효과를 갱신합니다.
+     */
     private void UpdateSpecificTiles(int oldIndex, int newIndex)
     {
         UpdateTileVisual(oldIndex);
         UpdateTileVisual(newIndex);
     }
 
+    /*
+     * 특정 인덱스의 타일이 P1 혹은 P2에 의해 선택되었는지 판별하여 색을 칠합니다.
+     */
     private void UpdateTileVisual(int targetIndex)
     {
         if (targetIndex < 0 || targetIndex >= gridTiles.Length) return;
@@ -422,6 +453,9 @@ public class CharacterSelectManager : MonoBehaviour
         gridTiles[targetIndex].UpdateVisuals(isP1, isP2, p1Context.cursorColor, p2Context.cursorColor);
     }
 
+    /*
+     * 변경된 캐릭터 인덱스에 맞춰 2D 일러스트, 텍스트, 3D 모델을 교체합니다.
+     */
     private void UpdateCharacterDisplay(PlayerSelectContext context)
     {
         CharacterSelectDataSO data = characterRoster[context.currentIndex];
@@ -438,6 +472,9 @@ public class CharacterSelectManager : MonoBehaviour
         context.loadCoroutine = StartCoroutine(SpawnModelRoutine(context, context.currentIndex));
     }
 
+    /*
+     * 지연 시간 후 이전 모델을 파괴하고 새 3D 모델을 생성 및 애니메이션 재생합니다.
+     */
     private IEnumerator SpawnModelRoutine(PlayerSelectContext context, int targetIndex)
     {
         yield return new WaitForSeconds(modelLoadDelay);
@@ -460,6 +497,9 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
+    /*
+     * 2D 일러스트의 피벗과 크기를 원본 이미지 비율에 맞추어 조정합니다.
+     */
     private void ApplyPivotAndSize(Image img, Sprite sprite, bool isMirrored)
     {
         if (img == null || sprite == null) return;
@@ -490,6 +530,9 @@ public class CharacterSelectManager : MonoBehaviour
         rt.localScale = scale;
     }
 
+    /*
+     * 대상 게임 오브젝트와 하위 모든 자식들의 레이어를 재귀적으로 변경합니다.
+     */
     private void SetLayerRecursively(GameObject obj, int layer)
     {
         if (obj == null) return;

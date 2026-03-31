@@ -3,13 +3,6 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 
-public struct RoomCreateData
-{
-    public string RoomName;
-    public bool IsPrivate;
-    public bool UsePassword;
-    public string Password;
-}
 
 public class CreateRoomPanelController : MonoBehaviour
 {

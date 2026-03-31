@@ -43,13 +43,10 @@ public class GameLoopManager : MonoBehaviour
     [SerializeField] private HealthBarController p2HealthBar;
     [SerializeField] private SpriteNumberDisplay roundTimerDisplay;
     
-    [SerializeField] private bool isDebugRollbackEnabled = false;
-    [SerializeField] private int debugRollbackFrames = 5;
-    [SerializeField] private int debugRollbackInterval = 30;
-    
     [SerializeField] private int maxRollbackFrames = 7;
     [SerializeField] private int inputDelayFrames = 2;
     [SerializeField] private float postMatchDelaySeconds = 3.0f;
+    [SerializeField] private int desyncAbortThreshold = 5;
 
     private const int ROLLBACK_WINDOW = 60;
     private const int SYNC_VERIFY_INTERVAL = 60;
@@ -66,7 +63,9 @@ public class GameLoopManager : MonoBehaviour
     private bool isSimulationRunning;
     private bool isRoundOver;
     private bool isResimulating;
-    private bool isWaitingForGameStart;
+    private bool isWaitingForServerGameStart;
+    private bool isWaitingForP2PConnection;
+    private bool isWaitingForServerSync;
     private bool isCameraFlipped;
     private bool isSoftStalling;
     private FPVector3 sharedDepthAxis;
@@ -76,6 +75,10 @@ public class GameLoopManager : MonoBehaviour
     private bool isDesyncDetected;
     private int postMatchDelayTicks;
     private int currentPingMs;
+    private int localPlayerSlot;
+    private int consecutiveDesyncCount;
+
+    private P2PNetworkManager currentP2PNetwork;
 
     private void Awake()
     {
@@ -88,19 +91,11 @@ public class GameLoopManager : MonoBehaviour
         simulationCore = new GameSimulationCore();
         simulationCore.Initialize(playerCollisionMinDistance);
 
-        NetworkSessionManager.Instance.OnPeerAddressReceived += HandlePeerConnection;
-        NetworkSessionManager.Instance.OnGameStartReceived += HandleGameStartCommand;
-        NetworkSessionManager.Instance.OnPingUpdated += HandlePingUpdate;
-        NetworkSessionManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
-
-        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
-        if (isOnline)
+        if (ServerNetworkManager.Instance != null)
         {
-            isWaitingForGameStart = true;
-        }
-        else
-        {
-            InitializeMatch(false);
+            ServerNetworkManager.Instance.OnGameStartReceived += HandleServerGameStart;
+            ServerNetworkManager.Instance.OnCountdownUpdateReceived += HandleServerSyncCountdown;
+            ServerNetworkManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
         }
     }
 
@@ -108,55 +103,86 @@ public class GameLoopManager : MonoBehaviour
     {
         DetermineCameraFlipState();
 
-        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
-        if (isOnline)
+        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
         {
-            IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-            if (session != null)
+            isSimulationRunning = false;
+            
+            //string existingIp = RoomStateManager.Instance != null ? RoomStateManager.Instance.GetTargetPeerIpAddress() : null;
+            //string existingIp = RoomStateManager.Instance != null ? RoomStateManager.Instance.GetTargetPeerIpAddress() : "127.0.0.1";
+            string existingIp = "127.0.0.1";
+            Debug.Log($"[GameLoopManager] Existing peer IP found: {existingIp}. Setting up P2P connection immediately.");
+
+            if (!string.IsNullOrEmpty(existingIp))
             {
-                int localSlot = session.GetLocalPlayerSlot();
-
-                if (localSlot == 1)
-                {
-                    NetworkSessionManager.Instance.StartP2PListen();
-                }
-
-                NetworkSessionManager.Instance.SendHandshake();
+                isWaitingForServerGameStart = false;
+                isWaitingForP2PConnection = true;
+                isWaitingForServerSync = true;
+                SetupP2PConnection(existingIp);
+                Debug.Log("[GameLoopManager] P2P connection setup initiated with existing IP.");
             }
+            else
+            {
+                isWaitingForServerGameStart = true;
+                isWaitingForP2PConnection = false;
+                isWaitingForServerSync = false;
+            }
+        }
+        else
+        {
+            InitializeMatch(false);
+            isSimulationRunning = true;
         }
     }
 
     private void OnDestroy()
     {
-        if (NetworkSessionManager.Instance != null)
+        if (ServerNetworkManager.Instance != null)
         {
-            NetworkSessionManager.Instance.OnPeerAddressReceived -= HandlePeerConnection;
-            NetworkSessionManager.Instance.OnGameStartReceived -= HandleGameStartCommand;
-            NetworkSessionManager.Instance.OnPingUpdated -= HandlePingUpdate;
-            NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
+            ServerNetworkManager.Instance.OnGameStartReceived -= HandleServerGameStart;
+            ServerNetworkManager.Instance.OnCountdownUpdateReceived -= HandleServerSyncCountdown;
+            ServerNetworkManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
+        }
+
+        if (currentP2PNetwork != null)
+        {
+            Destroy(currentP2PNetwork.gameObject);
         }
     }
 
     private void FixedUpdate()
     {
-        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
-
-        if (isOnline)
+        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
         {
-            NetworkSessionManager.Instance.UpdateNetwork();
-        }
+            if (isWaitingForServerGameStart) return;
 
-        if (isWaitingForGameStart || !isSimulationRunning) return;
+            if (isWaitingForP2PConnection)
+            {
+                ProcessP2PHandshake();
+                return;
+            }
 
-        if (isOnline)
-        {
-            if (!NetworkSessionManager.Instance.GetIsConnected()) return;
+            if (isWaitingForServerSync)
+            {
+                if (currentP2PNetwork != null) currentP2PNetwork.PumpNetworkTick();
+                return;
+            }
 
-            ProcessOnlineTick();
-            VerifySyncState();
+            if (!isSimulationRunning) return;
+
+            if (currentP2PNetwork != null)
+            {
+                currentP2PNetwork.PumpNetworkTick();
+                
+                if (!currentP2PNetwork.GetIsConnected()) return;
+
+                currentPingMs = currentP2PNetwork.GetCurrentPingMs();
+                ProcessOnlineTick();
+                VerifySyncState();
+            }
         }
         else
         {
+            if (!isSimulationRunning) return;
             ProcessOfflineTick();
         }
     }
@@ -201,16 +227,41 @@ public class GameLoopManager : MonoBehaviour
     public PlayerController GetPlayerOneController() => playerOne.controller;
     public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
+    /*
+     * 룸 매니저에서 가져온 로컬 슬롯 번호에 맞춰 P2P 호스트 생성 또는 접속을 실행합니다.
+     */
+    private void SetupP2PConnection(string peerIp)
+    {
+        GameObject p2pObj = new GameObject("P2PNetworkManager");
+        currentP2PNetwork = p2pObj.AddComponent<P2PNetworkManager>();
+
+        ushort port = 9001;
+        localPlayerSlot = RoomStateManager.Instance != null ? RoomStateManager.Instance.GetLocalPlayerSlot() : 0;
+
+        if (localPlayerSlot == 0)
+        {
+            Debug.Log("[GameLoop] Initializing P2P as HOST (Slot 0)");
+            currentP2PNetwork.InitializeDriverAsHost(port);
+        }
+        else
+        {
+            Debug.Log($"[GameLoop] Initializing P2P as CLIENT (Slot 1) connecting to {peerIp}");
+            currentP2PNetwork.ConnectToPeer(peerIp, port);
+        }
+    }
+
+    /*
+     * 플레이어의 진영 데이터를 확인하여 로컬 카메라의 좌우 반전 여부를 결정합니다.
+     */
     private void DetermineCameraFlipState()
     {
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session != null)
+        if (RoomStateManager.Instance != null)
         {
-            int localSlot = session.GetLocalPlayerSlot();
-            RoomStateModel roomState = session.GetRoomState();
+            int slot = RoomStateManager.Instance.GetLocalPlayerSlot();
+            RoomStateModel roomState = RoomStateManager.Instance.roomModel;
             
-            int mySide = (localSlot == 0) ? roomState.p1PreferredSide : roomState.p2PreferredSide;
-            isCameraFlipped = (localSlot == 0 && mySide == 1) || (localSlot == 1 && mySide == 0);
+            int mySide = (slot == 0) ? roomState.p1PreferredSide : roomState.p2PreferredSide;
+            isCameraFlipped = (slot == 0 && mySide == 1) || (slot == 1 && mySide == 0);
 
             if (cameraManager != null)
             {
@@ -219,23 +270,46 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    /*
+     * 서버 연결 해제 명령 수신 시 시뮬레이션을 중단하고 상태를 갱신합니다.
+     */
     private void HandleMatchAborted(GameSceneType targetScene)
     {
         isSimulationRunning = false;
         isRoundOver = true;
     }
 
-    private void HandleGameStartCommand()
+    /*
+     * 서버로부터 아이피를 늦게 수신했을 경우, 이를 감지하여 P2P 연결 페이즈로 넘어갑니다.
+     */
+    private void HandleServerGameStart(string peerIp)
     {
-        isWaitingForGameStart = false;
-        InitializeMatch(true);
+        if (isWaitingForServerGameStart)
+        {
+            isWaitingForServerGameStart = false;
+            isWaitingForP2PConnection = true;
+            isWaitingForServerSync = true;
+            SetupP2PConnection(peerIp);
+        }
     }
 
-    private void HandlePingUpdate(int ping)
+    /*
+     * 서버로부터 시작 명령을 수신하면 모든 대기를 풀고 시뮬레이션을 개시합니다.
+     */
+    private void HandleServerSyncCountdown(bool isStarted)
     {
-        currentPingMs = ping;
+        if (isWaitingForServerSync && isStarted)
+        {
+            isWaitingForServerSync = false;
+            InitializeMatch(true);
+            isSimulationRunning = true;
+            Debug.Log("[GameLoopManager] Server sync complete. Simulation started.");
+        }
     }
 
+    /*
+     * 매치에 필요한 데이터 구조, 타이머, 캐릭터 컨트롤러를 동적 초기화합니다.
+     */
     private void InitializeMatch(bool isNetworkReset)
     {
         currentTick = 0;
@@ -246,6 +320,7 @@ public class GameLoopManager : MonoBehaviour
         lastHashedTick = -1;
         latestConfirmedTick = 0;
         currentPingMs = 0;
+        consecutiveDesyncCount = 0;
 
         postMatchDelayTicks = Mathf.RoundToInt(postMatchDelaySeconds * 60f);
 
@@ -258,7 +333,10 @@ public class GameLoopManager : MonoBehaviour
         roundTimer = new RoundTimerManager();
         roundTimer.InitializeTimer(99);
 
-        if (isNetworkReset) NetworkSessionManager.Instance.ClearBuffer();
+        if (isNetworkReset && currentP2PNetwork != null)
+        {
+            currentP2PNetwork.ClearBuffer();
+        }
 
         if (playerOne.instance != null) Destroy(playerOne.instance);
         if (playerTwo.instance != null) Destroy(playerTwo.instance);
@@ -279,31 +357,37 @@ public class GameLoopManager : MonoBehaviour
 
         if (cameraManager != null) cameraManager.SetTargetPlayers(playerOne.instance, playerTwo.instance);
 
-        isSimulationRunning = true;
         SaveGameState(0);
     }
 
-    private void HandlePeerConnection(string peerIp)
+    /*
+     * P2P 연결이 확립될 때까지 대기하며, 성공 시 서버로 Handshake를 발송합니다.
+     */
+    private void ProcessP2PHandshake()
     {
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session != null)
+        if (currentP2PNetwork != null)
         {
-            int localSlot = session.GetLocalPlayerSlot();
-
-            if (localSlot == 0)
+            currentP2PNetwork.PumpNetworkTick();
+            
+            if (currentP2PNetwork.GetIsConnected())
             {
-                NetworkSessionManager.Instance.ConnectToPeer(peerIp);
+                isWaitingForP2PConnection = false;
+                if (ServerNetworkManager.Instance != null)
+                {
+                    Debug.Log($"[CL-NET] P2P Connected! Sending Handshake to Server. Slot: {localPlayerSlot}");
+                    ServerNetworkManager.Instance.SendHandshake();
+                }
+                Debug.Log("[GameLoopManager] P2P Connected. Handshake sent to server. Waiting for Sync...");
             }
         }
     }
 
+    /*
+     * 온라인 롤백 넷코드 시뮬레이션의 단일 틱 처리를 수행합니다.
+     */
     private void ProcessOnlineTick()
     {
-        IMatchSession session = GameFlowManager.Instance.GetCurrentSession();
-        if (session == null) return;
-
-        int localPlayerIndex = session.GetLocalPlayerSlot();
-        bool isP1Local = (localPlayerIndex == 0);
+        bool isP1Local = (localPlayerSlot == 0);
 
         VerifyRemoteInputsAndRollback(isP1Local);
         BroadcastSyncHashes();
@@ -325,13 +409,16 @@ public class GameLoopManager : MonoBehaviour
             return;
         }
 
-        UpdateLocalInput(isP1Local, localPlayerIndex);
+        UpdateLocalInput(isP1Local, localPlayerSlot);
         PredictRemoteInput(isP1Local);
 
         ProcessTick(new PlayerInput { flags = p1InputBuffer[currentTick % ROLLBACK_WINDOW] }, 
                     new PlayerInput { flags = p2InputBuffer[currentTick % ROLLBACK_WINDOW] });
     }
 
+    /*
+     * 핑 기반으로 양측 클라이언트의 진행 속도 오차를 조절하기 위해 대기 여부를 판정합니다.
+     */
     private bool ShouldApplyTimeSync(int currentRollback)
     {
         float oneWayPingMs = currentPingMs / 2f;
@@ -350,6 +437,9 @@ public class GameLoopManager : MonoBehaviour
         return false;
     }
 
+    /*
+     * 상대방의 실제 인풋을 버퍼에서 꺼내어 예측 데이터와 다르면 과거로 돌아가 재시뮬레이션합니다.
+     */
     private void VerifyRemoteInputsAndRollback(bool isP1Local)
     {
         int rollbackTick = -1;
@@ -357,7 +447,7 @@ public class GameLoopManager : MonoBehaviour
 
         for (int t = latestConfirmedTick; t < currentTick; t++)
         {
-            if (NetworkSessionManager.Instance.TryGetRemoteInput(t, out ushort rawInput))
+            if (currentP2PNetwork.TryGetRemoteInput(t, out ushort rawInput))
             {
                 InputFlags actualRemote = (InputFlags)rawInput;
                 int idx = t % ROLLBACK_WINDOW;
@@ -387,6 +477,9 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    /*
+     * 로컬 물리 입력을 샘플링하여 지연 버퍼에 넣고 P2P 망으로 발송합니다.
+     */
     private void UpdateLocalInput(bool isP1Local, int localIdx)
     {
         PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localIdx, isCameraFlipped);
@@ -394,13 +487,17 @@ public class GameLoopManager : MonoBehaviour
         
         if (isP1Local) p1InputBuffer[targetTick % ROLLBACK_WINDOW] = physicalInput.flags;
         else p2InputBuffer[targetTick % ROLLBACK_WINDOW] = physicalInput.flags;
-        NetworkSessionManager.Instance.SendLocalInput(targetTick, (ushort)physicalInput.flags);
+        
+        currentP2PNetwork.SendLocalInput(targetTick, (ushort)physicalInput.flags);
     }
 
+    /*
+     * 아직 수신되지 않은 미래 틱에 대해 상대방이 이전과 동일한 키를 누르고 있을 것이라 추론합니다.
+     */
     private void PredictRemoteInput(bool isP1Local)
     {
         int idx = currentTick % ROLLBACK_WINDOW;
-        if (NetworkSessionManager.Instance.TryGetRemoteInput(currentTick, out ushort rawInput))
+        if (currentP2PNetwork.TryGetRemoteInput(currentTick, out ushort rawInput))
         {
             InputFlags actualRemote = (InputFlags)rawInput;
             if (isP1Local) p2InputBuffer[idx] = actualRemote;
@@ -415,13 +512,19 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    /*
+     * 연결이 불안정하여 하드 스톨이 걸렸을 때 로컬 입력만 강제로 재전송합니다.
+     */
     private void ResendLastInput(bool isP1Local)
     {
         int lastTick = Mathf.Max(0, currentTick + inputDelayFrames - 1);
         InputFlags lastInput = isP1Local ? p1InputBuffer[lastTick % ROLLBACK_WINDOW] : p2InputBuffer[lastTick % ROLLBACK_WINDOW];
-        NetworkSessionManager.Instance.SendLocalInput(lastTick, (ushort)lastInput);
+        currentP2PNetwork.SendLocalInput(lastTick, (ushort)lastInput);
     }
 
+    /*
+     * 주기적으로 로컬 시뮬레이션 해시값을 생성하여 상대방에게 전송합니다.
+     */
     private void BroadcastSyncHashes()
     {
         int maxHashTick = Mathf.Min(latestConfirmedTick, currentTick);
@@ -431,26 +534,45 @@ public class GameLoopManager : MonoBehaviour
             {
                 ulong hash = StateHashUtility.ComputeHash(stateBuffer[t % ROLLBACK_WINDOW]);
                 localHashBuffer[t] = hash;
-                NetworkSessionManager.Instance.SendSyncHash(t, hash);
+                currentP2PNetwork.SendSyncHash(t, hash);
                 lastHashedTick = t;
             }
         }
     }
 
+    /*
+     * 상대의 해시와 로컬 해시를 비교하여 디싱크 발생 시 덤프 로그를 생성하고 유예 카운트를 셉니다.
+     */
     private void VerifySyncState()
     {
         List<int> verifiedTicks = new List<int>();
         
         foreach (var kvp in localHashBuffer)
         {
-            bool hasRemoteHash = NetworkSessionManager.Instance.TryGetRemoteHash(kvp.Key, out ulong remoteHash);
+            bool hasRemoteHash = currentP2PNetwork.TryGetRemoteHash(kvp.Key, out ulong remoteHash);
             
             if (hasRemoteHash)
             {
                 bool isHashMismatch = kvp.Value != remoteHash;
                 
-                if (isHashMismatch) TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
-                else isDesyncDetected = false;
+                if (isHashMismatch)
+                {
+                    consecutiveDesyncCount++;
+                    GameStateSnapshot snapshot = stateBuffer[kvp.Key % ROLLBACK_WINDOW];
+                    string roleLabel = (localPlayerSlot == 0) ? "P1" : "P2";
+                    HashTraceUtility.TraceAndDumpHash(roleLabel, snapshot);
+                    
+                    if (consecutiveDesyncCount >= desyncAbortThreshold)
+                    {
+                        TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
+                        return; 
+                    }
+                }
+                else
+                {
+                    consecutiveDesyncCount = 0;
+                    isDesyncDetected = false;
+                }
                 
                 verifiedTicks.Add(kvp.Key);
             }
@@ -462,6 +584,28 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    /*
+     * 유예 기간을 초과한 진짜 디싱크가 감지되면 시뮬레이션을 중지하고 로비로 탈출합니다.
+     */
+    private void TriggerDesyncError(int tick, ulong local, ulong remote)
+    {
+        if (isDesyncDetected) return;
+
+        isDesyncDetected = true;
+        isSimulationRunning = false; 
+        
+        Debug.LogError($"[FATAL DESYNC] Tick: {tick} | Local: {local} | Remote: {remote}. Aborting Match.");
+
+        if (ServerNetworkManager.Instance != null)
+        {
+            
+        }
+        GameFlowManager.Instance.ChangeScene(GameSceneType.OnlineMatchedRoom);
+    }
+
+    /*
+     * 입력 데이터를 버퍼에 저장하고 물리 프레임을 전진시킵니다.
+     */
     private void ProcessTick(PlayerInput p1, PlayerInput p2)
     {
         int idx = currentTick % ROLLBACK_WINDOW;
@@ -472,6 +616,9 @@ public class GameLoopManager : MonoBehaviour
         currentTick++;
     }
 
+    /*
+     * 양 플레이어의 상태 업데이트, 충돌, 타이머 계산 등 실제 인게임 규칙을 처리합니다.
+     */
     private void RunTick(PlayerInput p1, PlayerInput p2)
     {
         bool isDelayFinished = isRoundOver && postMatchDelayTicks <= 0;
@@ -496,6 +643,9 @@ public class GameLoopManager : MonoBehaviour
         if (!isResimulating) SyncVisuals();
     }
 
+    /*
+     * 라운드 종료 여부를 확인하고, 종료되었다면 결과 연산 대기 시간을 계산합니다.
+     */
     private void UpdateMatchState()
     {
         if (isRoundOver)
@@ -507,6 +657,9 @@ public class GameLoopManager : MonoBehaviour
         CheckRoundEndCondition();
     }
 
+    /*
+     * 체력과 타이머를 검사하여 게임 승패가 갈릴 조건인지 판단합니다.
+     */
     private void CheckRoundEndCondition()
     {
         if (playerOne.controller == null || playerTwo.controller == null) return;
@@ -523,6 +676,9 @@ public class GameLoopManager : MonoBehaviour
         isRoundOver = true;
     }
 
+    /*
+     * KO 직후의 여운 시간을 기다린 뒤 승패 애니메이션 트리거를 발동시킵니다.
+     */
     private void ProcessPostMatchDelay()
     {
         if (postMatchDelayTicks > 0)
@@ -541,6 +697,9 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    /*
+     * 남은 체력 판정에 따라 각 컨트롤러의 승리 또는 패배 상태를 강제 주입합니다.
+     */
     private void ApplyFinalMatchResult()
     {
         if (playerOne.controller == null || playerTwo.controller == null) return;
@@ -569,23 +728,35 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
+    /*
+     * 승자와 패자의 애니메이션 상태를 갱신합니다.
+     */
     private void SetWinLossState(PlayerSessionContext winner, PlayerSessionContext loser)
     {
         winner.controller.GetStateMachine().TransitionTo(PlayerState_Type.Win, true);
         loser.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true); 
     }
 
+    /*
+     * 무승부 시 양측 모두 패배(쓰러짐) 모션으로 처리합니다.
+     */
     private void SetDrawState()
     {
         playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
         playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
     }
 
+    /*
+     * 경기가 끝난 후 로비로 돌아가기 위한 UI를 표출합니다.
+     */
     private void ShowSceneTransitionUI()
     {
         Debug.Log("Show Scene Transition UI");
     }
 
+    /*
+     * 롤백 대응을 위해 현재 틱의 게임 시뮬레이션 상태를 버퍼에 복사하여 보존합니다.
+     */
     private void SaveGameState(int tick)
     {
         int idx = tick % ROLLBACK_WINDOW;
@@ -600,6 +771,9 @@ public class GameLoopManager : MonoBehaviour
         if (playerTwo.controller != null) playerTwo.controller.ExportState(ref stateBuffer[idx].p2Snapshot);
     }
 
+    /*
+     * 과거 시점의 데이터를 버퍼에서 읽어와 현재 게임 메모리에 덮어씌웁니다.
+     */
     private void LoadGameState(int tick)
     {
         int idx = tick % ROLLBACK_WINDOW;
@@ -613,6 +787,9 @@ public class GameLoopManager : MonoBehaviour
         if (playerTwo.controller != null) playerTwo.controller.ImportState(stateBuffer[idx].p2Snapshot);
     }
 
+    /*
+     * 잘못된 예측 프레임부터 현재 프레임까지 고속으로 루프를 돌려 상태를 교정합니다.
+     */
     private void Resimulate(int from, int to)
     {
         isResimulating = true;
@@ -626,13 +803,12 @@ public class GameLoopManager : MonoBehaviour
         isResimulating = false;
     }
 
+    /*
+     * 캐릭터 프리팹을 씬에 생성하고 논리 컨트롤러 및 렌더러를 연결합니다.
+     */
     private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
     {
-        if (context.characterData == null)
-        {
-            Debug.LogError("[GameLoopManager] CharacterData is missing! Character initialization aborted.");
-            return;
-        }
+        if (context.characterData == null) return;
 
         context.instance = Instantiate(context.characterData.characterPrefab, spawnPos, Quaternion.identity);
         context.renderer = context.instance.GetComponent<PlayerRenderer>();
@@ -642,6 +818,9 @@ public class GameLoopManager : MonoBehaviour
         if (context.renderer != null) context.renderer.InitializeRenderer(context.controller, context.characterData.animationMap.stateMap, context.characterData.effectTable);
     }
 
+    /*
+     * 연산된 논리적 위치와 상태를 실제 3D 모델(유니티 트랜스폼/애니메이터)에 반영합니다.
+     */
     private void SyncVisuals()
     {
         if (playerOne.renderer != null) playerOne.renderer.UpdateRenderer();
@@ -653,12 +832,9 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-    private void TriggerDesyncError(int tick, ulong local, ulong remote)
-    {
-        isDesyncDetected = true;
-        Debug.LogError($"[DESYNC] Tick: {tick} | Local: {local} | Remote: {remote}");
-    }
-
+    /*
+     * 타격이 성공했을 때 화면에 스파크 이펙트를 생성합니다.
+     */
     private void HandleHitSpark(PlayerController target, Vector3 point, EffectType effect)
     {
         if (isResimulating) return;
@@ -666,12 +842,14 @@ public class GameLoopManager : MonoBehaviour
         if (ctx.renderer != null) ctx.renderer.PlayHitSpark(point, effect);
     }
 
+    /*
+     * 오프라인 모드일 때 로컬 기기의 두 입력 장치를 샘플링하여 틱을 회전시킵니다.
+     */
     private void ProcessOfflineTick()
     {
         bool isP1Right = cameraManager.IsPlayerOneOnRightSide();
         PlayerInput p1 = inputProvider.GetCurrentInput(currentTick, 0, !isP1Right);
         PlayerInput p2 = inputProvider.GetCurrentInput(currentTick, 1, isP1Right);
         ProcessTick(p1, p2);
-        if (isDebugRollbackEnabled && (currentTick % debugRollbackInterval == 0) && currentTick > debugRollbackFrames) Resimulate(currentTick - debugRollbackFrames, currentTick);
     }
 }

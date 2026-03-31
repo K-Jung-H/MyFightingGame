@@ -575,6 +575,61 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 174501793}
   m_CullTransparentMesh: 1
+--- !u!1 &270887678
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 270887680}
+  - component: {fileID: 270887679}
+  m_Layer: 0
+  m_Name: Temp_FlowManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &270887679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 270887678}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d60447a3fa4eeaa4297f6f3d164550b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameFlowManager
+  currentMode: 2
+  currentScene: 4
+  previousScene: 3
+  referenceResolution: {x: 1920, y: 1080}
+  startSceneName: StartScene
+  gameModeSelectSceneName: GameModeSelectScene
+  onlineMatchingSceneName: OnlineMatchingScene
+  onlineMatchedRoomSceneName: OnlineMatchedRoomScene
+  characterSelectSceneName: CharacterSelectScene
+  gamePlaySceneName: GamePlayScene
+  serverSceneName: EmptyServerScene
+--- !u!4 &270887680
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 270887678}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &291846204
 GameObject:
   m_ObjectHideFlags: 0
@@ -1901,6 +1956,62 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &1696261776
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1696261778}
+  - component: {fileID: 1696261777}
+  m_Layer: 0
+  m_Name: SceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1696261777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696261776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7759229fa75d74591b6018f79d28bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MatchedRoomUIManager
+  textP1Name: {fileID: 0}
+  textP1Level: {fileID: 0}
+  textP2Name: {fileID: 0}
+  textP2Level: {fileID: 0}
+  textRoomPlayedGames: {fileID: 0}
+  textRoomP1Wins: {fileID: 0}
+  textRoomP2Wins: {fileID: 0}
+  textRoomChat: {fileID: 0}
+  btnToggleReadyP1: {fileID: 0}
+  btnToggleReadyP2: {fileID: 0}
+  btnGameStart: {fileID: 0}
+  btnReturn: {fileID: 0}
+--- !u!4 &1696261778
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696261776}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1759686806
 GameObject:
   m_ObjectHideFlags: 0
@@ -2342,5 +2453,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 1098951373}
   - {fileID: 1647233850}
-  - {fileID: 44383291}
   - {fileID: 726909425}
+  - {fileID: 1696261778}
+  - {fileID: 270887680}
+  - {fileID: 44383291}

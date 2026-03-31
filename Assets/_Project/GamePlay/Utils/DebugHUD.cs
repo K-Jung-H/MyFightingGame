@@ -7,8 +7,6 @@ public class DebugHUD : MonoBehaviour
     [SerializeField] private PlayerController p1Controller;
     [SerializeField] private PlayerController p2Controller;
 
-    private NetworkSessionManager networkSession;
-
     private Queue<string> p1InputLogQueue = new Queue<string>();
     private Queue<string> p2InputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
@@ -29,65 +27,11 @@ public class DebugHUD : MonoBehaviour
 
     private void Start()
     {
-        networkSession = NetworkSessionManager.Instance;
-        
         bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
         isShowAllHUD = isOnline;
         isShowServer = isOnline;
         
         TryConnectControllers();
-    }
-
-    private void TryConnectControllers()
-    {
-        bool isManagerMissing = gameLoopManager == null;
-        if (isManagerMissing) return;
-
-        bool isP1Missing = p1Controller == null;
-        if (isP1Missing)
-        {
-            p1Controller = gameLoopManager.GetPlayerOneController();
-        }
-
-        bool isP2Missing = p2Controller == null;
-        if (isP2Missing)
-        {
-            p2Controller = gameLoopManager.GetPlayerTwoController();
-        }
-
-        bool canBindP1 = p1Controller != null && !isP1HealthBound;
-        if (canBindP1)
-        {
-            PlayerCombat p1Combat = p1Controller.GetCombat();
-            p1Combat.OnHealthChanged += UpdateP1Health;
-
-            UpdateP1Health(p1Combat.GetCurrentHealth(), p1Combat.GetMaxHealth());
-
-            isP1HealthBound = true;
-        }
-
-        bool canBindP2 = p2Controller != null && !isP2HealthBound;
-        if (canBindP2)
-        {
-            PlayerCombat p2Combat = p2Controller.GetCombat();
-            p2Combat.OnHealthChanged += UpdateP2Health;
-
-            UpdateP2Health(p2Combat.GetCurrentHealth(), p2Combat.GetMaxHealth());
-
-            isP2HealthBound = true;
-        }
-    }
-
-    private void UpdateP1Health(int current, int max)
-    {
-        p1CurrentHealth = current;
-        p1MaxHealth = max;
-    }
-
-    private void UpdateP2Health(int current, int max)
-    {
-        p2CurrentHealth = current;
-        p2MaxHealth = max;
     }
 
     private void OnDestroy()
@@ -138,6 +82,70 @@ public class DebugHUD : MonoBehaviour
         DrawP2DebugPanel(p2StartX, bottomY, panelWidth);
     }
 
+    /*
+     * 씬 내의 게임 매니저와 플레이어 컨트롤러를 찾아 디버그 HUD에 연결합니다.
+     */
+    private void TryConnectControllers()
+    {
+        bool isManagerMissing = gameLoopManager == null;
+        if (isManagerMissing) return;
+
+        bool isP1Missing = p1Controller == null;
+        if (isP1Missing)
+        {
+            p1Controller = gameLoopManager.GetPlayerOneController();
+        }
+
+        bool isP2Missing = p2Controller == null;
+        if (isP2Missing)
+        {
+            p2Controller = gameLoopManager.GetPlayerTwoController();
+        }
+
+        bool canBindP1 = p1Controller != null && !isP1HealthBound;
+        if (canBindP1)
+        {
+            PlayerCombat p1Combat = p1Controller.GetCombat();
+            p1Combat.OnHealthChanged += UpdateP1Health;
+
+            UpdateP1Health(p1Combat.GetCurrentHealth(), p1Combat.GetMaxHealth());
+
+            isP1HealthBound = true;
+        }
+
+        bool canBindP2 = p2Controller != null && !isP2HealthBound;
+        if (canBindP2)
+        {
+            PlayerCombat p2Combat = p2Controller.GetCombat();
+            p2Combat.OnHealthChanged += UpdateP2Health;
+
+            UpdateP2Health(p2Combat.GetCurrentHealth(), p2Combat.GetMaxHealth());
+
+            isP2HealthBound = true;
+        }
+    }
+
+    /*
+     * 플레이어 1의 체력 정보를 갱신하여 캐싱합니다.
+     */
+    private void UpdateP1Health(int current, int max)
+    {
+        p1CurrentHealth = current;
+        p1MaxHealth = max;
+    }
+
+    /*
+     * 플레이어 2의 체력 정보를 갱신하여 캐싱합니다.
+     */
+    private void UpdateP2Health(int current, int max)
+    {
+        p2CurrentHealth = current;
+        p2MaxHealth = max;
+    }
+
+    /*
+     * 화면 중앙 하단에 네트워크 및 서버 상태 정보를 렌더링합니다.
+     */
     private void DrawServerStatusPanel(float startX, float bottomY, float width)
     {
         string serverTitle = isShowServer ? "▼ Server Status" : "▲ Server Status";
@@ -170,6 +178,9 @@ public class DebugHUD : MonoBehaviour
         }
     }
 
+    /*
+     * 세부 네트워크 상태(연결 여부, 락스텝 스톨, 디싱크)를 렌더링합니다.
+     */
     private float DrawNetworkStateSection(float startX, float currentY, float width)
     {
         string netTitle = isShowNetworkDetails ? "▼ Network State" : "▶ Network State";
@@ -181,7 +192,9 @@ public class DebugHUD : MonoBehaviour
 
         if (isShowNetworkDetails)
         {
-            bool isConnected = networkSession != null && networkSession.GetIsConnected();
+            P2PNetworkManager p2pManager = Object.FindFirstObjectByType<P2PNetworkManager>();
+            bool isConnected = p2pManager != null && p2pManager.GetIsConnected();
+
             GUI.color = isConnected ? Color.green : Color.red;
             GUI.Label(new Rect(startX + 20, currentY, width - 30, 20), $"Connection: {(isConnected ? "Connected" : "Disconnected")}");
             currentY += 15f;
@@ -220,6 +233,9 @@ public class DebugHUD : MonoBehaviour
         return currentY;
     }
 
+    /*
+     * 화면 좌측 하단에 플레이어 1의 입력 로그 및 액션 디버그 패널을 렌더링합니다.
+     */
     private void DrawP1DebugPanel(float startX, float bottomY, float width)
     {
         bool hasP1Controller = p1Controller != null;
@@ -238,6 +254,9 @@ public class DebugHUD : MonoBehaviour
         }
     }
 
+    /*
+     * 화면 우측 하단에 플레이어 2의 입력 로그 및 액션 디버그 패널을 렌더링합니다.
+     */
     private void DrawP2DebugPanel(float startX, float bottomY, float width)
     {
         bool hasP2Controller = p2Controller != null;
@@ -256,6 +275,9 @@ public class DebugHUD : MonoBehaviour
         }
     }
 
+    /*
+     * 컨트롤러의 현재 입력, 액션, 콤보 시퀀스를 문자열로 변환하여 GUI에 출력합니다.
+     */
     private void DrawInputDebugContent(PlayerController controller, Queue<string> logQueue, float startX, float startY, float width, float panelHeight)
     {
         GUI.Box(new Rect(startX, startY, width, panelHeight), "");
@@ -314,6 +336,9 @@ public class DebugHUD : MonoBehaviour
         GUI.Label(new Rect(startX + 10, yOffset, width - 20, 60), comboString, multilineStyle);
     }
 
+    /*
+     * 비트 플래그 형태의 키 입력을 읽기 쉬운 기호 및 문자열로 포맷팅합니다.
+     */
     private string InputFlagsToString(InputFlags flags)
     {
         bool isNone = flags == InputFlags.None;

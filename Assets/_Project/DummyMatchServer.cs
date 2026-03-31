@@ -242,6 +242,9 @@ public class DummyMatchServer : MonoBehaviour
     {
         byte packetType = stream.ReadByte();
 
+        // =========================================================
+        // 1. 방(Room) 소속과 무관하게 '로비'에서도 반드시 처리되어야 하는 패킷들
+        // =========================================================
         if (packetType == NetworkPacketType.CreateRoomRequest)
         {
             HandleCreateRoomRequest(conn, ref stream);
@@ -257,15 +260,22 @@ public class DummyMatchServer : MonoBehaviour
             HandleJoinRoomRequest(conn, ref stream);
             return;
         }
-        
-        if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom)) return;
-
-        if (packetType == 22) 
+        else if (packetType == 22) // SERVER_PING_PACKET (위치 교정됨)
         {
             float sentTime = stream.ReadFloat();
             SendServerPong(conn, sentTime);
+            return; // 핑 응답 후 즉시 종료
         }
-        else if (packetType == NetworkPacketType.SelectUpdate)
+        
+        // =========================================================
+        // 2. 검문소: 이 아래부터는 방(Room)에 입장한 유저의 패킷만 통과시킵니다.
+        // =========================================================
+        if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom)) return;
+
+        // =========================================================
+        // 3. 인게임 및 룸 내부 상태 동기화 패킷들
+        // =========================================================
+        if (packetType == NetworkPacketType.SelectUpdate)
         {
             int playerIdx = stream.ReadInt();
             int charIdx = stream.ReadInt();
@@ -327,6 +337,7 @@ public class DummyMatchServer : MonoBehaviour
         }
         else if (packetType == NetworkPacketType.Handshake)
         {
+            LogEvent($"[SV-NET] Handshake packet received from {conn.GetHashCode()}.");
             ProcessHandshake(conn, currentRoom);
         }
         else if (packetType == NetworkPacketType.ReportDisconnect)

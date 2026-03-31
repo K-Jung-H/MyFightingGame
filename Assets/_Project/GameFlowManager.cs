@@ -40,7 +40,6 @@ public class GameFlowManager : MonoBehaviour
     [SerializeField] private string gamePlaySceneName = "GamePlayScene";
     [SerializeField] private string serverSceneName = "EmptyServerScene";
 
-    private IMatchSession currentSession;
     private DummyMatchServer dummyServer;
     private bool isFlowInitialized;
 
@@ -55,17 +54,6 @@ public class GameFlowManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Update()
-    {
-        if (currentScene != GameSceneType.GamePlay && currentScene != GameSceneType.Server)
-        {
-            if (NetworkSessionManager.Instance != null)
-            {
-                NetworkSessionManager.Instance.UpdateNetwork();
-            }
-        }
-    }
-
     private void OnGUI()
     {
         bool isOnlineMode = (currentMode == ConnectionMode.OnlineClient);
@@ -74,20 +62,6 @@ public class GameFlowManager : MonoBehaviour
             DrawNetworkStatusGUI();
             if (currentScene == GameSceneType.Server) return;
         }
-   
-    }
-
-    private void OnDestroy()
-    {
-        if (NetworkSessionManager.Instance != null)
-        {
-            NetworkSessionManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
-        }
-    }
-
-    public IMatchSession GetCurrentSession()
-    {
-        return currentSession;
     }
 
     public Vector2 GetReferenceResolution()
@@ -95,62 +69,18 @@ public class GameFlowManager : MonoBehaviour
         return referenceResolution;
     }
 
-    public void OnReceiveSceneChangeCommand(string targetScene)
-    {
-        if (targetScene == "GamePlayScene" || targetScene == gamePlaySceneName)
-        {
-            ChangeScene(GameSceneType.GamePlay);
-        }
-    }
-
     public void ChangeScene(GameSceneType targetSceneType)
     {
         previousScene = currentScene;
         currentScene = targetSceneType;
 
-        if (currentScene == GameSceneType.Start)
-        {
-            SceneManager.LoadScene(startSceneName);
-        }
-        else if (currentScene == GameSceneType.GameModeSelect)
-        {
-            SceneManager.LoadScene(gameModeSelectSceneName);
-        }
-        else if (currentScene == GameSceneType.OnlineMatching)
-        {
-            SceneManager.LoadScene(onlineMatchingSceneName);
-        }
-        else if (currentScene == GameSceneType.OnlineMatchedRoom)
-        {
-            SceneManager.LoadScene(onlineMatchedRoomSceneName);
-        }
-        else if (currentScene == GameSceneType.CharacterSelect)
-        {
-            SceneManager.LoadScene(characterSelectSceneName);
-        }
-        else if (currentScene == GameSceneType.GamePlay)
-        {
-            SceneManager.LoadScene(gamePlaySceneName);
-        }
-        else if (currentScene == GameSceneType.Server)
-        {
-            SceneManager.LoadScene(serverSceneName);
-        }
-    }
-
-    public void GoBack()
-    {
-        if (currentScene != previousScene)
-        {
-            if (currentMode != ConnectionMode.None && previousScene == GameSceneType.GameModeSelect)
-            {
-                currentMode = ConnectionMode.None;
-                currentSession = null;
-                isFlowInitialized = false;
-            }
-
-            ChangeScene(previousScene);
-        }
+        if (currentScene == GameSceneType.Start) SceneManager.LoadScene(startSceneName);
+        else if (currentScene == GameSceneType.GameModeSelect) SceneManager.LoadScene(gameModeSelectSceneName);
+        else if (currentScene == GameSceneType.OnlineMatching) SceneManager.LoadScene(onlineMatchingSceneName);
+        else if (currentScene == GameSceneType.OnlineMatchedRoom) SceneManager.LoadScene(onlineMatchedRoomSceneName);
+        else if (currentScene == GameSceneType.CharacterSelect) SceneManager.LoadScene(characterSelectSceneName);
+        else if (currentScene == GameSceneType.GamePlay) SceneManager.LoadScene(gamePlaySceneName);
+        else if (currentScene == GameSceneType.Server) SceneManager.LoadScene(serverSceneName);
     }
 
     public void StartDedicatedServer()
@@ -172,25 +102,64 @@ public class GameFlowManager : MonoBehaviour
     {
         currentMode = ConnectionMode.Offline;
         isFlowInitialized = true;
-        currentSession = new OfflineMatchSession();
-        currentSession.SendSideUpdate(0);
         ChangeScene(GameSceneType.CharacterSelect);
     }
 
     public void SelectOnlineMode()
     {
         currentMode = ConnectionMode.OnlineClient;
+
+        if (ServerNetworkManager.Instance == null)
+        {
+            GameObject serverObj = new GameObject("ServerNetworkManager");
+            serverObj.AddComponent<ServerNetworkManager>();
+        }
+
+        if (RoomStateManager.Instance == null)
+        {
+            GameObject roomObj = new GameObject("RoomStateManager");
+            roomObj.AddComponent<RoomStateManager>();
+        }
+
         ChangeScene(GameSceneType.OnlineMatching);
     }
 
+    public void GoBack()
+    {
+        if (currentScene != previousScene)
+        {
+            if (currentMode != ConnectionMode.None && previousScene == GameSceneType.GameModeSelect)
+            {
+                currentMode = ConnectionMode.None;
+                isFlowInitialized = false;
+
+                if (ServerNetworkManager.Instance != null)
+                {
+                    Destroy(ServerNetworkManager.Instance.gameObject);
+                }
+
+                if (RoomStateManager.Instance != null)
+                {
+                    Destroy(RoomStateManager.Instance.gameObject);
+                }
+            }
+
+            ChangeScene(previousScene);
+        }
+    }
+    
     private void HandleMatchAborted(GameSceneType targetScene)
     {
-        currentSession = null;
         isFlowInitialized = false;
         
-        NetworkSessionManager.Instance.ResetNetworkSession();
-        
-        if (targetScene == GameSceneType.OnlineMatching)
+        if (targetScene == GameSceneType.Start || targetScene == GameSceneType.GameModeSelect)
+        {
+            currentMode = ConnectionMode.None;
+            
+            if (ServerNetworkManager.Instance != null) Destroy(ServerNetworkManager.Instance.gameObject);
+            if (RoomStateManager.Instance != null) Destroy(RoomStateManager.Instance.gameObject);
+        }
+        else if (targetScene == GameSceneType.OnlineMatching)
         {
             currentMode = ConnectionMode.OnlineClient;
         }
@@ -206,17 +175,7 @@ public class GameFlowManager : MonoBehaviour
         float startY = 360f;
         
         string modeStr = currentMode.ToString();
-        bool isConnected = currentSession != null && NetworkSessionManager.Instance.GetIsConnected();
-        
-        string netStatus = "";
-        if (currentMode == ConnectionMode.DedicatedServer)
-        {
-            netStatus = "[Dedicated Server Running]";
-        }
-        else
-        {
-            netStatus = isConnected ? "[Server Connected]" : "[Connecting...]";
-        }
+        string netStatus = (currentMode == ConnectionMode.DedicatedServer) ? "[Dedicated Server Running]" : "[Online Mode]";
 
         string displayText = $"{modeStr} | {netStatus}";
         
