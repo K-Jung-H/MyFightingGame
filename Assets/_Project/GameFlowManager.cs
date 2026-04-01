@@ -15,7 +15,7 @@ public enum GameSceneType
     Start,
     GameModeSelect,
     Training,
-    OnlineMatching,
+    OnlineLobby,
     OnlineMatchedRoom,
     CharacterSelect,
     GamePlay,
@@ -76,7 +76,7 @@ public class GameFlowManager : MonoBehaviour
 
         if (currentScene == GameSceneType.Start) SceneManager.LoadScene(startSceneName);
         else if (currentScene == GameSceneType.GameModeSelect) SceneManager.LoadScene(gameModeSelectSceneName);
-        else if (currentScene == GameSceneType.OnlineMatching) SceneManager.LoadScene(onlineMatchingSceneName);
+        else if (currentScene == GameSceneType.OnlineLobby) SceneManager.LoadScene(onlineMatchingSceneName);
         else if (currentScene == GameSceneType.OnlineMatchedRoom) SceneManager.LoadScene(onlineMatchedRoomSceneName);
         else if (currentScene == GameSceneType.CharacterSelect) SceneManager.LoadScene(characterSelectSceneName);
         else if (currentScene == GameSceneType.GamePlay) SceneManager.LoadScene(gamePlaySceneName);
@@ -121,7 +121,7 @@ public class GameFlowManager : MonoBehaviour
             roomObj.AddComponent<RoomStateManager>();
         }
 
-        ChangeScene(GameSceneType.OnlineMatching);
+        ChangeScene(GameSceneType.OnlineLobby);
     }
 
     public void GoBack()
@@ -159,7 +159,7 @@ public class GameFlowManager : MonoBehaviour
             if (ServerNetworkManager.Instance != null) Destroy(ServerNetworkManager.Instance.gameObject);
             if (RoomStateManager.Instance != null) Destroy(RoomStateManager.Instance.gameObject);
         }
-        else if (targetScene == GameSceneType.OnlineMatching)
+        else if (targetScene == GameSceneType.OnlineLobby)
         {
             currentMode = ConnectionMode.OnlineClient;
         }

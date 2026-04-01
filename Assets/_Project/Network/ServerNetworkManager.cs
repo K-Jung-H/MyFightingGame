@@ -10,6 +10,8 @@ public class ServerNetworkManager : MonoBehaviour
     public event Action OnConnectionEstablished;
     public event Action<byte, RoomMetadata[]> OnSearchRoomResponseReceived;
     public event Action<bool, string, bool> OnJoinRoomResponseReceived;
+    public event Action<RoomStateModel> OnRoomStateBroadcastReceived;
+
     public event Action<int, bool, int, int, bool, int> OnSelectBroadcastReceived;
     public event Action<bool> OnCountdownUpdateReceived;
     public event Action OnStartButtonActiveReceived;
@@ -126,6 +128,58 @@ public class ServerNetworkManager : MonoBehaviour
             serverDriver.EndSend(writer);
         }
     }
+
+    public void SendRuleUpdate(int rounds, int timeLimit)
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.RuleUpdate);
+            writer.WriteInt(rounds);
+            writer.WriteInt(timeLimit);
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendReadyStateUpdate(bool isReady)
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.ReadyStateUpdate);
+            writer.WriteByte((byte)(isReady ? 1 : 0));
+            serverDriver.EndSend(writer);
+        }
+    }
+    
+    public void SendLobbyStartRequest()
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.LobbyStartRequest);
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendRoomLeaveRequest()
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.RoomLeaveRequest);
+            serverDriver.EndSend(writer);
+        }
+    }
+
 
     /*
      * 캐릭터 선택 락인(Lock-in) 정보를 서버로 전송합니다.
@@ -324,6 +378,26 @@ public class ServerNetworkManager : MonoBehaviour
             bool isHost = stream.ReadByte() == 1;
             
             OnJoinRoomResponseReceived?.Invoke(isSuccess, roomCodeOrReason, isHost);
+        }
+        else if (packetType == NetworkPacketType.RoomStateBroadcast)
+        {
+            RoomStateModel updatedModel = new RoomStateModel();
+            
+            updatedModel.isP1Connected = stream.ReadByte() == 1;
+            updatedModel.isP2Connected = stream.ReadByte() == 1;
+            
+            updatedModel.maxRounds = stream.ReadInt();
+            updatedModel.roundTimeLimit = stream.ReadInt();
+            
+            updatedModel.p1Wins = stream.ReadInt();
+            updatedModel.p1Losses = stream.ReadInt();
+            updatedModel.p2Wins = stream.ReadInt();
+            updatedModel.p2Losses = stream.ReadInt();
+            
+            updatedModel.isP1Ready = stream.ReadByte() == 1;
+            updatedModel.isP2Ready = stream.ReadByte() == 1;
+
+            OnRoomStateBroadcastReceived?.Invoke(updatedModel);
         }
         else if (packetType == NetworkPacketType.SelectBroadcast)
         {

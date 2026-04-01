@@ -260,7 +260,7 @@ public class DummyMatchServer : MonoBehaviour
             HandleJoinRoomRequest(conn, ref stream);
             return;
         }
-        else if (packetType == 22) // SERVER_PING_PACKET (위치 교정됨)
+        else if (packetType == 22) // ServerNetworkManager::SERVER_PING_PACKET
         {
             float sentTime = stream.ReadFloat();
             SendServerPong(conn, sentTime);
@@ -271,6 +271,45 @@ public class DummyMatchServer : MonoBehaviour
         // 2. 검문소: 이 아래부터는 방(Room)에 입장한 유저의 패킷만 통과시킵니다.
         // =========================================================
         if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom)) return;
+
+        if (packetType == NetworkPacketType.RuleUpdate)
+        {
+            int rounds = stream.ReadInt();
+            int timeLimit = stream.ReadInt();
+
+            if (conn == currentRoom.p1)
+            {
+                currentRoom.stateModel.maxRounds = rounds;
+                currentRoom.stateModel.roundTimeLimit = timeLimit;
+                BroadcastRoomState(currentRoom);
+            }
+        }
+        else if (packetType == NetworkPacketType.ReadyStateUpdate)
+        {
+            bool isReady = stream.ReadByte() == 1;
+
+            if (conn == currentRoom.p1)
+            {
+                currentRoom.stateModel.isP1Ready = isReady;
+                BroadcastRoomState(currentRoom);
+            }
+            else if (conn == currentRoom.p2)
+            {
+                currentRoom.stateModel.isP2Ready = isReady;
+                BroadcastRoomState(currentRoom);
+            }
+        }
+        else if (packetType == NetworkPacketType.RoomLeaveRequest)
+        {
+            HandleDisconnect(conn);
+        }
+        else if (packetType == NetworkPacketType.LobbyStartRequest)
+        {
+            if (conn == currentRoom.p1 && currentRoom.stateModel.isP2Ready)
+            {
+                BroadcastSceneChange(currentRoom);
+            }
+        }
 
         // =========================================================
         // 3. 인게임 및 룸 내부 상태 동기화 패킷들
@@ -449,6 +488,7 @@ public class DummyMatchServer : MonoBehaviour
                 success = true;
                 targetRoom.p2 = conn;
                 connectionToRoom[conn] = targetRoom;
+                targetRoom.stateModel.isP2Connected = true;
                 reason = "Success";
                 LogEvent($"Client joined Room [{code}].");
             }
@@ -468,8 +508,36 @@ public class DummyMatchServer : MonoBehaviour
         if (success)
         {
             SendSlotId(conn, 1);
-            BroadcastSelectState(targetRoom);
+            BroadcastRoomState(targetRoom);
         }
+    }
+
+    private void BroadcastRoomState(ServerRoom room)
+    {
+        if (room.p1.IsCreated) SendRoomState(room.p1, room);
+        if (room.p2.IsCreated) SendRoomState(room.p2, room);
+    }
+
+    private void SendRoomState(NetworkConnection conn, ServerRoom room)
+    {
+        driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        writer.WriteByte(NetworkPacketType.RoomStateBroadcast);
+        
+        writer.WriteByte((byte)(room.stateModel.isP1Connected ? 1 : 0));
+        writer.WriteByte((byte)(room.stateModel.isP2Connected ? 1 : 0));
+        
+        writer.WriteInt(room.stateModel.maxRounds);
+        writer.WriteInt(room.stateModel.roundTimeLimit);
+        
+        writer.WriteInt(room.stateModel.p1Wins);
+        writer.WriteInt(room.stateModel.p1Losses);
+        writer.WriteInt(room.stateModel.p2Wins);
+        writer.WriteInt(room.stateModel.p2Losses);
+        
+        writer.WriteByte((byte)(room.stateModel.isP1Ready ? 1 : 0));
+        writer.WriteByte((byte)(room.stateModel.isP2Ready ? 1 : 0));
+        
+        driver.EndSend(writer);
     }
 
     private void ProcessHandshake(NetworkConnection conn, ServerRoom room)
@@ -494,16 +562,45 @@ public class DummyMatchServer : MonoBehaviour
         if (conn == room.p1)
         {
             LogEvent($"Room [{room.roomCode}] P1 Disconnected.");
-            room.p1 = default;
-            room.stateModel.isP1CharacterLocked = false;
-            room.isP1Ready = false;
-            room.isP1StartRequested = false;
+            
+            if (room.p2.IsCreated && !isMatchActive)
+            {
+                room.p1 = room.p2;
+                room.p2 = default;
+                
+                room.stateModel.isP1Connected = room.stateModel.isP2Connected;
+                room.stateModel.isP2Connected = false;
+                
+                room.stateModel.p1Wins = room.stateModel.p2Wins;
+                room.stateModel.p1Losses = room.stateModel.p2Losses;
+                room.stateModel.isP1Ready = room.stateModel.isP2Ready;
+                room.stateModel.p1CharacterIndex = room.stateModel.p2CharacterIndex;
+                room.stateModel.isP1CharacterLocked = room.stateModel.isP2CharacterLocked;
+                room.stateModel.p1PreferredSide = room.stateModel.p2PreferredSide;
+
+                room.stateModel.p2Wins = 0;
+                room.stateModel.p2Losses = 0;
+                room.stateModel.isP2Ready = false;
+                room.stateModel.p2CharacterIndex = -1;
+                room.stateModel.isP2CharacterLocked = false;
+                
+                SendSlotId(room.p1, 0);
+            }
+            else
+            {
+                room.p1 = default;
+                room.stateModel.isP1Connected = false;
+                room.stateModel.isP1CharacterLocked = false;
+                room.isP1Ready = false;
+                room.isP1StartRequested = false;
+            }
             isMatched = true;
         }
         else if (conn == room.p2)
         {
             LogEvent($"Room [{room.roomCode}] P2 Disconnected.");
             room.p2 = default;
+            room.stateModel.isP2Connected = false;
             room.stateModel.isP2CharacterLocked = false;
             room.isP2Ready = false;
             room.isP2StartRequested = false;
@@ -535,7 +632,7 @@ public class DummyMatchServer : MonoBehaviour
             room.countdownTimer = 3f;
             
             BroadcastCountdownState(room, false);
-            BroadcastSelectState(room);
+            BroadcastRoomState(room);
         }
     }
 

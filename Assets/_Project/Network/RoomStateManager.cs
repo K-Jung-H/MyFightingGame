@@ -47,6 +47,7 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnCountdownUpdateReceived += HandleCountdownUpdate;
             ServerNetworkManager.Instance.OnStartButtonActiveReceived += HandleStartButtonActive;
             ServerNetworkManager.Instance.OnSceneChangeReceived += HandleSceneChangeCommand;
+            ServerNetworkManager.Instance.OnRoomStateBroadcastReceived += HandleRoomStateBroadcast;
         }
     }
 
@@ -59,6 +60,7 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnCountdownUpdateReceived -= HandleCountdownUpdate;
             ServerNetworkManager.Instance.OnStartButtonActiveReceived -= HandleStartButtonActive;
             ServerNetworkManager.Instance.OnSceneChangeReceived -= HandleSceneChangeCommand;
+            ServerNetworkManager.Instance.OnRoomStateBroadcastReceived -= HandleRoomStateBroadcast;
         }
     }
 
@@ -98,6 +100,15 @@ public class RoomStateManager : MonoBehaviour
     private void HandleSlotAssigned(int slotId)
     {
         localPlayerSlot = slotId;
+    }
+
+    public void UpdateRoomModel(RoomStateModel newModel)
+    {
+        roomModel = newModel;
+    }
+    private void HandleRoomStateBroadcast(RoomStateModel newModel)
+    {
+        UpdateRoomModel(newModel);
     }
 
     private void HandleSelectBroadcast(int p1Idx, bool p1Lock, int p1Side, int p2Idx, bool p2Lock, int p2Side)

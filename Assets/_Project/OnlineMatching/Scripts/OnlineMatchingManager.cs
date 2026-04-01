@@ -144,8 +144,7 @@ public class OnlineMatchingManager : MonoBehaviour
             
             if (RoomStateManager.Instance != null)
             {
-                //RoomStateManager.Instance.ChangeRoomState(RoomStateType.Lobby);
-                RoomStateManager.Instance.ChangeRoomState(RoomStateType.CharacterSelect);
+                RoomStateManager.Instance.ChangeRoomState(RoomStateType.Lobby);
             }
         }
         else

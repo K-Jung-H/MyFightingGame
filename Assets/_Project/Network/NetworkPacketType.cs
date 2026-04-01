@@ -25,4 +25,10 @@ public static class NetworkPacketType
     public const byte SearchRoomResponse = 32;
     public const byte JoinRoomRequest = 33;
     public const byte JoinRoomResponse = 34;
+    
+    public const byte RuleUpdate = 35;
+    public const byte RoomLeaveRequest = 36;
+    public const byte ReadyStateUpdate = 37;
+    public const byte RoomStateBroadcast = 38;
+    public const byte LobbyStartRequest = 39;
 }

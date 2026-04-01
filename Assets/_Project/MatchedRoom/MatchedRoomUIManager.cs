@@ -1,159 +1,135 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System;
+
+[System.Serializable]
+public struct RuleOption
+{
+    public Button button;
+    public int value;
+}
 
 public class MatchedRoomUIManager : MonoBehaviour
 {
-    public TextMeshProUGUI textP1Name;
-    public TextMeshProUGUI textP1Level;
-    public TextMeshProUGUI textP2Name;
-    public TextMeshProUGUI textP2Level;
-
-    public TextMeshProUGUI textRoomPlayedGames;
-    public TextMeshProUGUI textRoomP1Wins;
-    public TextMeshProUGUI textRoomP2Wins;
-    public TextMeshProUGUI textRoomChat;
-
-    public Button btnToggleReadyP1;
-    public Button btnToggleReadyP2;
-    public Button btnGameStart;
-    public Button btnReturn;
-
-    private bool isP1Ready;
-    private bool isP2Ready;
-    private bool isHost;
+    [SerializeField] private MatchedRoomManager roomManager;
+    
+    [SerializeField] private RuleOption[] roundOptions;
+    [SerializeField] private RuleOption[] timeOptions;
+    
+    [SerializeField] private PlayerInfoPanel p1InfoPanel;
+    [SerializeField] private PlayerInfoPanel p2InfoPanel;
+    
+    [SerializeField] private Button readyToggleButton;
+    [SerializeField] private GameObject readyStateImage;
+    [SerializeField] private Button startMatchButton;
+    [SerializeField] private Button leaveButton;
 
     private void Start()
     {
-        if (btnToggleReadyP1 != null) btnToggleReadyP1.onClick.AddListener(OnClickReadyP1);
-        if (btnToggleReadyP2 != null) btnToggleReadyP2.onClick.AddListener(OnClickReadyP2);
-        if (btnGameStart != null) btnGameStart.onClick.AddListener(OnClickGameStart);
-        if (btnReturn != null) btnReturn.onClick.AddListener(OnClickReturn);
-
-        InitializeDefaultState();
-    }
-
-    private void OnDestroy()
-    {
-        if (btnToggleReadyP1 != null) btnToggleReadyP1.onClick.RemoveAllListeners();
-        if (btnToggleReadyP2 != null) btnToggleReadyP2.onClick.RemoveAllListeners();
-        if (btnGameStart != null) btnGameStart.onClick.RemoveAllListeners();
-        if (btnReturn != null) btnReturn.onClick.RemoveAllListeners();
-    }
-
-    public void UpdatePlayerInfo(int playerIndex, string playerName, int playerLevel)
-    {
-        if (playerIndex == 1)
+        foreach (RuleOption option in roundOptions)
         {
-            if (textP1Name != null) textP1Name.text = playerName;
-            if (textP1Level != null) textP1Level.text = $"Lv. {playerLevel}";
-        }
-        else if (playerIndex == 2)
-        {
-            if (textP2Name != null) textP2Name.text = playerName;
-            if (textP2Level != null) textP2Level.text = $"Lv. {playerLevel}";
-        }
-    }
-
-    public void UpdateRoomStats(int totalGames, int p1Wins, int p2Wins)
-    {
-        if (textRoomPlayedGames != null) textRoomPlayedGames.text = $"Played Games: {totalGames}";
-        if (textRoomP1Wins != null) textRoomP1Wins.text = $"1P Wins: {p1Wins}";
-        if (textRoomP2Wins != null) textRoomP2Wins.text = $"2P Wins: {p2Wins}";
-    }
-
-    public void SetPlayerReadyState(int playerIndex, bool isReady)
-    {
-        if (playerIndex == 1)
-        {
-            isP1Ready = isReady;
-            UpdateButtonColor(btnToggleReadyP1, isP1Ready);
-        }
-        else if (playerIndex == 2)
-        {
-            isP2Ready = isReady;
-            UpdateButtonColor(btnToggleReadyP2, isP2Ready);
+            if (option.button != null)
+            {
+                int capturedValue = option.value;
+                option.button.onClick.AddListener(() => OnRoundRadioClicked(capturedValue));
+            }
         }
 
-        CheckGameStartCondition();
+        foreach (RuleOption option in timeOptions)
+        {
+            if (option.button != null)
+            {
+                int capturedValue = option.value;
+                option.button.onClick.AddListener(() => OnTimeRadioClicked(capturedValue));
+            }
+        }
+
+        readyToggleButton.onClick.AddListener(OnReadyClicked);
+        startMatchButton.onClick.AddListener(OnStartClicked);
+        leaveButton.onClick.AddListener(OnLeaveClicked);
     }
 
-    public void SetupRoomAuthority(bool isUserHost)
+    public void RefreshUI(RoomStateModel model, int localSlot)
     {
-        isHost = isUserHost;
+        bool isHost = (localSlot == 0);
+        bool isP2Present = model.isP2Connected; 
+
+        foreach (RuleOption option in roundOptions)
+        {
+            if (option.button == null) continue;
+            option.button.interactable = isHost;
+            UpdateRadioButtonVisual(option.button, model.maxRounds == option.value);
+        }
+
+        foreach (RuleOption option in timeOptions)
+        {
+            if (option.button == null) continue;
+            option.button.interactable = isHost;
+            UpdateRadioButtonVisual(option.button, model.roundTimeLimit == option.value);
+        }
+
+        p1InfoPanel.UpdatePanel("Player 1", 0, model.p1Wins, model.p1Losses, model.isP1Ready, model.isP1Connected);
+        p2InfoPanel.UpdatePanel("Player 2", 0, model.p2Wins, model.p2Losses, model.isP2Ready, isP2Present);
+
+        readyToggleButton.gameObject.SetActive(true);
+        startMatchButton.gameObject.SetActive(isHost);
         
-        if (btnToggleReadyP1 != null) btnToggleReadyP1.interactable = isHost;
-        if (btnToggleReadyP2 != null) btnToggleReadyP2.interactable = !isHost;
-        
-        if (btnGameStart != null)
+        bool canStart = model.isP1Ready && (isP2Present ? model.isP2Ready : false);
+        startMatchButton.interactable = canStart;
+
+        if (readyStateImage != null)
         {
-            btnGameStart.gameObject.SetActive(isHost);
-            btnGameStart.interactable = false;
+            bool isLocalReady = isHost ? model.isP1Ready : model.isP2Ready;
+            readyStateImage.SetActive(isLocalReady);
         }
     }
 
-    public void AppendChatMessage(string sender, string message)
+    private void UpdateRadioButtonVisual(Button btn, bool isSelected)
     {
-        if (textRoomChat != null)
-        {
-            textRoomChat.text += $"\n[{sender}]: {message}";
-        }
-    }
-
-    private void OnClickReadyP1()
-    {
-        if (!isHost) return;
+        ColorBlock cb = btn.colors;
         
-        SetPlayerReadyState(1, !isP1Ready);
-    }
-
-    private void OnClickReadyP2()
-    {
-        if (isHost) return;
-
-        SetPlayerReadyState(2, !isP2Ready);
-    }
-
-    private void OnClickGameStart()
-    {
-        if (isHost && isP1Ready && isP2Ready)
+        if (isSelected)
         {
-            Debug.Log("Game Start Requested.");
+            cb.normalColor = Color.green;
+            cb.selectedColor = Color.green;
+            cb.disabledColor = Color.green;
         }
-    }
-
-    private void OnClickReturn()
-    {
-        Debug.Log("Return to Lobby Requested.");
-    }
-
-    private void InitializeDefaultState()
-    {
-        UpdatePlayerInfo(1, "Waiting...", 0);
-        UpdatePlayerInfo(2, "Waiting...", 0);
-        UpdateRoomStats(0, 0, 0);
-        SetPlayerReadyState(1, false);
-        SetPlayerReadyState(2, false);
-        
-        if (textRoomChat != null) textRoomChat.text = string.Empty;
-    }
-
-    private void CheckGameStartCondition()
-    {
-        if (isHost && btnGameStart != null)
+        else
         {
-            btnGameStart.interactable = (isP1Ready && isP2Ready);
+            cb.normalColor = Color.white;
+            cb.selectedColor = Color.white;
+            cb.disabledColor = ColorBlock.defaultColorBlock.disabledColor;
         }
+        
+        btn.colors = cb;
     }
 
-    private void UpdateButtonColor(Button btn, bool isReady)
+    private void OnRoundRadioClicked(int value)
     {
-        if (btn == null) return;
-        
-        ColorBlock colors = btn.colors;
-        colors.normalColor = isReady ? Color.green : Color.white;
-        colors.selectedColor = isReady ? Color.green : Color.white;
-        btn.colors = colors;
+        if (RoomStateManager.Instance == null) return;
+        int currentTime = RoomStateManager.Instance.roomModel.roundTimeLimit;
+        roomManager.RequestRuleUpdate(value, currentTime);
+    }
+
+    private void OnTimeRadioClicked(int value)
+    {
+        if (RoomStateManager.Instance == null) return;
+        int currentRounds = RoomStateManager.Instance.roomModel.maxRounds;
+        roomManager.RequestRuleUpdate(currentRounds, value);
+    }
+
+    private void OnReadyClicked()
+    {
+        roomManager.ToggleReadyState();
+    }
+
+    private void OnStartClicked()
+    {
+        roomManager.AttemptStartMatch();
+    }
+
+    private void OnLeaveClicked()
+    {
+        roomManager.LeaveRoom();
     }
 }
