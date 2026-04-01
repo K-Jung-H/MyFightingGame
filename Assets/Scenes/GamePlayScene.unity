@@ -151,9 +151,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04183c00f241045438e60929e25ff40d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLoopManager
-  cameraManager: {fileID: 330585548}
-  playerCollisionMinDistance: 0.5
-  globalGravity: 0.02
+  envSettings:
+    playerCollisionMinDistance: 1
+    globalGravity: 0.02
+    p1SpawnPos: {x: -2, y: 0, z: 0}
+    p2SpawnPos: {x: 2, y: 0, z: 0}
+    postMatchDelaySeconds: 3
+  networkSettings:
+    maxRollbackFrames: 7
+    inputDelayFrames: 2
+    desyncAbortThreshold: 5
+  uiBindings:
+    cameraManager: {fileID: 330585548}
+    p1HealthBar: {fileID: 147935802}
+    p2HealthBar: {fileID: 1930355440}
+    roundTimerDisplay: {fileID: 508090641}
   playerOne:
     characterData: {fileID: 11400000, guid: 914a4ffd064c33e47925cfabf435e814, type: 2}
     customBinding:
@@ -184,17 +196,6 @@ MonoBehaviour:
       selectKey: 0
     instance: {fileID: 0}
     renderer: {fileID: 0}
-  p1SpawnPos: {x: 2, y: 0, z: 0}
-  p2SpawnPos: {x: -2, y: 0, z: 0}
-  p1HealthBar: {fileID: 147935802}
-  p2HealthBar: {fileID: 1930355440}
-  roundTimerDisplay: {fileID: 508090641}
-  isDebugRollbackEnabled: 0
-  debugRollbackFrames: 5
-  debugRollbackInterval: 30
-  maxRollbackFrames: 7
-  inputDelayFrames: 2
-  postMatchDelaySeconds: 3
 --- !u!4 &22342366
 Transform:
   m_ObjectHideFlags: 0

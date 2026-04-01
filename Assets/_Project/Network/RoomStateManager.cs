@@ -30,6 +30,7 @@ public class RoomStateManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             roomModel = new RoomStateModel();
+            targetPeerIpAddress = "127.0.0.1";
         }
         else
         {
@@ -46,7 +47,6 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnCountdownUpdateReceived += HandleCountdownUpdate;
             ServerNetworkManager.Instance.OnStartButtonActiveReceived += HandleStartButtonActive;
             ServerNetworkManager.Instance.OnSceneChangeReceived += HandleSceneChangeCommand;
-            ServerNetworkManager.Instance.OnGameStartReceived += HandleGameStart;
         }
     }
 
@@ -59,7 +59,6 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnCountdownUpdateReceived -= HandleCountdownUpdate;
             ServerNetworkManager.Instance.OnStartButtonActiveReceived -= HandleStartButtonActive;
             ServerNetworkManager.Instance.OnSceneChangeReceived -= HandleSceneChangeCommand;
-            ServerNetworkManager.Instance.OnGameStartReceived -= HandleGameStart;
         }
     }
 
@@ -135,10 +134,5 @@ public class RoomStateManager : MonoBehaviour
     private void HandleSceneChangeCommand()
     {
         ChangeRoomState(RoomStateType.InGame);
-    }
-
-    private void HandleGameStart(string peerIp)
-    {
-        targetPeerIpAddress = peerIp;
     }
 }

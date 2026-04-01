@@ -14,7 +14,7 @@ public class ServerNetworkManager : MonoBehaviour
     public event Action<bool> OnCountdownUpdateReceived;
     public event Action OnStartButtonActiveReceived;
     public event Action OnSceneChangeReceived;
-    public event Action<string> OnGameStartReceived;
+    public event Action OnGameStartReceived;
     public event Action<int> OnSlotAssignedReceived;
     public event Action<GameSceneType> OnMatchAbortedReceived;
 
@@ -355,8 +355,8 @@ public class ServerNetworkManager : MonoBehaviour
         }
         else if (packetType == NetworkPacketType.GameStart)
         {
-            string peerIp = stream.ReadFixedString64().ToString();
-            OnGameStartReceived?.Invoke(peerIp);
+            stream.ReadFixedString64();
+            OnGameStartReceived?.Invoke();
         }
         else if (packetType == SERVER_PONG_PACKET)
         {
