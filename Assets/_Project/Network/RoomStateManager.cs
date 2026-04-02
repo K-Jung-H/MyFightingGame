@@ -79,6 +79,9 @@ public class RoomStateManager : MonoBehaviour
         return localPlayerSlot;
     }
 
+    /*
+     * 로컬 룸 상태를 갱신하고, 해당 상태에 맞는 씬으로 자동 전환합니다. (방 생성 및 입장 시 UI에서 호출)
+     */
     public void ChangeRoomState(RoomStateType newState)
     {
         currentRoomState = newState;
@@ -142,8 +145,22 @@ public class RoomStateManager : MonoBehaviour
         }
     }
 
-    private void HandleSceneChangeCommand()
+    /*
+     * 서버의 강제 씬 전환 명령(SceneChange 패킷)을 수신했을 때 로컬 상태 머신에 매핑하여 실행합니다.
+     */
+    private void HandleSceneChangeCommand(GameSceneType targetScene)
     {
-        ChangeRoomState(RoomStateType.InGame);
+        if (targetScene == GameSceneType.OnlineMatchedRoom)
+        {
+            ChangeRoomState(RoomStateType.Lobby);
+        }
+        else if (targetScene == GameSceneType.CharacterSelect)
+        {
+            ChangeRoomState(RoomStateType.CharacterSelect);
+        }
+        else if (targetScene == GameSceneType.GamePlay)
+        {
+            ChangeRoomState(RoomStateType.InGame);
+        }
     }
 }

@@ -6,8 +6,6 @@ public class MatchedRoomManager : MonoBehaviour
     [SerializeField] private MatchedRoomUIManager uiManager;
 
     private int localPlayerSlot;
-    private bool isLocalReady;
-
     private void Start()
     {
         if (RoomStateManager.Instance != null)

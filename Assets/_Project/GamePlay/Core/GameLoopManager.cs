@@ -30,6 +30,16 @@ public struct GameStateSnapshot
 }
 
 [System.Serializable]
+public struct MatchScoreContext
+{
+    public int currentRound;
+    public int maxRounds;
+    public int requiredWins;
+    public int p1Wins;
+    public int p2Wins;
+}
+
+[System.Serializable]
 public struct GameEnvironmentSettings
 {
     public float playerCollisionMinDistance;
@@ -92,6 +102,7 @@ public class GameLoopManager : MonoBehaviour
     private const float SYNC_TIMEOUT_LIMIT = 10f;
     private const float P2P_CONNECT_TIMEOUT_LIMIT = 5f;
 
+    private MatchScoreContext scoreContext;
     private ConnectionFlowState connectionState;
     private SimulationState simState;
 
@@ -115,6 +126,7 @@ public class GameLoopManager : MonoBehaviour
         {
             ServerNetworkManager.Instance.OnGameStartReceived += HandleServerGameStart;
             ServerNetworkManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
+            ServerNetworkManager.Instance.OnNextRoundStartReceived += HandleNextRoundStart;
         }
     }
 
@@ -136,7 +148,6 @@ public class GameLoopManager : MonoBehaviour
         else
         {
             InitializeMatch(false);
-            simState.isSimulationRunning = true;
         }
     }
 
@@ -146,6 +157,7 @@ public class GameLoopManager : MonoBehaviour
         {
             ServerNetworkManager.Instance.OnGameStartReceived -= HandleServerGameStart;
             ServerNetworkManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
+            ServerNetworkManager.Instance.OnNextRoundStartReceived -= HandleNextRoundStart;
         }
 
         if (connectionState.currentP2PNetwork != null)
@@ -212,12 +224,6 @@ public class GameLoopManager : MonoBehaviour
     private void OnGUI()
     {
         if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline) return;
-
-        Vector2 refRes = GameFlowManager.Instance.GetReferenceResolution();
-        Vector3 scale = new Vector3(Screen.width / refRes.x, Screen.height / refRes.y, 1f);
-        float minScale = Mathf.Min(scale.x, scale.y);
-        scale = new Vector3(minScale, minScale, 1f);
-        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
 
         NetworkSyncState syncState = syncController.GetSyncState();
         int rollbackFrames = Mathf.Max(0, simState.currentTick - syncState.latestConfirmedTick);
@@ -317,20 +323,28 @@ public class GameLoopManager : MonoBehaviour
 
     private void InitializeMatch(bool isNetworkReset)
     {
-        simState.currentTick = 0;
-        simState.isRoundOver = false;
+        int timeLimit = 99;
+        int maxRds = 3;
+
+        if (RoomStateManager.Instance != null)
+        {
+            RoomStateModel model = RoomStateManager.Instance.roomModel;
+            timeLimit = model.roundTimeLimit;
+            maxRds = model.maxRounds;
+            
+            scoreContext.p1Wins = model.p1Wins;
+            scoreContext.p2Wins = model.p2Wins;
+        }
+
+        scoreContext.maxRounds = maxRds;
+        scoreContext.requiredWins = (maxRds / 2) + 1;
+        scoreContext.currentRound = scoreContext.p1Wins + scoreContext.p2Wins; 
+
         simState.isResimulating = false;
-        simState.postMatchDelayTicks = Mathf.RoundToInt(envSettings.postMatchDelaySeconds * 60f);
         simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64.FromFloat(1f));
 
         stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
         roundTimer = new RoundTimerManager();
-        roundTimer.InitializeTimer(99);
-
-        if (isNetworkReset && connectionState.currentP2PNetwork != null)
-        {
-            connectionState.currentP2PNetwork.ClearBuffer();
-        }
 
         if (playerOne.instance != null) Destroy(playerOne.instance);
         if (playerTwo.instance != null) Destroy(playerTwo.instance);
@@ -362,7 +376,7 @@ public class GameLoopManager : MonoBehaviour
 
         if (uiBindings.cameraManager != null) uiBindings.cameraManager.SetTargetPlayers(playerOne.instance, playerTwo.instance);
 
-        SaveGameState(0);
+        ResetForNextRound();
     }
 
     private void ProcessP2PHandshake()
@@ -454,18 +468,28 @@ public class GameLoopManager : MonoBehaviour
             
             if (simState.postMatchDelayTicks == 0)
             {
-                ApplyFinalMatchResult();
+                EvaluateRoundResult(out int winnerSlot);
                 
                 if (!simState.isResimulating)
                 {
-                    ShowSceneTransitionUI();
+                    bool isOnline = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient;
+                    
+                    if (isOnline)
+                    {
+                        ReportRoundEndToServer(winnerSlot);
+                    }
+                    else
+                    {
+                        PrepareNextRoundOrEndMatch();
+                    }
                 }
             }
         }
     }
 
-    private void ApplyFinalMatchResult()
+    private void EvaluateRoundResult(out int winnerSlot)
     {
+        winnerSlot = -1;
         if (playerOne.controller == null || playerTwo.controller == null) return;
 
         int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
@@ -474,22 +498,116 @@ public class GameLoopManager : MonoBehaviour
 
         if (p1Hp <= 0 && p2Hp <= 0)
         {
+            winnerSlot = -1; 
             SetDrawState();
         }
         else if (p1Hp <= 0)
         {
+            winnerSlot = 1; 
+            scoreContext.p2Wins++;
             SetWinLossState(playerTwo, playerOne);
         }
         else if (p2Hp <= 0)
         {
+            winnerSlot = 0; 
+            scoreContext.p1Wins++;
             SetWinLossState(playerOne, playerTwo);
         }
         else if (timeFrames <= 0)
         {
-            if (p1Hp > p2Hp) SetWinLossState(playerOne, playerTwo);
-            else if (p2Hp > p1Hp) SetWinLossState(playerTwo, playerOne);
-            else SetDrawState();
+            if (p1Hp > p2Hp) 
+            {
+                winnerSlot = 0;
+                scoreContext.p1Wins++;
+                SetWinLossState(playerOne, playerTwo);
+            }
+            else if (p2Hp > p1Hp) 
+            {
+                winnerSlot = 1;
+                scoreContext.p2Wins++;
+                SetWinLossState(playerTwo, playerOne);
+            }
+            else 
+            {
+                winnerSlot = -1;
+                SetDrawState();
+            }
         }
+    }
+
+    private void ReportRoundEndToServer(int winnerSlot)
+    {
+        simState.isSimulationRunning = false; 
+        
+        if (ServerNetworkManager.Instance != null)
+        {
+            ServerNetworkManager.Instance.SendRoundEndReport(winnerSlot, scoreContext.p1Wins, scoreContext.p2Wins);
+        }
+    }
+
+    private void HandleNextRoundStart()
+    {
+        PrepareNextRoundOrEndMatch();
+    }
+
+    private void PrepareNextRoundOrEndMatch()
+    {
+        bool isMatchOver = scoreContext.p1Wins >= scoreContext.requiredWins || scoreContext.p2Wins >= scoreContext.requiredWins;
+
+        if (isMatchOver)
+        {
+            ProcessFinalMatchEnd();
+        }
+        else
+        {
+            ResetForNextRound();
+        }
+    }
+
+    private void ResetForNextRound()
+    {
+        simState.currentTick = 0;
+        simState.isRoundOver = false;
+        simState.postMatchDelayTicks = Mathf.RoundToInt(envSettings.postMatchDelaySeconds * 60f);
+
+        scoreContext.currentRound++;
+
+        if (playerOne.controller != null && playerTwo.controller != null)
+        {
+            playerOne.controller.GetCombat().InitializeHealth();
+            playerTwo.controller.GetCombat().InitializeHealth();
+
+            playerOne.controller.GetPhysics().SetPosition(envSettings.p1SpawnPos);
+            playerTwo.controller.GetPhysics().SetPosition(envSettings.p2SpawnPos);
+
+            playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true);
+            playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true);
+
+            playerOne.controller.GetActionController().ClearAllBuffers();
+            playerTwo.controller.GetActionController().ClearAllBuffers();
+            
+            playerOne.controller.GetCombat().ClearRegisteredHitGroupIds();
+            playerTwo.controller.GetCombat().ClearRegisteredHitGroupIds();
+        }
+
+        int timeLimit = RoomStateManager.Instance != null ? RoomStateManager.Instance.roomModel.roundTimeLimit : 99;
+        roundTimer.InitializeTimer(timeLimit);
+
+        if (connectionState.currentP2PNetwork != null)
+        {
+            connectionState.currentP2PNetwork.ClearBuffer();
+        }
+
+        System.Array.Clear(stateBuffer, 0, stateBuffer.Length);
+        
+        SaveGameState(0);
+
+        simState.isSimulationRunning = true;
+    }
+
+    private void ProcessFinalMatchEnd()
+    {
+        simState.isSimulationRunning = false;
     }
 
     private void SetWinLossState(PlayerSessionContext winner, PlayerSessionContext loser)

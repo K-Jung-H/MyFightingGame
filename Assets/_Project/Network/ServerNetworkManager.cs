@@ -15,10 +15,11 @@ public class ServerNetworkManager : MonoBehaviour
     public event Action<int, bool, int, int, bool, int> OnSelectBroadcastReceived;
     public event Action<bool> OnCountdownUpdateReceived;
     public event Action OnStartButtonActiveReceived;
-    public event Action OnSceneChangeReceived;
+    public event Action<GameSceneType> OnSceneChangeReceived;
     public event Action OnGameStartReceived;
     public event Action<int> OnSlotAssignedReceived;
     public event Action<GameSceneType> OnMatchAbortedReceived;
+    public event Action OnNextRoundStartReceived;
 
     private NetworkDriver serverDriver;
     private NetworkConnection serverConnection;
@@ -216,6 +217,21 @@ public class ServerNetworkManager : MonoBehaviour
     }
 
     /*
+     * 캐릭터 선택이 끝난 뒤 인게임 진입을 요청합니다.
+     */
+    public void SendStartRequest()
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+        
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.StartRequest);
+            serverDriver.EndSend(writer);
+        }
+    }
+    
+    /*
      * 씬 로딩 및 P2P 준비 완료를 서버에 통보합니다.
      */
     public void SendHandshake()
@@ -231,17 +247,17 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 캐릭터 선택이 끝난 뒤 인게임 진입을 요청합니다.
-     */
-    public void SendStartRequest()
+    public void SendRoundEndReport(int winnerSlot, int p1Wins, int p2Wins)
     {
         if (!isConnected || !serverConnection.IsCreated) return;
-        
+
         int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
         if (sendStatus == 0)
         {
-            writer.WriteByte(NetworkPacketType.StartRequest);
+            writer.WriteByte(NetworkPacketType.RoundEndReport);
+            writer.WriteInt(winnerSlot);
+            writer.WriteInt(p1Wins);
+            writer.WriteInt(p2Wins);
             serverDriver.EndSend(writer);
         }
     }
@@ -425,7 +441,9 @@ public class ServerNetworkManager : MonoBehaviour
         }
         else if (packetType == NetworkPacketType.SceneChange)
         {
-            OnSceneChangeReceived?.Invoke();
+            int targetSceneIndex = stream.ReadInt();
+            GameSceneType targetSceneType = (GameSceneType)targetSceneIndex;
+            OnSceneChangeReceived?.Invoke(targetSceneType);
         }
         else if (packetType == NetworkPacketType.GameStart)
         {
@@ -440,6 +458,10 @@ public class ServerNetworkManager : MonoBehaviour
         {
             int sceneTypeInt = stream.ReadInt();
             OnMatchAbortedReceived?.Invoke((GameSceneType)sceneTypeInt);
+        }
+        else if (packetType == NetworkPacketType.NextRoundStart)
+        {
+            OnNextRoundStartReceived?.Invoke();
         }
     }
 

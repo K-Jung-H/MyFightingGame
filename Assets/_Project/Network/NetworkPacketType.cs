@@ -31,4 +31,7 @@ public static class NetworkPacketType
     public const byte ReadyStateUpdate = 37;
     public const byte RoomStateBroadcast = 38;
     public const byte LobbyStartRequest = 39;
+    
+    public const byte RoundEndReport = 40;
+    public const byte NextRoundStart = 41;
 }

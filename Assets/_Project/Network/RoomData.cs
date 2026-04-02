@@ -49,8 +49,8 @@ public class RoomStateModel
         isP1Connected = true; 
         isP2Connected = false;
         
-        p1CharacterIndex = -1;
-        p2CharacterIndex = -1;
+        p1CharacterIndex = 0;
+        p2CharacterIndex = 0;
         maxRounds = 3;
         roundTimeLimit = 99;
     }

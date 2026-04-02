@@ -1583,8 +1583,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1530600976}
-  - {fileID: 937050514}
   - {fileID: 154806683}
+  - {fileID: 937050514}
   m_Father: {fileID: 44383291}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5377,18 +5377,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MatchedRoomUIManager
   roomManager: {fileID: 1696261779}
   roundOptions:
-  - button: {fileID: 457680541}
+  - button: {fileID: 1281416449}
     value: 30
-  - button: {fileID: 1022831769}
+  - button: {fileID: 689147075}
     value: 60
-  - button: {fileID: 246669608}
+  - button: {fileID: 1499159822}
     value: 90
   timeOptions:
-  - button: {fileID: 1281416449}
+  - button: {fileID: 457680541}
     value: 1
-  - button: {fileID: 689147075}
+  - button: {fileID: 1022831769}
     value: 3
-  - button: {fileID: 1499159822}
+  - button: {fileID: 246669608}
     value: 5
   p1InfoPanel: {fileID: 1759686810}
   p2InfoPanel: {fileID: 1710459519}
