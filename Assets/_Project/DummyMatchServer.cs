@@ -3,9 +3,6 @@ using Unity.Networking.Transport;
 using Unity.Collections;
 using System.Collections.Generic;
 
-/*
- * 서버에서 관리하는 개별 방의 상태와 접속자 정보, 패킷 로그 및 라운드 검증 데이터를 보관하는 클래스입니다.
- */
 public class ServerRoom
 {
     public string roomCode;
@@ -27,10 +24,25 @@ public class ServerRoom
 
     public bool isP1RoundReported;
     public bool isP2RoundReported;
+
+    public int p1RoundWins;
+    public int p2RoundWins;
+
     public int p1ReportedWinner;
     public int p2ReportedWinner;
-    public int p1ReportedWins;
-    public int p2ReportedWins;
+    
+    public int p1ReportedP1Wins;
+    public int p1ReportedP2Wins;
+    public int p2ReportedP1Wins;
+    public int p2ReportedP2Wins;
+
+    public bool isVotingStarted;
+    public float votingTimer;
+    public bool hasP1Voted;
+    public bool hasP2Voted;
+
+    public MatchEndActionType p1VoteAction;
+    public MatchEndActionType p2VoteAction;
 
     public List<string> roomLogs;
     private const int MAX_ROOM_LOGS = 8;
@@ -57,10 +69,22 @@ public class ServerRoom
 
         isP1RoundReported = false;
         isP2RoundReported = false;
+
+        p1RoundWins = 0;
+        p2RoundWins = 0;
+
         p1ReportedWinner = -1;
         p2ReportedWinner = -1;
-        p1ReportedWins = 0;
-        p2ReportedWins = 0;
+        
+        p1ReportedP1Wins = 0;
+        p1ReportedP2Wins = 0;
+        p2ReportedP1Wins = 0;
+        p2ReportedP2Wins = 0;
+
+        hasP1Voted = false;
+        hasP2Voted = false;
+        isVotingStarted = false;
+        votingTimer = 15f;
 
         roomLogs = new List<string>();
     }
@@ -79,9 +103,6 @@ public class ServerRoom
     public bool HasPassword() => !string.IsNullOrEmpty(password);
 }
 
-/*
- * 클라이언트 접속 처리, 상태 머신 기반 패킷 라우팅 및 롤백 넷코드 무결성 검증을 담당하는 더미 매치 서버입니다.
- */
 public class DummyMatchServer : MonoBehaviour
 {
     private NetworkDriver driver;
@@ -94,9 +115,6 @@ public class DummyMatchServer : MonoBehaviour
     private const int MAX_LOG_LINES = 15;
     private Vector2 scrollPosition;
 
-    /*
-     * 매 프레임마다 네트워크 드라이버를 업데이트하고 연결 관리 및 카운트다운 갱신을 수행합니다.
-     */
     private void Update()
     {
         if (!driver.IsCreated) return;
@@ -136,9 +154,6 @@ public class DummyMatchServer : MonoBehaviour
         UpdateRoomTimers();
     }
 
-/*
-     * 개선된 UI 레이아웃을 통해 서버의 글로벌 상태와 개별 방의 상태, 스코어, 패킷 로그를 렌더링합니다.
-     */
     private void OnGUI()
     {
         GUI.skin.label.richText = true;
@@ -185,7 +200,7 @@ public class DummyMatchServer : MonoBehaviour
             
             GUILayout.Label($"Rounds: {room.stateModel.maxRounds}  |  Time: {room.stateModel.roundTimeLimit}");
             GUILayout.Label($"P1: {p1State}  |  P2: {p2State}");
-            GUILayout.Label($"<color=white><b>Score -> P1: {room.stateModel.p1Wins}  |  P2: {room.stateModel.p2Wins}</b></color>");
+            GUILayout.Label($"<color=white><b>Match Score -> P1: {room.stateModel.p1Wins}  |  P2: {room.stateModel.p2Wins}</b></color>");
             
             GUILayout.Space(5);
             GUILayout.Label("<b>--- Packet Logs ---</b>");
@@ -203,9 +218,6 @@ public class DummyMatchServer : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    /*
-     * 객체 파괴 시 드라이버와 메모리를 정리합니다.
-     */
     private void OnDestroy()
     {
         if (driver.IsCreated)
@@ -215,9 +227,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 지정된 포트로 서버를 바인딩하고 연결 수신을 시작합니다.
-     */
     public void StartServer()
     {
         NetworkSettings settings = new NetworkSettings();
@@ -238,9 +247,6 @@ public class DummyMatchServer : MonoBehaviour
         LogEvent("Dedicated Lobby Server started on port 9000.");
     }
 
-    /*
-     * 끊어진 연결 목록을 정리하여 배열을 최적화합니다.
-     */
     private void CleanupConnections()
     {
         for (int i = 0; i < connections.Length; i++)
@@ -253,9 +259,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 플레이어가 모두 떠난 빈 방을 식별하여 메모리에서 해제합니다.
-     */
     private void CleanupEmptyRooms()
     {
         List<string> emptyRoomCodes = new List<string>();
@@ -275,9 +278,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 캐릭터 선택 씬 등의 3초 카운트다운 타이머를 관리하고 완료 시 시작 버튼을 활성화합니다.
-     */
     private void UpdateRoomTimers()
     {
         foreach (var kvp in activeRooms)
@@ -295,22 +295,43 @@ public class DummyMatchServer : MonoBehaviour
                     BroadcastStartButtonActive(room);
                 }
             }
+
+            if (room.isVotingStarted)
+            {
+                room.votingTimer -= Time.deltaTime;
+
+                if (room.votingTimer <= 0f)
+                {
+                    room.isVotingStarted = false;
+                    room.LogRoomEvent("[Server] Vote timeout. Forcing return to lobby.");
+                    
+                    ResetRoomForRematch(room);
+                    room.currentState = RoomStateType.Lobby;
+                    BroadcastRoomState(room);
+                    BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
+                }
+            }
         }
     }
 
-    /*
-     * 수신된 패킷을 식별하고 방의 현재 상태(RoomStateType)에 따라 적절한 핸들러로 라우팅합니다.
-     */
     private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
     {
         byte packetType = stream.ReadByte();
 
         switch (packetType)
         {
-            case NetworkPacketType.CreateRoomRequest: HandleCreateRoomRequest(conn, ref stream); return;
-            case NetworkPacketType.SearchRoomRequest: HandleSearchRoomRequest(conn, ref stream); return;
-            case NetworkPacketType.JoinRoomRequest: HandleJoinRoomRequest(conn, ref stream); return;
-            case 22: SendServerPong(conn, stream.ReadFloat()); return;
+            case NetworkPacketType.CreateRoomRequest: 
+                HandleCreateRoomRequest(conn, ref stream); 
+                return;
+            case NetworkPacketType.SearchRoomRequest: 
+                HandleSearchRoomRequest(conn, ref stream); 
+                return;
+            case NetworkPacketType.JoinRoomRequest: 
+                HandleJoinRoomRequest(conn, ref stream); 
+                return;
+            case 22: 
+                SendServerPong(conn, stream.ReadFloat()); 
+                return;
         }
         
         if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom)) return;
@@ -323,32 +344,27 @@ public class DummyMatchServer : MonoBehaviour
             case NetworkPacketType.ReportDisconnect: 
                 ResolveDisconnect(conn, currentRoom); 
                 break;
-            
             case NetworkPacketType.RuleUpdate:
             case NetworkPacketType.ReadyStateUpdate:
             case NetworkPacketType.LobbyStartRequest:
                 if (currentRoom.currentState == RoomStateType.Lobby) 
                     HandleLobbyPackets(packetType, conn, currentRoom, ref stream);
                 break;
-
             case NetworkPacketType.SelectUpdate:
             case NetworkPacketType.SideUpdate:
             case NetworkPacketType.StartRequest:
                 if (currentRoom.currentState == RoomStateType.CharacterSelect) 
                     HandleCharacterSelectPackets(packetType, conn, currentRoom, ref stream);
                 break;
-
             case NetworkPacketType.Handshake:
             case NetworkPacketType.RoundEndReport:
+            case NetworkPacketType.MatchEndActionRequest:
                 if (currentRoom.currentState == RoomStateType.InGame) 
                     HandleInGamePackets(packetType, conn, currentRoom, ref stream);
                 break;
         }
     }
 
-    /*
-     * 로비 씬 내부에서 발생하는 방 규칙 설정, 준비 상태 전환, 씬 시작 요청 패킷을 처리합니다.
-     */
     private void HandleLobbyPackets(byte packetType, NetworkConnection conn, ServerRoom room, ref DataStreamReader stream)
     {
         string sender = (conn == room.p1) ? "P1" : "P2";
@@ -366,7 +382,6 @@ public class DummyMatchServer : MonoBehaviour
                     BroadcastRoomState(room);
                 }
                 break;
-
             case NetworkPacketType.ReadyStateUpdate:
                 bool isReady = stream.ReadByte() == 1;
                 if (conn == room.p1) room.stateModel.isP1Ready = isReady;
@@ -374,23 +389,18 @@ public class DummyMatchServer : MonoBehaviour
                 room.LogRoomEvent($"[{sender}] Ready State -> {isReady}");
                 BroadcastRoomState(room);
                 break;
-
             case NetworkPacketType.LobbyStartRequest:
                 room.LogRoomEvent($"[{sender}] Requested Lobby Start.");
                 if (conn == room.p1 && room.stateModel.isP2Ready)
                 {
                     room.currentState = RoomStateType.CharacterSelect;
                     room.LogRoomEvent($"[Server] State Changed to CharacterSelect. Broadcasting SceneChange.");
-                    
                     BroadcastSceneChange(room, (int)GameSceneType.CharacterSelect);
                 }
                 break;
         }
     }
 
-    /*
-     * 캐릭터 선택 씬에서 발생하는 캐릭터 락인, 진영 선택, 게임 시작 요청 패킷을 처리합니다.
-     */
     private void HandleCharacterSelectPackets(byte packetType, NetworkConnection conn, ServerRoom room, ref DataStreamReader stream)
     {
         string sender = (conn == room.p1) ? "P1" : "P2";
@@ -434,14 +444,12 @@ public class DummyMatchServer : MonoBehaviour
                     BroadcastCountdownState(room, false);
                 }
                 break;
-
             case NetworkPacketType.SideUpdate:
                 int side = stream.ReadInt();
                 if (conn == room.p1) room.stateModel.p1PreferredSide = side;
                 else if (conn == room.p2) room.stateModel.p2PreferredSide = side;
                 BroadcastSelectState(room);
                 break;
-
             case NetworkPacketType.StartRequest:
                 if (room.isCountdownFinished)
                 {
@@ -452,7 +460,6 @@ public class DummyMatchServer : MonoBehaviour
                     {
                         room.currentState = RoomStateType.InGame;
                         room.LogRoomEvent($"[Server] State Changed to InGame. Broadcasting SceneChange.");
-                        
                         BroadcastSceneChange(room, (int)GameSceneType.GamePlay); 
                     }
                 }
@@ -460,9 +467,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 인게임 씬에서 발생하는 핸드쉐이크, 라운드 결과 교차 검증 패킷을 처리합니다.
-     */
     private void HandleInGamePackets(byte packetType, NetworkConnection conn, ServerRoom room, ref DataStreamReader stream)
     {
         string sender = (conn == room.p1) ? "P1" : "P2";
@@ -480,39 +484,63 @@ public class DummyMatchServer : MonoBehaviour
                     BroadcastGameStart(room);
                 }
                 break;
-
             case NetworkPacketType.RoundEndReport:
                 int reportedWinner = stream.ReadInt();
-                int reportedP1Wins = stream.ReadInt();
-                int reportedP2Wins = stream.ReadInt();
-
-                room.LogRoomEvent($"[{sender}] Round Report -> Winner: {reportedWinner}, P1W: {reportedP1Wins}, P2W: {reportedP2Wins}");
+                int reportedP1RoundWins = stream.ReadInt();
+                int reportedP2RoundWins = stream.ReadInt();
 
                 if (conn == room.p1)
                 {
                     room.p1ReportedWinner = reportedWinner;
-                    room.p1ReportedWins = reportedP1Wins;
+                    room.p1ReportedP1Wins = reportedP1RoundWins;
+                    room.p1ReportedP2Wins = reportedP2RoundWins;
                     room.isP1RoundReported = true;
                 }
                 else if (conn == room.p2)
                 {
                     room.p2ReportedWinner = reportedWinner;
-                    room.p2ReportedWins = reportedP2Wins;
+                    room.p2ReportedP1Wins = reportedP1RoundWins;
+                    room.p2ReportedP2Wins = reportedP2RoundWins;
                     room.isP2RoundReported = true;
                 }
 
                 if (room.isP1RoundReported && room.isP2RoundReported)
                 {
-                    if (room.p1ReportedWinner == room.p2ReportedWinner)
+                    bool isWinnerMatch = room.p1ReportedWinner == room.p2ReportedWinner;
+                    bool isScoreMatch = (room.p1ReportedP1Wins == room.p2ReportedP1Wins) && 
+                                        (room.p1ReportedP2Wins == room.p2ReportedP2Wins);
+
+                    if (isWinnerMatch && isScoreMatch)
                     {
-                        room.LogRoomEvent("[Server] Round Reports match. Broadcasting NextRoundStart.");
-                        room.stateModel.p1Wins = room.p1ReportedWins;
-                        room.stateModel.p2Wins = room.p2ReportedWins;
+                        room.LogRoomEvent("[Server] Round Reports match. Broadcasting RoundVerified.");
+                        
+                        room.p1RoundWins = room.p1ReportedP1Wins;
+                        room.p2RoundWins = room.p1ReportedP2Wins;
                         
                         room.isP1RoundReported = false;
                         room.isP2RoundReported = false;
+
+                        int requiredRoundWins = (room.stateModel.maxRounds / 2) + 1;
+                        bool isMatchOver = room.p1RoundWins >= requiredRoundWins || room.p2RoundWins >= requiredRoundWins;
+
+                        if (isMatchOver)
+                        {
+                            room.isVotingStarted = true;
+                            room.votingTimer = 15f;
+
+                            if (room.p1RoundWins > room.p2RoundWins)
+                            {
+                                room.stateModel.p1Wins++;
+                                room.stateModel.p2Losses++;
+                            }
+                            else if (room.p2RoundWins > room.p1RoundWins)
+                            {
+                                room.stateModel.p2Wins++;
+                                room.stateModel.p1Losses++;
+                            }
+                        }
                         
-                        BroadcastNextRoundStart(room);
+                        BroadcastRoundVerified(room);
                     }
                     else
                     {
@@ -521,12 +549,31 @@ public class DummyMatchServer : MonoBehaviour
                     }
                 }
                 break;
+            case NetworkPacketType.MatchEndActionRequest:
+                MatchEndActionType action = (MatchEndActionType)stream.ReadByte();
+
+                if (conn == room.p1) 
+                {
+                    room.hasP1Voted = true;
+                    room.p1VoteAction = action;
+                }
+                else if (conn == room.p2) 
+                {
+                    room.hasP2Voted = true;
+                    room.p2VoteAction = action;
+                }
+
+                room.LogRoomEvent($"[{sender}] Vote Action: {action}");
+
+                bool p1Rematch = room.hasP1Voted && room.p1VoteAction == MatchEndActionType.Rematch;
+                bool p2Rematch = room.hasP2Voted && room.p2VoteAction == MatchEndActionType.Rematch;
+                BroadcastRematchSync(room, p1Rematch, p2Rematch);
+
+                EvaluateMatchEndVotes(room);
+                break;
         }
     }
 
-    /*
-     * 글로벌 영역에서 새로운 방을 생성하고 초기 상태를 할당합니다.
-     */
     private void HandleCreateRoomRequest(NetworkConnection conn, ref DataStreamReader stream)
     {
         string title = stream.ReadFixedString64().ToString();
@@ -561,9 +608,6 @@ public class DummyMatchServer : MonoBehaviour
         BroadcastSelectState(newRoom);
     }
 
-    /*
-     * 활성화된 방 목록을 검색하여 매칭되는 결과를 클라이언트에게 반환합니다.
-     */
     private void HandleSearchRoomRequest(NetworkConnection conn, ref DataStreamReader stream)
     {
         byte searchType = stream.ReadByte();
@@ -610,9 +654,6 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 룸 코드와 비밀번호를 확인하여 클라이언트를 방에 합류시킵니다.
-     */
     private void HandleJoinRoomRequest(NetworkConnection conn, ref DataStreamReader stream)
     {
         string code = stream.ReadFixedString64().ToString();
@@ -660,9 +701,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 로컬 핑 계산을 위해 수신된 시간을 그대로 반환합니다.
-     */
     private void SendServerPong(NetworkConnection conn, float receivedTime)
     {
         int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -674,9 +712,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 퇴장 요청을 처리하여 해당 연결을 방에서 분리합니다.
-     */
     private void HandleRoomLeaveRequest(NetworkConnection conn, ServerRoom room)
     {
         string sender = (conn == room.p1) ? "P1" : "P2";
@@ -684,9 +719,6 @@ public class DummyMatchServer : MonoBehaviour
         HandleDisconnect(conn);
     }
 
-    /*
-     * 플레이어 퇴장 또는 연결 유실 시 방장 권한을 승계하거나 매치를 중단시킵니다.
-     */
     private void HandleDisconnect(NetworkConnection conn)
     {
         if (!connectionToRoom.TryGetValue(conn, out ServerRoom room)) return;
@@ -704,15 +736,17 @@ public class DummyMatchServer : MonoBehaviour
                 
                 room.stateModel.isP1Connected = room.stateModel.isP2Connected;
                 room.stateModel.isP2Connected = false;
+                
                 room.stateModel.p1Wins = room.stateModel.p2Wins;
                 room.stateModel.p1Losses = room.stateModel.p2Losses;
+                room.stateModel.p2Wins = 0;
+                room.stateModel.p2Losses = 0;
+
                 room.stateModel.isP1Ready = room.stateModel.isP2Ready;
                 room.stateModel.p1CharacterIndex = room.stateModel.p2CharacterIndex;
                 room.stateModel.isP1CharacterLocked = room.stateModel.isP2CharacterLocked;
                 room.stateModel.p1PreferredSide = room.stateModel.p2PreferredSide;
 
-                room.stateModel.p2Wins = 0;
-                room.stateModel.p2Losses = 0;
                 room.stateModel.isP2Ready = false;
                 room.stateModel.p2CharacterIndex = -1;
                 room.stateModel.isP2CharacterLocked = false;
@@ -723,6 +757,8 @@ public class DummyMatchServer : MonoBehaviour
             {
                 room.p1 = default;
                 room.stateModel.isP1Connected = false;
+                room.stateModel.p1Wins = 0;
+                room.stateModel.p1Losses = 0;
                 room.stateModel.isP1CharacterLocked = false;
                 room.stateModel.isP1Ready = false;
                 room.isP1StartRequested = false;
@@ -734,6 +770,8 @@ public class DummyMatchServer : MonoBehaviour
             LogEvent($"Room [{room.roomCode}] P2 Disconnected.");
             room.p2 = default;
             room.stateModel.isP2Connected = false;
+            room.stateModel.p2Wins = 0;
+            room.stateModel.p2Losses = 0;
             room.stateModel.isP2CharacterLocked = false;
             room.stateModel.isP2Ready = false;
             room.isP2StartRequested = false;
@@ -770,9 +808,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 디싱크 발생 또는 심각한 통신 오류 시 강제로 매치를 무효화하고 로비로 롤백시킵니다.
-     */
     private void ResolveDisconnect(NetworkConnection reporterConn, ServerRoom room)
     {
         room.currentState = RoomStateType.Lobby;
@@ -788,18 +823,12 @@ public class DummyMatchServer : MonoBehaviour
         DestroyRoom(room);
     }
 
-    /*
-     * 방에 연결된 양측 클라이언트에게 룸 전체 데이터 모델을 동기화합니다.
-     */
     private void BroadcastRoomState(ServerRoom room)
     {
         if (room.p1.IsCreated) SendRoomState(room.p1, room);
         if (room.p2.IsCreated) SendRoomState(room.p2, room);
     }
 
-    /*
-     * 로비 관련 데이터 필드를 바이트 스트림에 담아 전송합니다.
-     */
     private void SendRoomState(NetworkConnection conn, ServerRoom room)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -817,9 +846,6 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 클라이언트가 서버에 입장했을 때 자신의 슬롯 번호(0 또는 1)를 안내합니다.
-     */
     private void SendSlotId(NetworkConnection conn, int slotId)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -828,18 +854,12 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 캐릭터 선택 씬의 진영 및 락인 상태를 전파합니다.
-     */
     private void BroadcastSelectState(ServerRoom room)
     {
         if (room.p1.IsCreated) SendSelectState(room.p1, room);
         if (room.p2.IsCreated) SendSelectState(room.p2, room);
     }
 
-    /*
-     * 캐릭터 인덱스와 락인 정보를 직렬화하여 전송합니다.
-     */
     private void SendSelectState(NetworkConnection conn, ServerRoom room)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -853,18 +873,12 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 캐릭터 락인 완료 후 3초 대기열의 활성 여부를 브로드캐스트합니다.
-     */
     private void BroadcastCountdownState(ServerRoom room, bool isStarted)
     {
         if (room.p1.IsCreated) SendCountdownState(room.p1, isStarted);
         if (room.p2.IsCreated) SendCountdownState(room.p2, isStarted);
     }
 
-    /*
-     * 카운트다운 상태 불리언을 전송합니다.
-     */
     private void SendCountdownState(NetworkConnection conn, bool isStarted)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -873,18 +887,12 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 카운트다운 완료를 알리고 UI에 시작 버튼을 노출시킵니다.
-     */
     private void BroadcastStartButtonActive(ServerRoom room)
     {
         if (room.p1.IsCreated) SendStartButtonActive(room.p1);
         if (room.p2.IsCreated) SendStartButtonActive(room.p2);
     }
 
-    /*
-     * 시작 버튼 활성화 패킷을 전송합니다.
-     */
     private void SendStartButtonActive(NetworkConnection conn)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -892,18 +900,12 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 룸의 상태 머신이 변경되었을 때 클라이언트들에게 타겟 씬 전환을 명령합니다.
-     */
     private void BroadcastSceneChange(ServerRoom room, int targetSceneInt)
     {
         if (room.p1.IsCreated) SendSceneChange(room.p1, targetSceneInt);
         if (room.p2.IsCreated) SendSceneChange(room.p2, targetSceneInt);
     }
 
-    /*
-     * 씬 전환 식별자 패킷과 목적지 씬의 정수 인덱스를 전송합니다.
-     */
     private void SendSceneChange(NetworkConnection conn, int targetSceneInt)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -912,18 +914,12 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 인게임 씬의 핸드쉐이크가 완료된 후 실제 틱 시뮬레이션 시작을 알립니다.
-     */
     private void BroadcastGameStart(ServerRoom room)
     {
         if (room.p1.IsCreated) SendGameStart(room.p1);
         if (room.p2.IsCreated) SendGameStart(room.p2);
     }
 
-    /*
-     * P2P 통신을 위한 로컬 IP와 게임 시작 패킷을 전송합니다.
-     */
     private void SendGameStart(NetworkConnection conn)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
@@ -932,28 +928,87 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    /*
-     * 라운드 종료 검증을 통과했을 때 클라이언트의 인게임 상태를 다음 라운드로 이행시킵니다.
-     */
-    private void BroadcastNextRoundStart(ServerRoom room)
+    private void BroadcastRoundVerified(ServerRoom room)
     {
-        if (room.p1.IsCreated) SendNextRoundStart(room.p1);
-        if (room.p2.IsCreated) SendNextRoundStart(room.p2);
+        if (room.p1.IsCreated) SendRoundVerified(room.p1);
+        if (room.p2.IsCreated) SendRoundVerified(room.p2);
     }
 
-    /*
-     * 라운드 재개 패킷 식별자를 전송합니다.
-     */
-    private void SendNextRoundStart(NetworkConnection conn)
+    private void SendRoundVerified(NetworkConnection conn)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
-        writer.WriteByte(NetworkPacketType.NextRoundStart);
+        writer.WriteByte(NetworkPacketType.RoundVerified);
         driver.EndSend(writer);
     }
 
-    /*
-     * 비정상 종료 시 접속된 클라이언트들에게 에러 씬으로 돌아갈 것을 명령합니다.
-     */
+    private void BroadcastRematchSync(ServerRoom room, bool p1Ready, bool p2Ready)
+    {
+        if (room.p1.IsCreated) SendRematchSync(room.p1, p1Ready, p2Ready);
+        if (room.p2.IsCreated) SendRematchSync(room.p2, p1Ready, p2Ready);
+    }
+
+    private void SendRematchSync(NetworkConnection conn, bool p1Ready, bool p2Ready)
+    {
+        driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        writer.WriteByte(NetworkPacketType.RematchSyncBroadcast);
+        writer.WriteByte((byte)(p1Ready ? 1 : 0));
+        writer.WriteByte((byte)(p2Ready ? 1 : 0));
+        driver.EndSend(writer);
+    }
+
+    private void EvaluateMatchEndVotes(ServerRoom room)
+    {
+        bool anyReturnToLobby = (room.hasP1Voted && room.p1VoteAction == MatchEndActionType.ReturnToMenu) || 
+                                (room.hasP2Voted && room.p2VoteAction == MatchEndActionType.ReturnToMenu);
+
+        bool anyCharacterSelect = (room.hasP1Voted && room.p1VoteAction == MatchEndActionType.ReturnToCharacterSelect) || 
+                                  (room.hasP2Voted && room.p2VoteAction == MatchEndActionType.ReturnToCharacterSelect);
+
+        bool bothRematch = room.hasP1Voted && room.p1VoteAction == MatchEndActionType.Rematch && 
+                           room.hasP2Voted && room.p2VoteAction == MatchEndActionType.Rematch;
+
+        if (anyReturnToLobby)
+        {
+            room.isVotingStarted = false;
+            ResetRoomForRematch(room);
+            room.currentState = RoomStateType.Lobby;
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
+        }
+        else if (anyCharacterSelect)
+        {
+            room.isVotingStarted = false;
+            ResetRoomForRematch(room);
+            room.currentState = RoomStateType.CharacterSelect;
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.CharacterSelect);
+        }
+        else if (bothRematch)
+        {
+            room.isVotingStarted = false;
+            ResetRoomForRematch(room);
+            room.currentState = RoomStateType.InGame;
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.GamePlay);
+        }
+    }
+
+    private void ResetRoomForRematch(ServerRoom room)
+    {
+        room.hasP1Voted = false;
+        room.hasP2Voted = false;
+        
+        room.p1RoundWins = 0;
+        room.p2RoundWins = 0;
+        
+        room.isP1RoundReported = false;
+        room.isP2RoundReported = false;
+        room.isP1StartRequested = false;
+        room.isP2StartRequested = false;
+        room.stateModel.isP1Ready = false;
+        room.stateModel.isP2Ready = false;
+    }
+
     private void BroadcastMatchAborted(NetworkConnection conn, int targetSceneInt)
     {
         if (!conn.IsCreated) return;
@@ -966,9 +1021,6 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    /*
-     * 메모리 누수를 방지하기 위해 방 객체를 지우고 양측의 연결을 강제로 차단합니다.
-     */
     private void DestroyRoom(ServerRoom room)
     {
         LogEvent($"Forcibly destroying Room [{room.roomCode}].");
@@ -987,9 +1039,6 @@ public class DummyMatchServer : MonoBehaviour
         activeRooms.Remove(room.roomCode);
     }
 
-    /*
-     * 서버 글로벌 로그 컨테이너에 텍스트를 누적 기록합니다.
-     */
     private void LogEvent(string msg)
     {
         Debug.Log($"[Server] {msg}");
@@ -997,9 +1046,6 @@ public class DummyMatchServer : MonoBehaviour
         if (serverLogs.Count > MAX_LOG_LINES) serverLogs.RemoveAt(0);
     }
 
-    /*
-     * 새로운 방에 부여할 5자리 난수 코드를 생성합니다.
-     */
     private string GenerateRoomCode()
     {
         string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

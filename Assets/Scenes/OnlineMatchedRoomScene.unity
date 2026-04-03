@@ -5378,18 +5378,18 @@ MonoBehaviour:
   roomManager: {fileID: 1696261779}
   roundOptions:
   - button: {fileID: 1281416449}
-    value: 30
+    value: 1
   - button: {fileID: 689147075}
-    value: 60
+    value: 3
   - button: {fileID: 1499159822}
-    value: 90
+    value: 5
   timeOptions:
   - button: {fileID: 457680541}
-    value: 1
+    value: 30
   - button: {fileID: 1022831769}
-    value: 3
+    value: 60
   - button: {fileID: 246669608}
-    value: 5
+    value: 90
   p1InfoPanel: {fileID: 1759686810}
   p2InfoPanel: {fileID: 1710459519}
   readyToggleButton: {fileID: 594525723}

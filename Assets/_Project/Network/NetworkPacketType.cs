@@ -33,5 +33,7 @@ public static class NetworkPacketType
     public const byte LobbyStartRequest = 39;
     
     public const byte RoundEndReport = 40;
-    public const byte NextRoundStart = 41;
+    public const byte RoundVerified = 41;
+    public const byte MatchEndActionRequest = 42;
+    public const byte RematchSyncBroadcast = 43;
 }

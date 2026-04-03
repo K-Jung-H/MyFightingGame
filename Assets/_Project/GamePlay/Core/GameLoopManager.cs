@@ -34,9 +34,9 @@ public struct MatchScoreContext
 {
     public int currentRound;
     public int maxRounds;
-    public int requiredWins;
-    public int p1Wins;
-    public int p2Wins;
+    public int requiredRoundWins;
+    public int p1RoundWins;
+    public int p2RoundWins;
 }
 
 [System.Serializable]
@@ -56,6 +56,8 @@ public struct UIBindings
     public HealthBarController p1HealthBar;
     public HealthBarController p2HealthBar;
     public SpriteNumberDisplay roundTimerDisplay;
+    public WinCounterUIManager winCounterUI;
+    public MatchResultUIManager matchResultUI;
 }
 
 public struct ConnectionFlowState
@@ -126,7 +128,13 @@ public class GameLoopManager : MonoBehaviour
         {
             ServerNetworkManager.Instance.OnGameStartReceived += HandleServerGameStart;
             ServerNetworkManager.Instance.OnMatchAbortedReceived += HandleMatchAborted;
-            ServerNetworkManager.Instance.OnNextRoundStartReceived += HandleNextRoundStart;
+            ServerNetworkManager.Instance.OnRoundVerifiedReceived += HandleRoundVerified;
+            ServerNetworkManager.Instance.OnRematchSyncReceived += HandleRematchSync;
+        }
+
+        if (uiBindings.matchResultUI != null)
+        {
+            uiBindings.matchResultUI.OnActionRequested += HandleMatchEndAction;
         }
     }
 
@@ -157,7 +165,13 @@ public class GameLoopManager : MonoBehaviour
         {
             ServerNetworkManager.Instance.OnGameStartReceived -= HandleServerGameStart;
             ServerNetworkManager.Instance.OnMatchAbortedReceived -= HandleMatchAborted;
-            ServerNetworkManager.Instance.OnNextRoundStartReceived -= HandleNextRoundStart;
+            ServerNetworkManager.Instance.OnRoundVerifiedReceived -= HandleRoundVerified;
+            ServerNetworkManager.Instance.OnRematchSyncReceived -= HandleRematchSync;
+        }
+
+        if (uiBindings.matchResultUI != null)
+        {
+            uiBindings.matchResultUI.OnActionRequested -= HandleMatchEndAction;
         }
 
         if (connectionState.currentP2PNetwork != null)
@@ -331,14 +345,19 @@ public class GameLoopManager : MonoBehaviour
             RoomStateModel model = RoomStateManager.Instance.roomModel;
             timeLimit = model.roundTimeLimit;
             maxRds = model.maxRounds;
-            
-            scoreContext.p1Wins = model.p1Wins;
-            scoreContext.p2Wins = model.p2Wins;
         }
 
+        scoreContext.p1RoundWins = 0;
+        scoreContext.p2RoundWins = 0;
         scoreContext.maxRounds = maxRds;
-        scoreContext.requiredWins = (maxRds / 2) + 1;
-        scoreContext.currentRound = scoreContext.p1Wins + scoreContext.p2Wins; 
+        scoreContext.requiredRoundWins = (maxRds / 2) + 1;
+        scoreContext.currentRound = 1; 
+
+        if (uiBindings.winCounterUI != null)
+        {
+            uiBindings.winCounterUI.InitializeCounters(scoreContext.requiredRoundWins);
+            uiBindings.winCounterUI.UpdateCounters(scoreContext.p1RoundWins, scoreContext.p2RoundWins);
+        }
 
         simState.isResimulating = false;
         simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64.FromFloat(1f));
@@ -504,13 +523,13 @@ public class GameLoopManager : MonoBehaviour
         else if (p1Hp <= 0)
         {
             winnerSlot = 1; 
-            scoreContext.p2Wins++;
+            scoreContext.p2RoundWins++;
             SetWinLossState(playerTwo, playerOne);
         }
         else if (p2Hp <= 0)
         {
             winnerSlot = 0; 
-            scoreContext.p1Wins++;
+            scoreContext.p1RoundWins++;
             SetWinLossState(playerOne, playerTwo);
         }
         else if (timeFrames <= 0)
@@ -518,13 +537,13 @@ public class GameLoopManager : MonoBehaviour
             if (p1Hp > p2Hp) 
             {
                 winnerSlot = 0;
-                scoreContext.p1Wins++;
+                scoreContext.p1RoundWins++;
                 SetWinLossState(playerOne, playerTwo);
             }
             else if (p2Hp > p1Hp) 
             {
                 winnerSlot = 1;
-                scoreContext.p2Wins++;
+                scoreContext.p2RoundWins++;
                 SetWinLossState(playerTwo, playerOne);
             }
             else 
@@ -533,26 +552,29 @@ public class GameLoopManager : MonoBehaviour
                 SetDrawState();
             }
         }
+
+        if (uiBindings.winCounterUI != null)
+        {
+            uiBindings.winCounterUI.UpdateCounters(scoreContext.p1RoundWins, scoreContext.p2RoundWins);
+        }
     }
 
     private void ReportRoundEndToServer(int winnerSlot)
     {
-        simState.isSimulationRunning = false; 
-        
         if (ServerNetworkManager.Instance != null)
         {
-            ServerNetworkManager.Instance.SendRoundEndReport(winnerSlot, scoreContext.p1Wins, scoreContext.p2Wins);
+            ServerNetworkManager.Instance.SendRoundEndReport(winnerSlot, scoreContext.p1RoundWins, scoreContext.p2RoundWins);
         }
     }
 
-    private void HandleNextRoundStart()
+    private void HandleRoundVerified()
     {
         PrepareNextRoundOrEndMatch();
     }
 
     private void PrepareNextRoundOrEndMatch()
     {
-        bool isMatchOver = scoreContext.p1Wins >= scoreContext.requiredWins || scoreContext.p2Wins >= scoreContext.requiredWins;
+        bool isMatchOver = scoreContext.p1RoundWins >= scoreContext.requiredRoundWins || scoreContext.p2RoundWins >= scoreContext.requiredRoundWins;
 
         if (isMatchOver)
         {
@@ -607,7 +629,52 @@ public class GameLoopManager : MonoBehaviour
 
     private void ProcessFinalMatchEnd()
     {
-        simState.isSimulationRunning = false;
+        if (uiBindings.matchResultUI != null)
+        {
+            uiBindings.matchResultUI.ShowResult(
+                scoreContext.p1RoundWins, 
+                scoreContext.p2RoundWins, 
+                scoreContext.requiredRoundWins, 
+                connectionState.localPlayerSlot
+            );
+        }
+    }
+
+    private void HandleMatchEndAction(MatchEndActionType actionType)
+    {
+        bool isOnline = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient;
+
+        if (isOnline)
+        {
+            if (ServerNetworkManager.Instance != null)
+            {
+                ServerNetworkManager.Instance.SendMatchEndAction(actionType);
+            }
+        }
+        else
+        {
+            switch (actionType)
+            {
+                case MatchEndActionType.ReturnToMenu:
+                    GameFlowManager.Instance.ChangeScene(GameSceneType.GameModeSelect);
+                    break;
+                case MatchEndActionType.ReturnToCharacterSelect:
+                    GameFlowManager.Instance.ChangeScene(GameSceneType.CharacterSelect);
+                    break;
+                case MatchEndActionType.Rematch:
+                    InitializeMatch(false);
+                    simState.isSimulationRunning = true;
+                    break;
+            }
+        }
+    }
+
+    private void HandleRematchSync(bool isP1Ready, bool isP2Ready)
+    {
+        if (uiBindings.matchResultUI != null)
+        {
+            uiBindings.matchResultUI.UpdateRematchSync(isP1Ready, isP2Ready);
+        }
     }
 
     private void SetWinLossState(PlayerSessionContext winner, PlayerSessionContext loser)
@@ -620,11 +687,6 @@ public class GameLoopManager : MonoBehaviour
     {
         playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
         playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
-    }
-
-    private void ShowSceneTransitionUI()
-    {
-        
     }
 
     private void SaveGameState(int tick)

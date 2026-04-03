@@ -19,7 +19,8 @@ public class ServerNetworkManager : MonoBehaviour
     public event Action OnGameStartReceived;
     public event Action<int> OnSlotAssignedReceived;
     public event Action<GameSceneType> OnMatchAbortedReceived;
-    public event Action OnNextRoundStartReceived;
+    public event Action OnRoundVerifiedReceived;
+    public event Action<bool, bool> OnRematchSyncReceived;
 
     private NetworkDriver serverDriver;
     private NetworkConnection serverConnection;
@@ -262,6 +263,19 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
+    public void SendMatchEndAction(MatchEndActionType actionType)
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.MatchEndActionRequest);
+            writer.WriteByte((byte)actionType);
+            serverDriver.EndSend(writer);
+        }
+    }
+
     /*
      * 디싱크(Desync) 발생 시 매치 무효화 요청을 서버로 보냅니다.
      */
@@ -459,9 +473,15 @@ public class ServerNetworkManager : MonoBehaviour
             int sceneTypeInt = stream.ReadInt();
             OnMatchAbortedReceived?.Invoke((GameSceneType)sceneTypeInt);
         }
-        else if (packetType == NetworkPacketType.NextRoundStart)
+        else if (packetType == NetworkPacketType.RoundVerified)
         {
-            OnNextRoundStartReceived?.Invoke();
+            OnRoundVerifiedReceived?.Invoke();
+        }
+        else if (packetType == NetworkPacketType.RematchSyncBroadcast)
+        {
+            bool p1Ready = stream.ReadByte() == 1;
+            bool p2Ready = stream.ReadByte() == 1;
+            OnRematchSyncReceived?.Invoke(p1Ready, p2Ready);
         }
     }
 

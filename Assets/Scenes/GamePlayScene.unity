@@ -242,6 +242,8 @@ MonoBehaviour:
     p1HealthBar: {fileID: 147935802}
     p2HealthBar: {fileID: 1433068454}
     roundTimerDisplay: {fileID: 508090641}
+    winCounterUI: {fileID: 363466550}
+    matchResultUI: {fileID: 1037750066}
   playerOne:
     characterData: {fileID: 11400000, guid: 914a4ffd064c33e47925cfabf435e814, type: 2}
     customBinding:
@@ -782,6 +784,81 @@ MonoBehaviour:
   backgroundSlider: {fileID: 786726415}
   delayBeforeDrain: 1
   drainSpeed: 5
+--- !u!1 &172471608
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 172471609}
+  - component: {fileID: 172471611}
+  - component: {fileID: 172471610}
+  m_Layer: 5
+  m_Name: Image_ReMatchReady_P2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &172471609
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172471608}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1076814014}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 75, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &172471610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172471608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5882353}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: d072264cff1ef234a81096514359c882, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &172471611
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172471608}
+  m_CullTransparentMesh: 1
 --- !u!1 &271709589
 GameObject:
   m_ObjectHideFlags: 0
@@ -794,7 +871,7 @@ GameObject:
   - component: {fileID: 271709592}
   - component: {fileID: 271709591}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1184,7 +1261,7 @@ GameObject:
   - component: {fileID: 334261591}
   - component: {fileID: 334261590}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1308,7 +1385,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.113385536, g: 0.6603774, b: 0.602697, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -1454,6 +1531,7 @@ GameObject:
   m_Component:
   - component: {fileID: 363466548}
   - component: {fileID: 363466549}
+  - component: {fileID: 363466550}
   m_Layer: 5
   m_Name: Play Game
   m_TagString: Untagged
@@ -1491,6 +1569,40 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 363466547}
   m_CullTransparentMesh: 1
+--- !u!114 &363466550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 363466547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 893f34cadbc385844a0feb3dff719638, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WinCounterUIManager
+  p1WinSlots:
+  - rootObject: {fileID: 355628609}
+    activeIconObject: {fileID: 1463506822}
+  - rootObject: {fileID: 1481935612}
+    activeIconObject: {fileID: 919577905}
+  - rootObject: {fileID: 692941008}
+    activeIconObject: {fileID: 1070995158}
+  - rootObject: {fileID: 1989348568}
+    activeIconObject: {fileID: 271709589}
+  - rootObject: {fileID: 2037251072}
+    activeIconObject: {fileID: 474654932}
+  p2WinSlots:
+  - rootObject: {fileID: 1552783104}
+    activeIconObject: {fileID: 1473653674}
+  - rootObject: {fileID: 1417644115}
+    activeIconObject: {fileID: 334261588}
+  - rootObject: {fileID: 90297910}
+    activeIconObject: {fileID: 787856357}
+  - rootObject: {fileID: 277543881}
+    activeIconObject: {fileID: 1410875518}
+  - rootObject: {fileID: 117802842}
+    activeIconObject: {fileID: 1507648430}
 --- !u!1 &398705992
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,7 +1664,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.113385536, g: 0.6603774, b: 0.602697, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -1888,7 +2000,7 @@ GameObject:
   - component: {fileID: 474654935}
   - component: {fileID: 474654934}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3373,7 +3485,7 @@ GameObject:
   - component: {fileID: 787856360}
   - component: {fileID: 787856359}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3590,7 +3702,7 @@ GameObject:
   - component: {fileID: 919577908}
   - component: {fileID: 919577907}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3663,6 +3775,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1037750063}
   - component: {fileID: 1037750065}
+  - component: {fileID: 1037750066}
   - component: {fileID: 1037750064}
   m_Layer: 5
   m_Name: Match Result
@@ -3670,7 +3783,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1037750063
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3729,6 +3842,25 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1037750062}
   m_CullTransparentMesh: 1
+--- !u!114 &1037750066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037750062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67acb4b7187b5384680010fc16ea8d35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MatchResultUIManager
+  resultPanel: {fileID: 1037750062}
+  matchResultText: {fileID: 744464866}
+  btnGoToMenu: {fileID: 338688646}
+  btnGoToCharacterSelect: {fileID: 398705994}
+  btnRematch: {fileID: 1076814015}
+  imgP1RematchReady: {fileID: 1806374347}
+  imgP2RematchReady: {fileID: 172471608}
 --- !u!1 &1070995158
 GameObject:
   m_ObjectHideFlags: 0
@@ -3741,7 +3873,7 @@ GameObject:
   - component: {fileID: 1070995161}
   - component: {fileID: 1070995160}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3836,6 +3968,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 477435450}
+  - {fileID: 1806374348}
+  - {fileID: 172471609}
   m_Father: {fileID: 5418776}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -3865,7 +3999,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.113385536, g: 0.6603774, b: 0.602697, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -4440,7 +4574,7 @@ GameObject:
   - component: {fileID: 1410875521}
   - component: {fileID: 1410875520}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4720,7 +4854,7 @@ GameObject:
   - component: {fileID: 1463506825}
   - component: {fileID: 1463506824}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4795,7 +4929,7 @@ GameObject:
   - component: {fileID: 1473653677}
   - component: {fileID: 1473653676}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4946,7 +5080,7 @@ GameObject:
   - component: {fileID: 1507648433}
   - component: {fileID: 1507648432}
   m_Layer: 5
-  m_Name: WinCounter
+  m_Name: WinCounter_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5275,6 +5409,81 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1664369406}
+  m_CullTransparentMesh: 1
+--- !u!1 &1806374347
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1806374348}
+  - component: {fileID: 1806374350}
+  - component: {fileID: 1806374349}
+  m_Layer: 5
+  m_Name: Image_ReMatchReady_P1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1806374348
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1806374347}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1076814014}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -75, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1806374349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1806374347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5882353}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: f6c3b8636257c704bb84790f2631bafc, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1806374350
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1806374347}
   m_CullTransparentMesh: 1
 --- !u!1 &1830912643
 GameObject:
