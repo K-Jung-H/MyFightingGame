@@ -18,8 +18,8 @@ public class MatchResultUIManager : MonoBehaviour
     public Button btnGoToCharacterSelect;
     public Button btnRematch;
 
-    public GameObject imgP1RematchReady;
-    public GameObject imgP2RematchReady;
+    public GameObject imgLeftRematchReady;
+    public GameObject imgRightRematchReady;
 
     public event Action<MatchEndActionType> OnActionRequested;
 
@@ -34,8 +34,8 @@ public class MatchResultUIManager : MonoBehaviour
 
     public void InitializeUI()
     {
-        if (imgP1RematchReady != null) imgP1RematchReady.SetActive(false);
-        if (imgP2RematchReady != null) imgP2RematchReady.SetActive(false);
+        if (imgLeftRematchReady != null) imgLeftRematchReady.SetActive(false);
+        if (imgRightRematchReady != null) imgRightRematchReady.SetActive(false);
     }
 
     public void ShowResult(int p1Wins, int p2Wins, int requiredWins, int localSlot)
@@ -72,10 +72,17 @@ public class MatchResultUIManager : MonoBehaviour
         btnGoToMenu.interactable = true;
     }
 
-    public void UpdateRematchSync(bool isP1Ready, bool isP2Ready)
+    public void UpdateRematchSync(bool isP1Ready, bool isP2Ready, bool isFlipped)
     {
-        if (imgP1RematchReady != null) imgP1RematchReady.SetActive(isP1Ready);
-        if (imgP2RematchReady != null) imgP2RematchReady.SetActive(isP2Ready);
+        if (imgLeftRematchReady != null) 
+        {
+            imgLeftRematchReady.SetActive(isFlipped ? isP2Ready : isP1Ready);
+        }
+        
+        if (imgRightRematchReady != null) 
+        {
+            imgRightRematchReady.SetActive(isFlipped ? isP1Ready : isP2Ready);
+        }
     }
 
     private void OnMenuButtonClicked()

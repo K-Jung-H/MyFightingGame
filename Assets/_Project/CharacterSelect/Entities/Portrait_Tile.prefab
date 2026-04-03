@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7329722146876533111}
   - component: {fileID: 1278689682309977638}
   m_Layer: 28
-  m_Name: P1_Cursor
+  m_Name: Left_Cursor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -201,7 +201,7 @@ GameObject:
   - component: {fileID: 986716913985153988}
   - component: {fileID: 4639427966625787216}
   m_Layer: 28
-  m_Name: P2_Cursor
+  m_Name: Right_Cursor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -353,6 +353,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectTile
   portraitImage: {fileID: 1090833780101954067}
-  p1CursorImage: {fileID: 1278689682309977638}
-  p2CursorImage: {fileID: 4639427966625787216}
+  leftCursorImage: {fileID: 0}
+  rightCursorImage: {fileID: 0}
   colorBlendRatio: 0.5

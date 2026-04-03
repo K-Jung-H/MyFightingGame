@@ -53,8 +53,8 @@ public struct GameEnvironmentSettings
 public struct UIBindings
 {
     public CameraManager cameraManager;
-    public HealthBarController p1HealthBar;
-    public HealthBarController p2HealthBar;
+    public HealthBarController leftHealthBar;
+    public HealthBarController rightHealthBar;
     public SpriteNumberDisplay roundTimerDisplay;
     public WinCounterUIManager winCounterUI;
     public MatchResultUIManager matchResultUI;
@@ -356,7 +356,7 @@ public class GameLoopManager : MonoBehaviour
         if (uiBindings.winCounterUI != null)
         {
             uiBindings.winCounterUI.InitializeCounters(scoreContext.requiredRoundWins);
-            uiBindings.winCounterUI.UpdateCounters(scoreContext.p1RoundWins, scoreContext.p2RoundWins);
+            uiBindings.winCounterUI.UpdateCounters(0, 0);
         }
 
         simState.isResimulating = false;
@@ -389,8 +389,11 @@ public class GameLoopManager : MonoBehaviour
             playerOne.controller.SetTarget(playerTwo.controller);
             playerTwo.controller.SetTarget(playerOne.controller);
 
-            if (uiBindings.p1HealthBar != null) uiBindings.p1HealthBar.Initialize(playerOne.controller.GetCombat(), false);
-            if (uiBindings.p2HealthBar != null) uiBindings.p2HealthBar.Initialize(playerTwo.controller.GetCombat(), true);
+            HealthBarController leftHpUI = simState.isCameraFlipped ? uiBindings.rightHealthBar : uiBindings.leftHealthBar;
+            HealthBarController rightHpUI = simState.isCameraFlipped ? uiBindings.leftHealthBar : uiBindings.rightHealthBar;
+
+            if (leftHpUI != null) leftHpUI.Initialize(simState.isCameraFlipped ? playerTwo.controller.GetCombat() : playerOne.controller.GetCombat(), false);
+            if (rightHpUI != null) rightHpUI.Initialize(simState.isCameraFlipped ? playerOne.controller.GetCombat() : playerTwo.controller.GetCombat(), true);
         }
 
         if (uiBindings.cameraManager != null) uiBindings.cameraManager.SetTargetPlayers(playerOne.instance, playerTwo.instance);
@@ -555,7 +558,9 @@ public class GameLoopManager : MonoBehaviour
 
         if (uiBindings.winCounterUI != null)
         {
-            uiBindings.winCounterUI.UpdateCounters(scoreContext.p1RoundWins, scoreContext.p2RoundWins);
+            int leftWins = simState.isCameraFlipped ? scoreContext.p2RoundWins : scoreContext.p1RoundWins;
+            int rightWins = simState.isCameraFlipped ? scoreContext.p1RoundWins : scoreContext.p2RoundWins;
+            uiBindings.winCounterUI.UpdateCounters(leftWins, rightWins);
         }
     }
 
@@ -673,7 +678,7 @@ public class GameLoopManager : MonoBehaviour
     {
         if (uiBindings.matchResultUI != null)
         {
-            uiBindings.matchResultUI.UpdateRematchSync(isP1Ready, isP2Ready);
+            uiBindings.matchResultUI.UpdateRematchSync(isP1Ready, isP2Ready, simState.isCameraFlipped);
         }
     }
 

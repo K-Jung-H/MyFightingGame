@@ -239,8 +239,8 @@ MonoBehaviour:
     postMatchDelaySeconds: 3
   uiBindings:
     cameraManager: {fileID: 330585548}
-    p1HealthBar: {fileID: 147935802}
-    p2HealthBar: {fileID: 1433068454}
+    leftHealthBar: {fileID: 147935802}
+    rightHealthBar: {fileID: 1433068454}
     roundTimerDisplay: {fileID: 508090641}
     winCounterUI: {fileID: 363466550}
     matchResultUI: {fileID: 1037750066}
@@ -652,7 +652,7 @@ GameObject:
   - component: {fileID: 128483286}
   - component: {fileID: 128483285}
   m_Layer: 5
-  m_Name: Portrait_P2
+  m_Name: Portrait_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -741,7 +741,7 @@ GameObject:
   - component: {fileID: 147935801}
   - component: {fileID: 147935802}
   m_Layer: 5
-  m_Name: HealthBar_P1
+  m_Name: HealthBar_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -796,7 +796,7 @@ GameObject:
   - component: {fileID: 172471611}
   - component: {fileID: 172471610}
   m_Layer: 5
-  m_Name: Image_ReMatchReady_P2
+  m_Name: Image_ReMatchReady_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1581,7 +1581,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 893f34cadbc385844a0feb3dff719638, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WinCounterUIManager
-  p1WinSlots:
+  leftWinSlots:
   - rootObject: {fileID: 355628609}
     activeIconObject: {fileID: 1463506822}
   - rootObject: {fileID: 1481935612}
@@ -1592,7 +1592,7 @@ MonoBehaviour:
     activeIconObject: {fileID: 271709589}
   - rootObject: {fileID: 2037251072}
     activeIconObject: {fileID: 474654932}
-  p2WinSlots:
+  rightWinSlots:
   - rootObject: {fileID: 1552783104}
     activeIconObject: {fileID: 1473653674}
   - rootObject: {fileID: 1417644115}
@@ -2305,7 +2305,7 @@ GameObject:
   - component: {fileID: 515837799}
   - component: {fileID: 515837798}
   m_Layer: 5
-  m_Name: Portrait_P1
+  m_Name: Portrait_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2470,7 +2470,7 @@ GameObject:
   - component: {fileID: 576769457}
   - component: {fileID: 576769456}
   m_Layer: 5
-  m_Name: Panel_P1
+  m_Name: Panel_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2760,7 +2760,7 @@ GameObject:
   - component: {fileID: 669537611}
   - component: {fileID: 669537610}
   m_Layer: 5
-  m_Name: Panel_P2
+  m_Name: Panel_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3237,7 +3237,7 @@ GameObject:
   - component: {fileID: 746309387}
   - component: {fileID: 746309386}
   m_Layer: 5
-  m_Name: Panel_Win_P2
+  m_Name: Panel_Win_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3859,8 +3859,8 @@ MonoBehaviour:
   btnGoToMenu: {fileID: 338688646}
   btnGoToCharacterSelect: {fileID: 398705994}
   btnRematch: {fileID: 1076814015}
-  imgP1RematchReady: {fileID: 1806374347}
-  imgP2RematchReady: {fileID: 172471608}
+  imgLeftRematchReady: {fileID: 1806374347}
+  imgRightRematchReady: {fileID: 172471608}
 --- !u!1 &1070995158
 GameObject:
   m_ObjectHideFlags: 0
@@ -4799,7 +4799,7 @@ GameObject:
   - component: {fileID: 1433068453}
   - component: {fileID: 1433068454}
   m_Layer: 5
-  m_Name: HealthBar_P2
+  m_Name: HealthBar_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5231,7 +5231,7 @@ GameObject:
   - component: {fileID: 1579139070}
   - component: {fileID: 1579139069}
   m_Layer: 5
-  m_Name: Panel_Win_P1
+  m_Name: Panel_Win_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5422,7 +5422,7 @@ GameObject:
   - component: {fileID: 1806374350}
   - component: {fileID: 1806374349}
   m_Layer: 5
-  m_Name: Image_ReMatchReady_P1
+  m_Name: Image_ReMatchReady_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

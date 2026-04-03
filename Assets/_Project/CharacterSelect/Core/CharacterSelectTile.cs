@@ -4,57 +4,55 @@ using UnityEngine.UI;
 public class CharacterSelectTile : MonoBehaviour
 {
     public Image portraitImage;
-    public Image p1CursorImage;
-    public Image p2CursorImage;
+    public Image leftCursorImage;
+    public Image rightCursorImage;
     public float colorBlendRatio = 0.5f;
 
     private void Awake()
     {
-        bool isP2CursorValid = p2CursorImage != null;
-        if (isP2CursorValid)
+        if (rightCursorImage != null)
         {
-            Vector3 p2Scale = p2CursorImage.rectTransform.localScale;
-            p2Scale.x = -Mathf.Abs(p2Scale.x);
-            p2CursorImage.rectTransform.localScale = p2Scale;
+            Vector3 rightScale = rightCursorImage.rectTransform.localScale;
+            rightScale.x = -Mathf.Abs(rightScale.x);
+            rightCursorImage.rectTransform.localScale = rightScale;
         }
     }
 
     public void SetupTile(Sprite portrait)
     {
-        bool isPortraitValid = portrait != null;
-        if (isPortraitValid)
+        if (portrait != null)
         {
             portraitImage.sprite = portrait;
         }
     }
 
-    public void UpdateVisuals(bool isP1Selected, bool isP2Selected, Color p1Color, Color p2Color)
+    public void UpdateVisuals(bool isLeftSelected, bool isRightSelected, Color leftColor, Color rightColor)
     {
-        bool isBothSelected = isP1Selected && isP2Selected;
+        bool isBothSelected = isLeftSelected && isRightSelected;
 
         if (isBothSelected)
         {
-            Color mixedCursorColor = Color.Lerp(p1Color, p2Color, 0.5f);
+            Color mixedCursorColor = Color.Lerp(leftColor, rightColor, 0.5f);
             Color finalBlendColor = Color.Lerp(Color.white, mixedCursorColor, colorBlendRatio);
 
-            p1CursorImage.enabled = true;
-            p1CursorImage.color = finalBlendColor;
+            leftCursorImage.enabled = true;
+            leftCursorImage.color = finalBlendColor;
 
-            p2CursorImage.enabled = true;
-            p2CursorImage.color = finalBlendColor;
+            rightCursorImage.enabled = true;
+            rightCursorImage.color = finalBlendColor;
         }
         else
         {
-            p1CursorImage.enabled = isP1Selected;
-            if (isP1Selected)
+            leftCursorImage.enabled = isLeftSelected;
+            if (isLeftSelected)
             {
-                p1CursorImage.color = Color.Lerp(Color.white, p1Color, colorBlendRatio);
+                leftCursorImage.color = Color.Lerp(Color.white, leftColor, colorBlendRatio);
             }
 
-            p2CursorImage.enabled = isP2Selected;
-            if (isP2Selected)
+            rightCursorImage.enabled = isRightSelected;
+            if (isRightSelected)
             {
-                p2CursorImage.color = Color.Lerp(Color.white, p2Color, colorBlendRatio);
+                rightCursorImage.color = Color.Lerp(Color.white, rightColor, colorBlendRatio);
             }
         }
     }

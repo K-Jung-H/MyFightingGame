@@ -314,7 +314,7 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-    private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
+private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
     {
         byte packetType = stream.ReadByte();
 
@@ -334,7 +334,11 @@ public class DummyMatchServer : MonoBehaviour
                 return;
         }
         
-        if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom)) return;
+        if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom))
+        {
+            LogEvent($"<color=red>Dropped Packet [{packetType}] - Client not in a room.</color>");
+            return;
+        }
 
         switch (packetType)
         {
@@ -347,20 +351,29 @@ public class DummyMatchServer : MonoBehaviour
             case NetworkPacketType.RuleUpdate:
             case NetworkPacketType.ReadyStateUpdate:
             case NetworkPacketType.LobbyStartRequest:
+            case NetworkPacketType.SideUpdate:
                 if (currentRoom.currentState == RoomStateType.Lobby) 
                     HandleLobbyPackets(packetType, conn, currentRoom, ref stream);
+                else
+                    LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
                 break;
             case NetworkPacketType.SelectUpdate:
-            case NetworkPacketType.SideUpdate:
             case NetworkPacketType.StartRequest:
                 if (currentRoom.currentState == RoomStateType.CharacterSelect) 
                     HandleCharacterSelectPackets(packetType, conn, currentRoom, ref stream);
+                else
+                    LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
                 break;
             case NetworkPacketType.Handshake:
             case NetworkPacketType.RoundEndReport:
             case NetworkPacketType.MatchEndActionRequest:
                 if (currentRoom.currentState == RoomStateType.InGame) 
                     HandleInGamePackets(packetType, conn, currentRoom, ref stream);
+                else
+                    LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
+                break;
+            default:
+                LogEvent($"<color=red>Dropped Packet [{packetType}] - Unknown Packet Type.</color>");
                 break;
         }
     }
@@ -397,6 +410,13 @@ public class DummyMatchServer : MonoBehaviour
                     room.LogRoomEvent($"[Server] State Changed to CharacterSelect. Broadcasting SceneChange.");
                     BroadcastSceneChange(room, (int)GameSceneType.CharacterSelect);
                 }
+                break;
+            case NetworkPacketType.SideUpdate:
+                int side = stream.ReadInt();
+                if (conn == room.p1) room.stateModel.p1PreferredSide = side;
+                else if (conn == room.p2) room.stateModel.p2PreferredSide = side;
+                room.LogRoomEvent($"[{sender}] Side Update -> {side}");
+                BroadcastSelectState(room);
                 break;
         }
     }
@@ -748,7 +768,7 @@ public class DummyMatchServer : MonoBehaviour
                 room.stateModel.p1PreferredSide = room.stateModel.p2PreferredSide;
 
                 room.stateModel.isP2Ready = false;
-                room.stateModel.p2CharacterIndex = -1;
+                room.stateModel.p2CharacterIndex = 0;
                 room.stateModel.isP2CharacterLocked = false;
                 
                 SendSlotId(room.p1, 0);
@@ -1007,6 +1027,9 @@ public class DummyMatchServer : MonoBehaviour
         room.isP2StartRequested = false;
         room.stateModel.isP1Ready = false;
         room.stateModel.isP2Ready = false;
+
+        room.stateModel.isP1CharacterLocked = false;
+        room.stateModel.isP2CharacterLocked = false;
     }
 
     private void BroadcastMatchAborted(NetworkConnection conn, int targetSceneInt)

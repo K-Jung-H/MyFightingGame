@@ -23,8 +23,8 @@ public class RoomStateModel
     public bool isP1Connected;
     public bool isP2Connected;
 
-    public int p1CharacterIndex = -1;
-    public int p2CharacterIndex = -1;
+    public int p1CharacterIndex = 0;
+    public int p2CharacterIndex = 0;
     public int selectedStageIndex = 0;
     public bool isP1CharacterLocked;
     public bool isP2CharacterLocked;
