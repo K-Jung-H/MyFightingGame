@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ee1509526630664d931c1b74f86e7cf, type: 3}
+  m_Name: Preset_Arrows
+  m_EditorClassIdentifier: Assembly-CSharp::InputBindingPresetSO
+  presetName: Arrows - QWAS
+  bindingData:
+    upKey: 63
+    downKey: 64
+    leftKey: 61
+    rightKey: 62
+    lpKey: 31
+    rpKey: 37
+    lkKey: 15
+    rkKey: 33
+    pauseKey: 1
+    selectKey: 1

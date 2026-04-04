@@ -51,12 +51,6 @@ public class DebugHUD : MonoBehaviour
 
     private void OnGUI()
     {
-        Vector2 refRes = GameFlowManager.Instance.GetReferenceResolution();
-        Vector3 scale = new Vector3(Screen.width / refRes.x, Screen.height / refRes.y, 1f);
-        float minScale = Mathf.Min(scale.x, scale.y);
-        scale = new Vector3(minScale, minScale, 1f);
-        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
-
         isShowAllHUD = GUI.Toggle(new Rect(10f, 250f, 150f, 20f), isShowAllHUD, " Toggle All Debug HUD");
 
         if (!isShowAllHUD) return;
@@ -71,11 +65,11 @@ public class DebugHUD : MonoBehaviour
         }
 
         float panelWidth = 280f;
-        float bottomY = refRes.y - 30f;
+        float bottomY = Screen.height - 30f;
 
         float p1StartX = 10f;
-        float serverStartX = (refRes.x - panelWidth) / 2f;
-        float p2StartX = refRes.x - panelWidth - 10f;
+        float serverStartX = (Screen.width - panelWidth) / 2f;
+        float p2StartX = Screen.width - panelWidth - 10f;
 
         DrawServerStatusPanel(serverStartX, bottomY, panelWidth);
         DrawP1DebugPanel(p1StartX, bottomY, panelWidth);

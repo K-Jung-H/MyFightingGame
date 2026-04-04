@@ -5,12 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
 
-public static class MatchDataManager
-{
-    public static CharacterDataSO P1CharacterData { get; set; }
-    public static CharacterDataSO P2CharacterData { get; set; }
-}
-
 [System.Serializable]
 public class PlayerSelectContext
 {

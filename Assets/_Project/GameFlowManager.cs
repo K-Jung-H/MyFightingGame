@@ -28,9 +28,6 @@ public class GameFlowManager : MonoBehaviour
 
     public ConnectionMode currentMode = ConnectionMode.None;
     public GameSceneType currentScene = GameSceneType.Start;
-    public GameSceneType previousScene = GameSceneType.Start;
-
-    [SerializeField] private Vector2 referenceResolution = new Vector2(1920f, 1080f);
     
     [SerializeField] private string startSceneName = "StartScene";
     [SerializeField] private string gameModeSelectSceneName = "GameModeSelectScene";
@@ -64,14 +61,8 @@ public class GameFlowManager : MonoBehaviour
         }
     }
 
-    public Vector2 GetReferenceResolution()
-    {
-        return referenceResolution;
-    }
-
     public void ChangeScene(GameSceneType targetSceneType)
     {
-        previousScene = currentScene;
         currentScene = targetSceneType;
 
         if (currentScene == GameSceneType.Start) SceneManager.LoadScene(startSceneName);
@@ -126,25 +117,36 @@ public class GameFlowManager : MonoBehaviour
 
     public void GoBack()
     {
-        if (currentScene != previousScene)
+        if (currentMode == ConnectionMode.OnlineClient)
         {
-            if (currentMode != ConnectionMode.None && previousScene == GameSceneType.GameModeSelect)
+            switch (currentScene)
             {
-                currentMode = ConnectionMode.None;
-                isFlowInitialized = false;
-
-                if (ServerNetworkManager.Instance != null)
-                {
-                    Destroy(ServerNetworkManager.Instance.gameObject);
-                }
-
-                if (RoomStateManager.Instance != null)
-                {
-                    Destroy(RoomStateManager.Instance.gameObject);
-                }
+                case GameSceneType.OnlineLobby:
+                    currentMode = ConnectionMode.None;
+                    isFlowInitialized = false;
+                    if (ServerNetworkManager.Instance != null) Destroy(ServerNetworkManager.Instance.gameObject);
+                    if (RoomStateManager.Instance != null) Destroy(RoomStateManager.Instance.gameObject);
+                    ChangeScene(GameSceneType.GameModeSelect);
+                    break;
+                case GameSceneType.OnlineMatchedRoom:
+                    if (ServerNetworkManager.Instance != null) ServerNetworkManager.Instance.SendRoomLeaveRequest();
+                    break;
+                case GameSceneType.CharacterSelect:
+                    if (ServerNetworkManager.Instance != null) ServerNetworkManager.Instance.SendCancelPhaseRequest();
+                    break;
             }
+            return;
+        }
 
-            ChangeScene(previousScene);
+        switch (currentScene)
+        {
+            case GameSceneType.GameModeSelect:
+                ChangeScene(GameSceneType.Start);
+                break;
+            case GameSceneType.Training:
+            case GameSceneType.CharacterSelect:
+                ChangeScene(GameSceneType.GameModeSelect);
+                break;
         }
     }
     

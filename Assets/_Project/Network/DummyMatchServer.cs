@@ -314,7 +314,7 @@ public class DummyMatchServer : MonoBehaviour
         }
     }
 
-private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
+    private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
     {
         byte packetType = stream.ReadByte();
 
@@ -354,6 +354,12 @@ private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
             case NetworkPacketType.SideUpdate:
                 if (currentRoom.currentState == RoomStateType.Lobby) 
                     HandleLobbyPackets(packetType, conn, currentRoom, ref stream);
+                else
+                    LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
+                break;
+            case NetworkPacketType.CancelPhaseRequest:
+                if (currentRoom.currentState == RoomStateType.CharacterSelect)
+                    HandleCancelPhaseRequest(conn, currentRoom);
                 else
                     LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
                 break;
@@ -464,12 +470,6 @@ private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
                     BroadcastCountdownState(room, false);
                 }
                 break;
-            case NetworkPacketType.SideUpdate:
-                int side = stream.ReadInt();
-                if (conn == room.p1) room.stateModel.p1PreferredSide = side;
-                else if (conn == room.p2) room.stateModel.p2PreferredSide = side;
-                BroadcastSelectState(room);
-                break;
             case NetworkPacketType.StartRequest:
                 if (room.isCountdownFinished)
                 {
@@ -484,6 +484,33 @@ private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
                     }
                 }
                 break;
+        }
+    }
+
+    private void HandleCancelPhaseRequest(NetworkConnection conn, ServerRoom room)
+    {
+        string sender = (conn == room.p1) ? "P1" : "P2";
+        room.LogRoomEvent($"[{sender}] Requested Phase Cancel.");
+
+        if (room.currentState == RoomStateType.CharacterSelect)
+        {
+            room.currentState = RoomStateType.Lobby;
+            
+            room.stateModel.isP1CharacterLocked = false;
+            room.stateModel.isP2CharacterLocked = false;
+            room.stateModel.isP1Ready = false;
+            room.stateModel.isP2Ready = false;
+            
+            room.isP1StartRequested = false;
+            room.isP2StartRequested = false;
+            room.isCountdownStarted = false;
+            room.isCountdownFinished = false;
+            room.countdownTimer = 3f;
+
+            room.LogRoomEvent("[Server] Phase downgraded to Lobby. Broadcasting SceneChange.");
+            
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
         }
     }
 
@@ -736,6 +763,9 @@ private void ProcessData(NetworkConnection conn, ref DataStreamReader stream)
     {
         string sender = (conn == room.p1) ? "P1" : "P2";
         room.LogRoomEvent($"[{sender}] Requested to leave room.");
+        
+        BroadcastMatchAborted(conn, (int)GameSceneType.OnlineLobby);
+        
         HandleDisconnect(conn);
     }
 

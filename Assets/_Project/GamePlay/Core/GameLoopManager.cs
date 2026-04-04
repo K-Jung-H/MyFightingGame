@@ -134,7 +134,9 @@ public class GameLoopManager : MonoBehaviour
 
         if (uiBindings.matchResultUI != null)
         {
+            uiBindings.matchResultUI.gameObject.SetActive(true);
             uiBindings.matchResultUI.OnActionRequested += HandleMatchEndAction;
+            uiBindings.matchResultUI.gameObject.SetActive(false);
         }
     }
 
@@ -335,8 +337,13 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-    private void InitializeMatch(bool isNetworkReset)
+private void InitializeMatch(bool isNetworkReset)
     {
+        if (uiBindings.matchResultUI != null)
+        {
+            uiBindings.matchResultUI.gameObject.SetActive(false);
+        }
+
         int timeLimit = 99;
         int maxRds = 3;
 
@@ -367,6 +374,33 @@ public class GameLoopManager : MonoBehaviour
 
         if (playerOne.instance != null) Destroy(playerOne.instance);
         if (playerTwo.instance != null) Destroy(playerTwo.instance);
+
+        InputBinding leftBinding = MatchDataManager.LeftKeyBindPreset != null 
+            ? MatchDataManager.LeftKeyBindPreset.bindingData 
+            : InputBinding.GetDefaultP1();
+
+        InputBinding rightBinding = MatchDataManager.RightKeyBindPreset != null 
+            ? MatchDataManager.RightKeyBindPreset.bindingData 
+            : InputBinding.GetDefaultP2();
+
+        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
+        {
+            playerOne.customBinding = leftBinding;
+            playerTwo.customBinding = rightBinding;
+        }
+        else if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        {
+            int localSlot = RoomStateManager.Instance != null ? RoomStateManager.Instance.GetLocalPlayerSlot() : 0;
+            
+            if (localSlot == 0)
+            {
+                playerOne.customBinding = leftBinding;
+            }
+            else
+            {
+                playerTwo.customBinding = leftBinding;
+            }
+        }
 
         inputProvider = new LocalInputProvider(playerOne.GetBinding(true), playerTwo.GetBinding(false));
 
@@ -636,6 +670,7 @@ public class GameLoopManager : MonoBehaviour
     {
         if (uiBindings.matchResultUI != null)
         {
+            uiBindings.matchResultUI.gameObject.SetActive(true);
             uiBindings.matchResultUI.ShowResult(
                 scoreContext.p1RoundWins, 
                 scoreContext.p2RoundWins, 

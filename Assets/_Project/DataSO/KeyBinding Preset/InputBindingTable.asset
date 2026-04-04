@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6313846685efba547a04a14ec2dca971, type: 3}
+  m_Name: InputBindingTable
+  m_EditorClassIdentifier: Assembly-CSharp::InputBindingTableSO
+  presets:
+  - {fileID: 11400000, guid: baa746378115aea4289e5fa027a43d97, type: 2}
+  - {fileID: 11400000, guid: 2a9fbfd673043e8449c4b75fa4cd4537, type: 2}

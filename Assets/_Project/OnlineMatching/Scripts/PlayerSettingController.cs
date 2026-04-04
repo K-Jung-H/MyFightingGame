@@ -8,19 +8,24 @@ public class PlayerSettingController : MonoBehaviour
     public Button leftSideButton;
     public Button rightSideButton;
     
-    public Button p1KeyBindButton;
-    public Button p2KeyBindButton;
-
     public TextMeshProUGUI currentSideStatusText;
     public Image currentSideStatusImage;
-    
-    public TextMeshProUGUI currentKeyBindStatusText;
-    public Image currentKeyBindStatusImage;
-
     public Side_Select_PanelPresetManager sideSelectManager;
 
+    [Header("KeyBind UI")]
+    public InputBindingTableSO bindingTable;
+    public Transform keyBindContentParent;
+    public KeyBindElementUI keyBindElementPrefab;
+    
+    [Header("KeyBind Details")]
+    public TextMeshProUGUI presetNameText;
+    public TextMeshProUGUI movementKeysText;
+    public TextMeshProUGUI attackKeysLeftText;
+    public TextMeshProUGUI attackKeysRightText;
+
+    public TextMeshProUGUI systemKeysText;
+
     public int SelectedSide { get; private set; } = 0;
-    public int SelectedKeyBind { get; private set; } = 0;
 
     public event Action<int> OnSideSelected;
 
@@ -28,12 +33,9 @@ public class PlayerSettingController : MonoBehaviour
     {
         leftSideButton.onClick.AddListener(() => SelectSide(0));
         rightSideButton.onClick.AddListener(() => SelectSide(1));
-        
-        p1KeyBindButton.onClick.AddListener(() => SelectKeyBind(0));
-        p2KeyBindButton.onClick.AddListener(() => SelectKeyBind(1));
 
         SelectSide(0);
-        SelectKeyBind(0);
+        InitializeKeyBindList();
     }
 
     private void SelectSide(int side)
@@ -58,18 +60,58 @@ public class PlayerSettingController : MonoBehaviour
         OnSideSelected?.Invoke(side);
     }
 
-    private void SelectKeyBind(int bind)
+    private void InitializeKeyBindList()
     {
-        SelectedKeyBind = bind;
+        if (bindingTable == null || keyBindElementPrefab == null || keyBindContentParent == null) return;
 
-        if (currentKeyBindStatusText != null)
+        foreach (Transform child in keyBindContentParent)
         {
-            currentKeyBindStatusText.text = (bind == 0) ? "P1 Keys Mapped" : "P2 Keys Mapped";
+            Destroy(child.gameObject);
         }
-        
-        if (currentKeyBindStatusImage != null)
+
+        for (int i = 0; i < bindingTable.presets.Length; i++)
         {
-            currentKeyBindStatusImage.gameObject.SetActive(true);
+            InputBindingPresetSO preset = bindingTable.presets[i];
+            KeyBindElementUI element = Instantiate(keyBindElementPrefab, keyBindContentParent);
+            element.Initialize(preset, OnKeyBindSelected);
+        }
+
+        if (bindingTable.presets.Length > 0)
+        {
+            OnKeyBindSelected(bindingTable.presets[0]);
+        }
+    }
+
+    private void OnKeyBindSelected(InputBindingPresetSO preset)
+    {
+        MatchDataManager.LocalKeyBindPreset = preset;
+        UpdateKeyBindDetailsUI(preset);
+    }
+
+    private void UpdateKeyBindDetailsUI(InputBindingPresetSO preset)
+    {
+        if (preset == null) return;
+
+        if (presetNameText != null) presetNameText.text = preset.presetName;
+        
+        if (movementKeysText != null)
+        {
+            movementKeysText.text = $"Up: {preset.bindingData.upKey}\nDown: {preset.bindingData.downKey}\nLeft: {preset.bindingData.leftKey}\nRight: {preset.bindingData.rightKey}";
+        }
+
+        if (attackKeysLeftText != null)
+        {
+            attackKeysLeftText.text = $"LP: {preset.bindingData.lpKey}  LK: {preset.bindingData.lkKey}";
+        }
+
+        if (attackKeysRightText != null)
+        {
+            attackKeysRightText.text = $"RP: {preset.bindingData.rpKey}  RK: {preset.bindingData.rkKey}";
+        }
+
+        if (systemKeysText != null)
+        {
+            systemKeysText.text = $"Select: {preset.bindingData.selectKey}\nPause: {preset.bindingData.pauseKey}";
         }
     }
 }

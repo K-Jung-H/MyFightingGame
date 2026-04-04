@@ -36,4 +36,6 @@ public static class NetworkPacketType
     public const byte RoundVerified = 41;
     public const byte MatchEndActionRequest = 42;
     public const byte RematchSyncBroadcast = 43;
+
+    public const byte CancelPhaseRequest = 44;
 }

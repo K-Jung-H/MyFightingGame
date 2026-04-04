@@ -47,7 +47,6 @@ public class ServerNetworkManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 창이 내려가도 네트워크 패킷 펌핑을 멈추지 않도록 설정
         Application.runInBackground = true;
     }
 
@@ -62,9 +61,6 @@ public class ServerNetworkManager : MonoBehaviour
         CleanupDriver();
     }
 
-    /*
-     * 매칭 서버로 네트워크 소켓 연결을 시도합니다.
-     */
     public void InitializeNetwork(string serverIp, ushort port)
     {
         if (isInitialized) return;
@@ -77,9 +73,6 @@ public class ServerNetworkManager : MonoBehaviour
         isInitialized = true;
     }
 
-    /*
-     * 대문자로 변경된 UI 데이터 모델을 기반으로 방 생성 요청을 서버에 전송합니다.
-     */
     public void SendCreateRoomRequest(RoomCreateData data)
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -97,9 +90,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 룸 코드 또는 제목으로 방 검색 요청을 서버에 발송합니다.
-     */
     public void SendSearchRoomRequest(byte searchType, string query)
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -114,9 +104,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 특정 룸 코드와 비밀번호를 사용하여 방 접속 요청을 발송합니다.
-     */
     public void SendJoinRoomRequest(string roomCode, string password)
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -181,11 +168,19 @@ public class ServerNetworkManager : MonoBehaviour
             serverDriver.EndSend(writer);
         }
     }
+    
+    public void SendCancelPhaseRequest()
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
 
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.CancelPhaseRequest);
+            serverDriver.EndSend(writer);
+        }
+    }
 
-    /*
-     * 캐릭터 선택 락인(Lock-in) 정보를 서버로 전송합니다.
-     */
     public void SendSelectUpdate(int playerIndex, int characterIndex, bool isLocked)
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -201,9 +196,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 플레이어의 시작 진영(Side) 정보를 서버로 전송합니다.
-     */
     public void SendSideUpdate(int side)
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -217,9 +209,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 캐릭터 선택이 끝난 뒤 인게임 진입을 요청합니다.
-     */
     public void SendStartRequest()
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -232,9 +221,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
     
-    /*
-     * 씬 로딩 및 P2P 준비 완료를 서버에 통보합니다.
-     */
     public void SendHandshake()
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -276,9 +262,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 디싱크(Desync) 발생 시 매치 무효화 요청을 서버로 보냅니다.
-     */
     public void SendMatchAbortRequest()
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -291,9 +274,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 비정상 연결 종료 시 서버에 이를 보고합니다.
-     */
     public void SendReportDisconnect()
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -306,9 +286,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 서버와의 연결 유지를 위해 주기적으로 Ping을 발송합니다.
-     */
     private void ProcessServerPing()
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -335,9 +312,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 유니티 틱마다 수신된 네트워크 이벤트를 펌핑합니다.
-     */
     private void PumpServerEvents()
     {
         if (!isInitialized || !serverDriver.IsCreated) return;
@@ -346,9 +320,6 @@ public class ServerNetworkManager : MonoBehaviour
         ProcessConnectionEvents();
     }
 
-    /*
-     * 연결 수립, 데이터 수신, 연결 단절 이벤트를 분기하여 처리합니다.
-     */
     private void ProcessConnectionEvents()
     {
         DataStreamReader stream;
@@ -376,9 +347,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 수신된 패킷 타입에 맞춰 데이터를 디코딩하고 각 씬 매니저로 이벤트를 발생시킵니다.
-     */
     private void HandleServerData(byte packetType, ref DataStreamReader stream)
     {
         lastServerPacketReceiveTime = Time.realtimeSinceStartup;
@@ -485,9 +453,6 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
-    /*
-     * 서버와 지정된 시간 동안 통신이 없으면 연결을 강제 종료하고 메인으로 돌아갑니다.
-     */
     private void HandleServerTimeout()
     {
         isConnected = false;
@@ -499,9 +464,6 @@ public class ServerNetworkManager : MonoBehaviour
         OnMatchAbortedReceived?.Invoke(GameSceneType.Start);
     }
 
-    /*
-     * 네트워크 객체 소멸 시 드라이버 메모리를 안전하게 해제합니다.
-     */
     private void CleanupDriver()
     {
         if (serverDriver.IsCreated)
