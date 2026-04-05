@@ -16,6 +16,11 @@ public static class HashTraceUtility
         hash = CombineAndLog(sb, hash, (ulong)snapshot.tick, "Tick");
         hash = TraceFPVector3(sb, hash, snapshot.sharedDepthAxis, "SharedDepthAxis");
         
+        hash = CombineAndLog(sb, hash, (ulong)snapshot.currentTimerFrames, "CurrentTimerFrames");
+        hash = CombineAndLog(sb, hash, snapshot.isTimerPaused ? 1UL : 0UL, "IsTimerPaused");
+        hash = CombineAndLog(sb, hash, (ulong)snapshot.currentPhase, "CurrentPhase");
+        hash = CombineAndLog(sb, hash, (ulong)snapshot.phaseDelayTicks, "PhaseDelayTicks");
+        
         sb.AppendLine("--- P1 ---");
         hash = TracePlayer(sb, hash, snapshot.p1Snapshot, "P1");
         

@@ -1,10 +1,28 @@
 using UnityEngine;
 
+public enum RoundPhase
+{
+    PreRound,
+    Fighting,
+    PostRound
+}
+
+[System.Serializable]
+public struct GameEnvironmentSettings
+{
+    public float playerCollisionMinDistance;
+    public float globalGravity;
+    public Vector3 p1SpawnPos;
+    public Vector3 p2SpawnPos;
+    public float preRoundDelaySeconds;
+    public float postRoundDelaySeconds;
+}
+
 [System.Serializable]
 public class PlayerSessionContext
 {
     public CharacterDataSO characterData;
-    public InputBinding customBinding;
+    [HideInInspector] public InputBinding customBinding;
     [HideInInspector] public GameObject instance;
     [HideInInspector] public PlayerRenderer renderer;
     [HideInInspector] public PlayerController controller;
@@ -17,18 +35,6 @@ public class PlayerSessionContext
     }
 }
 
-public struct GameStateSnapshot
-{
-    public int tick;
-    public PlayerSnapshot p1Snapshot;
-    public PlayerSnapshot p2Snapshot;
-    public FPVector3 sharedDepthAxis;
-    public int currentTimerFrames;
-    public bool isTimerPaused;
-    public bool isRoundOver;
-    public int postMatchDelayTicks;
-}
-
 [System.Serializable]
 public struct MatchScoreContext
 {
@@ -37,27 +43,6 @@ public struct MatchScoreContext
     public int requiredRoundWins;
     public int p1RoundWins;
     public int p2RoundWins;
-}
-
-[System.Serializable]
-public struct GameEnvironmentSettings
-{
-    public float playerCollisionMinDistance;
-    public float globalGravity;
-    public Vector3 p1SpawnPos;
-    public Vector3 p2SpawnPos;
-    public float postMatchDelaySeconds;
-}
-
-[System.Serializable]
-public struct UIBindings
-{
-    public CameraManager cameraManager;
-    public HealthBarController leftHealthBar;
-    public HealthBarController rightHealthBar;
-    public SpriteNumberDisplay roundTimerDisplay;
-    public WinCounterUIManager winCounterUI;
-    public MatchResultUIManager matchResultUI;
 }
 
 public struct ConnectionFlowState
@@ -70,17 +55,6 @@ public struct ConnectionFlowState
     public P2PNetworkManager currentP2PNetwork;
 }
 
-public struct SimulationState
-{
-    public int currentTick;
-    public bool isSimulationRunning;
-    public bool isRoundOver;
-    public bool isResimulating;
-    public bool isCameraFlipped;
-    public int postMatchDelayTicks;
-    public FPVector3 sharedDepthAxis;
-}
-
 public struct NetworkSyncState
 {
     public int latestConfirmedTick;
@@ -91,10 +65,33 @@ public struct NetworkSyncState
     public int lastHashedTick;
 }
 
+public struct SimulationState
+{
+    public int currentTick;
+    public bool isSimulationRunning;
+    public bool isResimulating;
+    public bool isCameraFlipped;
+    public RoundPhase currentPhase;
+    public int phaseDelayTicks;
+    public FPVector3 sharedDepthAxis;
+}
+
+public struct GameStateSnapshot
+{
+    public int tick;
+    public PlayerSnapshot p1Snapshot;
+    public PlayerSnapshot p2Snapshot;
+    public FPVector3 sharedDepthAxis;
+    public int currentTimerFrames;
+    public bool isTimerPaused;
+    public RoundPhase currentPhase;
+    public int phaseDelayTicks;
+}
+
 public class GameLoopManager : MonoBehaviour
 {
-    [SerializeField] private GameEnvironmentSettings envSettings = new GameEnvironmentSettings { playerCollisionMinDistance = 1.0f, globalGravity = 0.02f, p1SpawnPos = new Vector3(-2, 0, 0), p2SpawnPos = new Vector3(2, 0, 0), postMatchDelaySeconds = 3.0f };
-    [SerializeField] private UIBindings uiBindings;
+    [SerializeField] private GameEnvironmentSettings envSettings = new GameEnvironmentSettings { playerCollisionMinDistance = 1.0f, globalGravity = 0.02f, p1SpawnPos = new Vector3(-2, 0, 0), p2SpawnPos = new Vector3(2, 0, 0), preRoundDelaySeconds = 3.0f, postRoundDelaySeconds = 3.0f };
+    [SerializeField] private PlayingUI_Manager playingUI;
     [SerializeField] private PlayerSessionContext playerOne;
     [SerializeField] private PlayerSessionContext playerTwo;
     [SerializeField] private NetworkSyncController syncController = new NetworkSyncController();
@@ -132,11 +129,10 @@ public class GameLoopManager : MonoBehaviour
             ServerNetworkManager.Instance.OnRematchSyncReceived += HandleRematchSync;
         }
 
-        if (uiBindings.matchResultUI != null)
+        if (playingUI != null)
         {
-            uiBindings.matchResultUI.gameObject.SetActive(true);
-            uiBindings.matchResultUI.OnActionRequested += HandleMatchEndAction;
-            uiBindings.matchResultUI.gameObject.SetActive(false);
+            playingUI.InitializeUI();
+            playingUI.BindMatchResultAction(HandleMatchEndAction);
         }
     }
 
@@ -171,9 +167,9 @@ public class GameLoopManager : MonoBehaviour
             ServerNetworkManager.Instance.OnRematchSyncReceived -= HandleRematchSync;
         }
 
-        if (uiBindings.matchResultUI != null)
+        if (playingUI != null)
         {
-            uiBindings.matchResultUI.OnActionRequested -= HandleMatchEndAction;
+            playingUI.UnbindMatchResultAction(HandleMatchEndAction);
         }
 
         if (connectionState.currentP2PNetwork != null)
@@ -314,17 +310,14 @@ public class GameLoopManager : MonoBehaviour
             int mySide = (slot == 0) ? roomState.p1PreferredSide : roomState.p2PreferredSide;
             simState.isCameraFlipped = (slot == 0 && mySide == 1) || (slot == 1 && mySide == 0);
 
-            if (uiBindings.cameraManager != null)
-            {
-                uiBindings.cameraManager.SetCameraFlip(simState.isCameraFlipped);
-            }
+            if (playingUI != null) playingUI.SetCameraFlip(simState.isCameraFlipped);
         }
     }
 
     private void HandleMatchAborted(GameSceneType targetScene)
     {
         simState.isSimulationRunning = false;
-        simState.isRoundOver = true;
+        simState.currentPhase = RoundPhase.PostRound;
     }
 
     private void HandleServerGameStart()
@@ -337,13 +330,8 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-private void InitializeMatch(bool isNetworkReset)
+    private void InitializeMatch(bool isNetworkReset)
     {
-        if (uiBindings.matchResultUI != null)
-        {
-            uiBindings.matchResultUI.gameObject.SetActive(false);
-        }
-
         int timeLimit = 99;
         int maxRds = 3;
 
@@ -360,10 +348,9 @@ private void InitializeMatch(bool isNetworkReset)
         scoreContext.requiredRoundWins = (maxRds / 2) + 1;
         scoreContext.currentRound = 1; 
 
-        if (uiBindings.winCounterUI != null)
+        if (playingUI != null)
         {
-            uiBindings.winCounterUI.InitializeCounters(scoreContext.requiredRoundWins);
-            uiBindings.winCounterUI.UpdateCounters(0, 0);
+            playingUI.SetupWinCounter(scoreContext.requiredRoundWins);
         }
 
         simState.isResimulating = false;
@@ -423,14 +410,13 @@ private void InitializeMatch(bool isNetworkReset)
             playerOne.controller.SetTarget(playerTwo.controller);
             playerTwo.controller.SetTarget(playerOne.controller);
 
-            HealthBarController leftHpUI = simState.isCameraFlipped ? uiBindings.rightHealthBar : uiBindings.leftHealthBar;
-            HealthBarController rightHpUI = simState.isCameraFlipped ? uiBindings.leftHealthBar : uiBindings.rightHealthBar;
-
-            if (leftHpUI != null) leftHpUI.Initialize(simState.isCameraFlipped ? playerTwo.controller.GetCombat() : playerOne.controller.GetCombat(), false);
-            if (rightHpUI != null) rightHpUI.Initialize(simState.isCameraFlipped ? playerOne.controller.GetCombat() : playerTwo.controller.GetCombat(), true);
+            if (playingUI != null)
+            {
+                playingUI.InitializeHealthBars(playerOne.controller, playerTwo.controller, simState.isCameraFlipped);
+            }
         }
 
-        if (uiBindings.cameraManager != null) uiBindings.cameraManager.SetTargetPlayers(playerOne.instance, playerTwo.instance);
+        if (playingUI != null) playingUI.SetCameraTargets(playerOne.instance, playerTwo.instance);
 
         ResetForNextRound();
     }
@@ -467,14 +453,25 @@ private void InitializeMatch(bool isNetworkReset)
 
     private void RunTick(PlayerInput p1, PlayerInput p2)
     {
-        bool isDelayFinished = simState.isRoundOver && simState.postMatchDelayTicks <= 0;
-        if (isDelayFinished) 
-        { 
-            p1.flags = InputFlags.None; 
-            p2.flags = InputFlags.None; 
+        if (simState.currentPhase == RoundPhase.PreRound)
+        {
+            p1.flags = InputFlags.None;
+            p2.flags = InputFlags.None;
+        }
+        else if (simState.currentPhase == RoundPhase.PostRound)
+        {
+            int p1Hp = playerOne.controller != null ? playerOne.controller.GetCombat().GetCurrentHealth() : 0;
+            int p2Hp = playerTwo.controller != null ? playerTwo.controller.GetCombat().GetCurrentHealth() : 0;
+            int timeFrames = roundTimer.GetCurrentFrames();
+
+            bool p1Wins = p1Hp > 0 && (p2Hp <= 0 || (timeFrames <= 0 && p1Hp > p2Hp));
+            bool p2Wins = p2Hp > 0 && (p1Hp <= 0 || (timeFrames <= 0 && p2Hp > p1Hp));
+
+            if (!p1Wins) p1.flags = InputFlags.None;
+            if (!p2Wins) p2.flags = InputFlags.None;
         }
         
-        if (!simState.isRoundOver)
+        if (simState.currentPhase == RoundPhase.Fighting)
         {
             roundTimer.UpdateTick();
         }
@@ -484,20 +481,54 @@ private void InitializeMatch(bool isNetworkReset)
             simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref simState.sharedDepthAxis, HandleHitSpark);
         }
 
-        UpdateMatchState();
+        UpdateRoundPhase();
 
         if (!simState.isResimulating) SyncVisuals();
     }
 
-    private void UpdateMatchState()
+    private void UpdateRoundPhase()
     {
-        if (simState.isRoundOver)
+        if (simState.currentPhase == RoundPhase.PreRound)
         {
-            ProcessPostMatchDelay();
-            return;
+            if (simState.phaseDelayTicks > 0)
+            {
+                simState.phaseDelayTicks--;
+            }
+            else
+            {
+                simState.currentPhase = RoundPhase.Fighting;
+            }
         }
-
-        CheckRoundEndCondition();
+        else if (simState.currentPhase == RoundPhase.Fighting)
+        {
+            CheckRoundEndCondition();
+        }
+        else if (simState.currentPhase == RoundPhase.PostRound)
+        {
+            if (simState.phaseDelayTicks > 0)
+            {
+                simState.phaseDelayTicks--;
+                
+                if (simState.phaseDelayTicks == 0)
+                {
+                    EvaluateRoundResult(out int winnerSlot);
+                    
+                    if (!simState.isResimulating)
+                    {
+                        bool isOnline = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient;
+                        
+                        if (isOnline)
+                        {
+                            ReportRoundEndToServer(winnerSlot);
+                        }
+                        else
+                        {
+                            PrepareNextRoundOrEndMatch();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void CheckRoundEndCondition()
@@ -513,34 +544,8 @@ private void InitializeMatch(bool isNetworkReset)
             return;
         }
 
-        simState.isRoundOver = true;
-    }
-
-    private void ProcessPostMatchDelay()
-    {
-        if (simState.postMatchDelayTicks > 0)
-        {
-            simState.postMatchDelayTicks--;
-            
-            if (simState.postMatchDelayTicks == 0)
-            {
-                EvaluateRoundResult(out int winnerSlot);
-                
-                if (!simState.isResimulating)
-                {
-                    bool isOnline = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient;
-                    
-                    if (isOnline)
-                    {
-                        ReportRoundEndToServer(winnerSlot);
-                    }
-                    else
-                    {
-                        PrepareNextRoundOrEndMatch();
-                    }
-                }
-            }
-        }
+        simState.currentPhase = RoundPhase.PostRound;
+        simState.phaseDelayTicks = Mathf.RoundToInt(envSettings.postRoundDelaySeconds * 60f);
     }
 
     private void EvaluateRoundResult(out int winnerSlot)
@@ -590,11 +595,11 @@ private void InitializeMatch(bool isNetworkReset)
             }
         }
 
-        if (uiBindings.winCounterUI != null)
+        if (playingUI != null)
         {
             int leftWins = simState.isCameraFlipped ? scoreContext.p2RoundWins : scoreContext.p1RoundWins;
             int rightWins = simState.isCameraFlipped ? scoreContext.p1RoundWins : scoreContext.p2RoundWins;
-            uiBindings.winCounterUI.UpdateCounters(leftWins, rightWins);
+            playingUI.UpdateWinCounter(leftWins, rightWins);
         }
     }
 
@@ -628,8 +633,8 @@ private void InitializeMatch(bool isNetworkReset)
     private void ResetForNextRound()
     {
         simState.currentTick = 0;
-        simState.isRoundOver = false;
-        simState.postMatchDelayTicks = Mathf.RoundToInt(envSettings.postMatchDelaySeconds * 60f);
+        simState.currentPhase = RoundPhase.PreRound;
+        simState.phaseDelayTicks = Mathf.RoundToInt(envSettings.preRoundDelaySeconds * 60f);
 
         scoreContext.currentRound++;
 
@@ -668,10 +673,9 @@ private void InitializeMatch(bool isNetworkReset)
 
     private void ProcessFinalMatchEnd()
     {
-        if (uiBindings.matchResultUI != null)
+        if (playingUI != null)
         {
-            uiBindings.matchResultUI.gameObject.SetActive(true);
-            uiBindings.matchResultUI.ShowResult(
+            playingUI.ShowMatchResult(
                 scoreContext.p1RoundWins, 
                 scoreContext.p2RoundWins, 
                 scoreContext.requiredRoundWins, 
@@ -711,9 +715,9 @@ private void InitializeMatch(bool isNetworkReset)
 
     private void HandleRematchSync(bool isP1Ready, bool isP2Ready)
     {
-        if (uiBindings.matchResultUI != null)
+        if (playingUI != null)
         {
-            uiBindings.matchResultUI.UpdateRematchSync(isP1Ready, isP2Ready, simState.isCameraFlipped);
+            playingUI.UpdateRematchSync(isP1Ready, isP2Ready, simState.isCameraFlipped);
         }
     }
 
@@ -734,8 +738,8 @@ private void InitializeMatch(bool isNetworkReset)
         int idx = tick % ROLLBACK_WINDOW;
         stateBuffer[idx].tick = tick;
         stateBuffer[idx].sharedDepthAxis = simState.sharedDepthAxis;
-        stateBuffer[idx].isRoundOver = simState.isRoundOver;
-        stateBuffer[idx].postMatchDelayTicks = simState.postMatchDelayTicks;
+        stateBuffer[idx].currentPhase = simState.currentPhase;
+        stateBuffer[idx].phaseDelayTicks = simState.phaseDelayTicks;
         
         roundTimer.ExportState(ref stateBuffer[idx]);
         
@@ -747,8 +751,8 @@ private void InitializeMatch(bool isNetworkReset)
     {
         int idx = tick % ROLLBACK_WINDOW;
         simState.sharedDepthAxis = stateBuffer[idx].sharedDepthAxis;
-        simState.isRoundOver = stateBuffer[idx].isRoundOver;
-        simState.postMatchDelayTicks = stateBuffer[idx].postMatchDelayTicks;
+        simState.currentPhase = stateBuffer[idx].currentPhase;
+        simState.phaseDelayTicks = stateBuffer[idx].phaseDelayTicks;
         
         roundTimer.ImportState(stateBuffer[idx]);
         
@@ -790,9 +794,10 @@ private void InitializeMatch(bool isNetworkReset)
         if (playerOne.renderer != null) playerOne.renderer.UpdateRenderer();
         if (playerTwo.renderer != null) playerTwo.renderer.UpdateRenderer();
 
-        if (roundTimer != null && uiBindings.roundTimerDisplay != null)
+        if (playingUI != null && roundTimer != null)
         {
-            uiBindings.roundTimerDisplay.SetNumber(roundTimer.GetRemainingSeconds());
+            playingUI.UpdateRoundTimer(roundTimer.GetRemainingSeconds());
+            playingUI.SyncBannerState(simState.currentPhase, simState.phaseDelayTicks, roundTimer.GetCurrentFrames());
         }
     }
 
@@ -805,7 +810,7 @@ private void InitializeMatch(bool isNetworkReset)
 
     private void ProcessOfflineTick()
     {
-        bool isP1Right = uiBindings.cameraManager.IsPlayerOneOnRightSide();
+        bool isP1Right = playingUI != null && playingUI.IsPlayerOneOnRightSide();
         PlayerInput p1 = inputProvider.GetCurrentInput(simState.currentTick, 0, !isP1Right);
         PlayerInput p2 = inputProvider.GetCurrentInput(simState.currentTick, 1, isP1Right);
         ProcessTick(p1, p2);

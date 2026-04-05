@@ -10,6 +10,11 @@ public static class StateHashUtility
         hash = CombineHash(hash, ComputeFPVector3Hash(snapshot.sharedDepthAxis));
         hash = CombineHash(hash, ComputePlayerHash(snapshot.p1Snapshot));
         hash = CombineHash(hash, ComputePlayerHash(snapshot.p2Snapshot));
+        
+        hash = CombineHash(hash, (ulong)snapshot.currentTimerFrames);
+        hash = CombineHash(hash, snapshot.isTimerPaused ? 1UL : 0UL);
+        hash = CombineHash(hash, (ulong)snapshot.currentPhase);
+        hash = CombineHash(hash, (ulong)snapshot.phaseDelayTicks);
 
         return hash;
     }

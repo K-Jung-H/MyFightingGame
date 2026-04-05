@@ -3,13 +3,12 @@ using UnityEngine.UI;
 
 public class SpriteNumberDisplay : MonoBehaviour
 {
-    public Sprite[] numberSprites;
     public Image[] uiDigitImages;
     public bool isZeroPadded;
 
+    private Sprite[] numberSprites;
     private int lastDisplayedNumber = -1;
     private int maxDisplayableNumber;
-
 
     private void Awake()
     {
@@ -19,6 +18,11 @@ public class SpriteNumberDisplay : MonoBehaviour
         }
         
         maxDisplayableNumber = (int)Mathf.Pow(10, uiDigitImages.Length) - 1;
+    }
+
+    public void InitializeSprites(Sprite[] sprites)
+    {
+        numberSprites = sprites;
     }
 
     public void SetNumber(int number)
@@ -40,7 +44,7 @@ public class SpriteNumberDisplay : MonoBehaviour
 
     private void UpdateDigitSprites(int number)
     {
-        if (uiDigitImages == null || uiDigitImages.Length == 0)
+        if (uiDigitImages == null || uiDigitImages.Length == 0 || numberSprites == null)
         {
             return;
         }
@@ -60,8 +64,16 @@ public class SpriteNumberDisplay : MonoBehaviour
             if (uiDigitImages[i] != null)
             {
                 uiDigitImages[i].preserveAspect = true;
-                uiDigitImages[i].sprite = numberSprites[digit];
-                uiDigitImages[i].gameObject.SetActive(isVisible);
+                
+                if (uiDigitImages[i].sprite != numberSprites[digit])
+                {
+                    uiDigitImages[i].sprite = numberSprites[digit];
+                }
+                
+                if (uiDigitImages[i].gameObject.activeSelf != isVisible)
+                {
+                    uiDigitImages[i].gameObject.SetActive(isVisible);
+                }
             }
         }
     }
