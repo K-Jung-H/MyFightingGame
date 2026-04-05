@@ -136,7 +136,14 @@ public class OnlineMatchingManager : MonoBehaviour
             
             if (lobbyUI != null)
             {
-                lobbyUI.HandlePasswordFailure();
+                if (roomCodeOrReason == "RoomFull.")
+                {
+                    lobbyUI.HandleRoomFullFailure();
+                }
+                else if (roomCodeOrReason == "IncorrectPassword.")
+                {
+                    lobbyUI.HandlePasswordFailure();
+                }
             }
         }
     }

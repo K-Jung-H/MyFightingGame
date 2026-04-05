@@ -37,7 +37,7 @@ public class RoomStateModel
     public bool isP2Ready;
 
     public int maxRounds = 3;
-    public int roundTimeLimit = 99;
+    public int roundTimeLimit = 60;
 
     public int p1Wins = 0;
     public int p1Losses = 0;
@@ -52,7 +52,7 @@ public class RoomStateModel
         p1CharacterIndex = 0;
         p2CharacterIndex = 0;
         maxRounds = 3;
-        roundTimeLimit = 99;
+        roundTimeLimit = 90;
     }
 
     public bool IsAllReadyToStart()

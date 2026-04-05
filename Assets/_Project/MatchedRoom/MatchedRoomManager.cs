@@ -108,8 +108,4 @@ public class MatchedRoomManager : MonoBehaviour
         }
     }
 
-    private void HandleSceneChange()
-    {
-        GameFlowManager.Instance.ChangeScene(GameSceneType.CharacterSelect);
-    }
 }

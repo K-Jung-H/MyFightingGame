@@ -713,11 +713,11 @@ public class DummyMatchServer : MonoBehaviour
         {
             if (targetRoom.IsFull())
             {
-                reason = "Room is full.";
+                reason = "RoomFull.";
             }
             else if (targetRoom.HasPassword() && targetRoom.password != pwd)
             {
-                reason = "Incorrect password.";
+                reason = "IncorrectPassword.";
             }
             else
             {

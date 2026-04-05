@@ -7,6 +7,7 @@ public class LobbyUIManager : MonoBehaviour
     public CreateRoomPanelController createRoomPanel;
     public RoomSearchPanelController searchPanel;
     public PasswordPanelController passwordPanel;
+    public ErrorPanelController errorPanel;
 
     public event Action<RoomCreateData> OnCreateRoomRequested;
     public event Action<string> OnTitleSearchRequested;
@@ -43,6 +44,13 @@ public class LobbyUIManager : MonoBehaviour
             passwordPanel.OnCloseClicked += () => passwordPanel.ClosePrompt();
         }
 
+        if (errorPanel != null)
+        {
+            errorPanel.OnPasswordErrorClosed += HandlePasswordErrorClosed;
+            errorPanel.OnRoomFullErrorClosed += HandleRoomFullErrorClosed;
+            errorPanel.gameObject.SetActive(false);
+        }
+
         SwitchCanvas(null);
     }
 
@@ -74,10 +82,44 @@ public class LobbyUIManager : MonoBehaviour
     {
         if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
         {
-            passwordPanel.ShowError();
+            passwordPanel.panelInput.SetActive(false);
+        }
+
+        if (errorPanel != null)
+        {
+            errorPanel.ShowPasswordError();
         }
     }
     
+    public void HandleRoomFullFailure()
+    {
+        if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
+        {
+            passwordPanel.panelInput.SetActive(false);
+        }
+
+        if (errorPanel != null)
+        {
+            errorPanel.ShowRoomFullError();
+        }
+    }
+
+    private void HandlePasswordErrorClosed()
+    {
+        if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
+        {
+            passwordPanel.ResetForRetry();
+        }
+    }
+
+    private void HandleRoomFullErrorClosed()
+    {
+        if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
+        {
+            passwordPanel.ClosePrompt();
+        }
+    }
+
     public void OpenCreateRoomCanvas()
     {
         if (createRoomPanel != null)

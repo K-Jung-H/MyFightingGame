@@ -10,9 +10,6 @@ public class PasswordPanelController : MonoBehaviour
     public Button btnSubmit;
     public Button btnCloseInput;
 
-    public GameObject panelError;
-    public Button btnCloseError;
-
     public event Action<string, string> OnSubmitRequested;
     public event Action OnCloseClicked;
 
@@ -22,7 +19,6 @@ public class PasswordPanelController : MonoBehaviour
     {
         if (btnSubmit != null) btnSubmit.onClick.AddListener(HandleSubmit);
         if (btnCloseInput != null) btnCloseInput.onClick.AddListener(HandleCloseInput);
-        if (btnCloseError != null) btnCloseError.onClick.AddListener(HandleCloseError);
     }
 
     public void OpenPrompt(string roomCode)
@@ -30,7 +26,6 @@ public class PasswordPanelController : MonoBehaviour
         currentRoomCode = roomCode;
         
         if (panelInput != null) panelInput.SetActive(true);
-        if (panelError != null) panelError.SetActive(false);
         
         if (inputPassword != null) inputPassword.text = string.Empty;
         if (btnSubmit != null) btnSubmit.interactable = true;
@@ -44,10 +39,17 @@ public class PasswordPanelController : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void ShowError()
+    public void ResetForRetry()
     {
-        if (panelInput != null) panelInput.SetActive(false);
-        if (panelError != null) panelError.SetActive(true);
+        if (panelInput != null) panelInput.SetActive(true);
+        
+        if (inputPassword != null)
+        {
+            inputPassword.text = string.Empty;
+            inputPassword.ActivateInputField();
+        }
+        
+        if (btnSubmit != null) btnSubmit.interactable = true;
     }
 
     private void HandleSubmit()
@@ -62,19 +64,5 @@ public class PasswordPanelController : MonoBehaviour
     private void HandleCloseInput()
     {
         OnCloseClicked?.Invoke();
-    }
-
-    private void HandleCloseError()
-    {
-        if (panelError != null) panelError.SetActive(false);
-        if (panelInput != null) panelInput.SetActive(true);
-        
-        if (inputPassword != null)
-        {
-            inputPassword.text = string.Empty;
-            inputPassword.ActivateInputField();
-        }
-        
-        if (btnSubmit != null) btnSubmit.interactable = true;
     }
 }
