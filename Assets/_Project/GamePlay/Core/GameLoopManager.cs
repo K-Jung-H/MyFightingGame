@@ -8,17 +8,6 @@ public enum RoundPhase
 }
 
 [System.Serializable]
-public struct GameEnvironmentSettings
-{
-    public float playerCollisionMinDistance;
-    public float globalGravity;
-    public Vector3 p1SpawnPos;
-    public Vector3 p2SpawnPos;
-    public float preRoundDelaySeconds;
-    public float postRoundDelaySeconds;
-}
-
-[System.Serializable]
 public class PlayerSessionContext
 {
     public CharacterDataSO characterData;
@@ -74,6 +63,9 @@ public struct SimulationState
     public RoundPhase currentPhase;
     public int phaseDelayTicks;
     public FPVector3 sharedDepthAxis;
+    public FP64 simulationScale;
+    public FP64 timeAccumulator;
+    public bool isLogicStep;
 }
 
 public struct GameStateSnapshot
@@ -86,16 +78,19 @@ public struct GameStateSnapshot
     public bool isTimerPaused;
     public RoundPhase currentPhase;
     public int phaseDelayTicks;
+    public FP64 simulationScale;
+    public FP64 timeAccumulator;
 }
 
 public class GameLoopManager : MonoBehaviour
 {
-    [SerializeField] private GameEnvironmentSettings envSettings = new GameEnvironmentSettings { playerCollisionMinDistance = 1.0f, globalGravity = 0.02f, p1SpawnPos = new Vector3(-2, 0, 0), p2SpawnPos = new Vector3(2, 0, 0), preRoundDelaySeconds = 3.0f, postRoundDelaySeconds = 3.0f };
+    [SerializeField] private GameRuleConfigSO ruleConfig;    
     [SerializeField] private PlayingUI_Manager playingUI;
     [SerializeField] private PlayerSessionContext playerOne;
     [SerializeField] private PlayerSessionContext playerTwo;
     [SerializeField] private NetworkSyncController syncController = new NetworkSyncController();
-
+    
+    private FP64 climaxRecoveryStepFP;
     private const int ROLLBACK_WINDOW = 60;
     private const int SYNC_VERIFY_INTERVAL = 60;
     private const float SYNC_TIMEOUT_LIMIT = 10f;
@@ -109,6 +104,7 @@ public class GameLoopManager : MonoBehaviour
     private LocalInputProvider inputProvider;
     private GameSimulationCore simulationCore;
     private RoundTimerManager roundTimer;
+    private RoundReferee roundReferee;
 
     private void Awake()
     {
@@ -118,8 +114,11 @@ public class GameLoopManager : MonoBehaviour
         Time.fixedDeltaTime = 1f / 60f;
         Application.targetFrameRate = 120;
 
+        roundReferee = new RoundReferee();
+        roundReferee.Initialize(ruleConfig);
+
         simulationCore = new GameSimulationCore();
-        simulationCore.Initialize(envSettings.playerCollisionMinDistance);
+        simulationCore.Initialize(ruleConfig.playerCollisionMinDistance);
 
         if (ServerNetworkManager.Instance != null)
         {
@@ -214,7 +213,11 @@ public class GameLoopManager : MonoBehaviour
             {
                 connectionState.currentP2PNetwork.PumpNetworkTick();
                 
-                if (!connectionState.currentP2PNetwork.GetIsConnected()) return;
+                if (!connectionState.currentP2PNetwork.GetIsConnected())
+                {
+                    TriggerDesyncError();
+                    return;
+                }
 
                 syncController.VerifySyncState();
 
@@ -402,8 +405,8 @@ public class GameLoopManager : MonoBehaviour
             TriggerDesyncError
         );
 
-        SetupPlayer(playerOne, envSettings.p1SpawnPos);
-        SetupPlayer(playerTwo, envSettings.p2SpawnPos);
+        SetupPlayer(playerOne, ruleConfig.p1SpawnPos);
+        SetupPlayer(playerTwo, ruleConfig.p2SpawnPos);
 
         if (playerOne.controller != null && playerTwo.controller != null)
         {
@@ -440,7 +443,15 @@ public class GameLoopManager : MonoBehaviour
 
     private void TriggerDesyncError()
     {
+        if (!simState.isSimulationRunning) return;
+
         simState.isSimulationRunning = false; 
+
+        if (ServerNetworkManager.Instance != null)
+        {
+            ServerNetworkManager.Instance.SendMatchEndAction(MatchEndActionType.ReturnToMenu);
+        }
+
         GameFlowManager.Instance.ChangeScene(GameSceneType.OnlineMatchedRoom);
     }
 
@@ -478,7 +489,34 @@ public class GameLoopManager : MonoBehaviour
         
         if (playerOne.controller != null && playerTwo.controller != null)
         {
-            simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref simState.sharedDepthAxis, HandleHitSpark);
+            bool isClimax = roundReferee.CheckClimaxCondition(playerOne.controller, playerTwo.controller);
+            
+            FP64 targetScale = FP64.FromFloat(1f);
+            
+            if (isClimax)
+            {
+                simState.simulationScale = FP64.FromFloat(ruleConfig.climaxSlowMoScale);
+            }
+            else if (simState.simulationScale.rawValue < targetScale.rawValue)
+            {
+                simState.simulationScale += climaxRecoveryStepFP;
+
+                if (simState.simulationScale.rawValue > targetScale.rawValue)
+                {
+                    simState.simulationScale = targetScale;
+                }
+            }
+
+            simState.timeAccumulator += simState.simulationScale;
+            simState.isLogicStep = false;
+
+            while (simState.timeAccumulator.rawValue >= FP64.FromFloat(1f).rawValue)
+            {
+                simState.isLogicStep = true;
+                simState.timeAccumulator -= FP64.FromFloat(1f);
+            }
+
+            simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref simState, HandleHitSpark);
         }
 
         UpdateRoundPhase();
@@ -533,66 +571,34 @@ public class GameLoopManager : MonoBehaviour
 
     private void CheckRoundEndCondition()
     {
-        if (playerOne.controller == null || playerTwo.controller == null) return;
-
-        int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
-        int p2Hp = playerTwo.controller.GetCombat().GetCurrentHealth();
         int timeFrames = roundTimer.GetCurrentFrames();
+        bool isOver = roundReferee.IsRoundOver(playerOne.controller, playerTwo.controller, timeFrames);
 
-        if (p1Hp > 0 && p2Hp > 0 && timeFrames > 0)
+        if (isOver)
         {
-            return;
+            simState.currentPhase = RoundPhase.PostRound;
+            simState.phaseDelayTicks = Mathf.RoundToInt(ruleConfig.postRoundDelaySeconds * 60f);
         }
-
-        simState.currentPhase = RoundPhase.PostRound;
-        simState.phaseDelayTicks = Mathf.RoundToInt(envSettings.postRoundDelaySeconds * 60f);
     }
 
     private void EvaluateRoundResult(out int winnerSlot)
     {
-        winnerSlot = -1;
-        if (playerOne.controller == null || playerTwo.controller == null) return;
-
-        int p1Hp = playerOne.controller.GetCombat().GetCurrentHealth();
-        int p2Hp = playerTwo.controller.GetCombat().GetCurrentHealth();
         int timeFrames = roundTimer.GetCurrentFrames();
+        winnerSlot = roundReferee.DetermineWinnerSlot(playerOne.controller, playerTwo.controller, timeFrames);
 
-        if (p1Hp <= 0 && p2Hp <= 0)
+        if (winnerSlot == -1)
         {
-            winnerSlot = -1; 
             SetDrawState();
         }
-        else if (p1Hp <= 0)
+        else if (winnerSlot == 0)
         {
-            winnerSlot = 1; 
-            scoreContext.p2RoundWins++;
-            SetWinLossState(playerTwo, playerOne);
-        }
-        else if (p2Hp <= 0)
-        {
-            winnerSlot = 0; 
             scoreContext.p1RoundWins++;
             SetWinLossState(playerOne, playerTwo);
         }
-        else if (timeFrames <= 0)
+        else if (winnerSlot == 1)
         {
-            if (p1Hp > p2Hp) 
-            {
-                winnerSlot = 0;
-                scoreContext.p1RoundWins++;
-                SetWinLossState(playerOne, playerTwo);
-            }
-            else if (p2Hp > p1Hp) 
-            {
-                winnerSlot = 1;
-                scoreContext.p2RoundWins++;
-                SetWinLossState(playerTwo, playerOne);
-            }
-            else 
-            {
-                winnerSlot = -1;
-                SetDrawState();
-            }
+            scoreContext.p2RoundWins++;
+            SetWinLossState(playerTwo, playerOne);
         }
 
         if (playingUI != null)
@@ -634,7 +640,14 @@ public class GameLoopManager : MonoBehaviour
     {
         simState.currentTick = 0;
         simState.currentPhase = RoundPhase.PreRound;
-        simState.phaseDelayTicks = Mathf.RoundToInt(envSettings.preRoundDelaySeconds * 60f);
+        simState.phaseDelayTicks = Mathf.RoundToInt(ruleConfig.preRoundDelaySeconds * 60f);
+        simState.simulationScale = FP64.FromFloat(1f);
+        simState.timeAccumulator = FP64.FromFloat(0f);
+        
+        long recoveryTicksLong = (long)Mathf.Max(1f, ruleConfig.climaxRecoverySeconds * 60f);
+        long oneRaw = FP64.FromFloat(1f).rawValue;
+        long slowMoRaw = FP64.FromFloat(ruleConfig.climaxSlowMoScale).rawValue;
+        climaxRecoveryStepFP = new FP64((oneRaw - slowMoRaw) / recoveryTicksLong);
 
         scoreContext.currentRound++;
 
@@ -643,8 +656,8 @@ public class GameLoopManager : MonoBehaviour
             playerOne.controller.GetCombat().InitializeHealth();
             playerTwo.controller.GetCombat().InitializeHealth();
 
-            playerOne.controller.GetPhysics().SetPosition(envSettings.p1SpawnPos);
-            playerTwo.controller.GetPhysics().SetPosition(envSettings.p2SpawnPos);
+            playerOne.controller.GetPhysics().SetPosition(ruleConfig.p1SpawnPos);
+            playerTwo.controller.GetPhysics().SetPosition(ruleConfig.p2SpawnPos);
 
             playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true);
             playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true);
@@ -706,6 +719,7 @@ public class GameLoopManager : MonoBehaviour
                     GameFlowManager.Instance.ChangeScene(GameSceneType.CharacterSelect);
                     break;
                 case MatchEndActionType.Rematch:
+                    if (playingUI != null) playingUI.HideMatchResult();
                     InitializeMatch(false);
                     simState.isSimulationRunning = true;
                     break;
@@ -740,6 +754,8 @@ public class GameLoopManager : MonoBehaviour
         stateBuffer[idx].sharedDepthAxis = simState.sharedDepthAxis;
         stateBuffer[idx].currentPhase = simState.currentPhase;
         stateBuffer[idx].phaseDelayTicks = simState.phaseDelayTicks;
+        stateBuffer[idx].simulationScale = simState.simulationScale;
+        stateBuffer[idx].timeAccumulator = simState.timeAccumulator;
         
         roundTimer.ExportState(ref stateBuffer[idx]);
         
@@ -753,6 +769,8 @@ public class GameLoopManager : MonoBehaviour
         simState.sharedDepthAxis = stateBuffer[idx].sharedDepthAxis;
         simState.currentPhase = stateBuffer[idx].currentPhase;
         simState.phaseDelayTicks = stateBuffer[idx].phaseDelayTicks;
+        simState.simulationScale = stateBuffer[idx].simulationScale;
+        simState.timeAccumulator = stateBuffer[idx].timeAccumulator;
         
         roundTimer.ImportState(stateBuffer[idx]);
         
@@ -785,14 +803,21 @@ public class GameLoopManager : MonoBehaviour
         context.renderer = context.instance.GetComponent<PlayerRenderer>();
         context.controller = new PlayerController();
         context.controller.Initialize(spawnPos, context.characterData);
-        context.controller.GetPhysics().SetGlobalGravity(envSettings.globalGravity);
+        context.controller.GetPhysics().SetGlobalGravity(ruleConfig.globalGravity);
         if (context.renderer != null) context.renderer.InitializeRenderer(context.controller, context.characterData.animationMap.stateMap, context.characterData.effectTable);
     }
 
     private void SyncVisuals()
     {
-        if (playerOne.renderer != null) playerOne.renderer.UpdateRenderer();
-        if (playerTwo.renderer != null) playerTwo.renderer.UpdateRenderer();
+        float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64.FromFloat(1f).rawValue;
+
+        if (VfxManager.Instance != null)
+        {
+            VfxManager.Instance.SetGlobalScale(currentVisualScale);
+        }
+
+        if (playerOne.renderer != null) playerOne.renderer.UpdateRenderer(currentVisualScale);
+        if (playerTwo.renderer != null) playerTwo.renderer.UpdateRenderer(currentVisualScale);
 
         if (playingUI != null && roundTimer != null)
         {

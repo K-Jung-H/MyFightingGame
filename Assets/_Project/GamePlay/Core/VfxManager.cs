@@ -7,6 +7,8 @@ public class VfxManager : MonoBehaviour
     private Dictionary<VfxClipSO, Queue<VfxObject>> pools;
 
     public static VfxManager Instance { get; private set; }
+    
+    public float GlobalSimulationScale { get; private set; } = 1f;
 
     private void Awake()
     {
@@ -22,7 +24,12 @@ public class VfxManager : MonoBehaviour
         }
     }
 
-    public void SpawnVfx(VfxClipSO clip, Transform targetBone, Vector3 offset, Quaternion rotOffset, bool isAttached)
+    public void SetGlobalScale(float scale)
+    {
+        GlobalSimulationScale = scale;
+    }
+
+    public void SpawnVfx(VfxClipSO clip, Transform targetBone, Vector3 offset, Quaternion rotOffset, bool isAttached, float simulationScale = 1f)
     {
         bool isClipInvalid = clip == null;
         if (isClipInvalid) return;
@@ -31,7 +38,7 @@ public class VfxManager : MonoBehaviour
         vfxObj.PlayAttached(clip, targetBone, offset, rotOffset, isAttached);
     }
 
-    public void SpawnVfxAtPosition(VfxClipSO clip, Vector3 position, Quaternion rotation)
+    public void SpawnVfxAtPosition(VfxClipSO clip, Vector3 position, Quaternion rotation, float simulationScale = 1f)
     {
         bool isClipInvalid = clip == null;
         if (isClipInvalid) return;

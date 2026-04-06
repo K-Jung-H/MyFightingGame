@@ -15,6 +15,10 @@ public static class StateHashUtility
         hash = CombineHash(hash, snapshot.isTimerPaused ? 1UL : 0UL);
         hash = CombineHash(hash, (ulong)snapshot.currentPhase);
         hash = CombineHash(hash, (ulong)snapshot.phaseDelayTicks);
+        hash = CombineHash(hash, (ulong)snapshot.simulationScale.rawValue);
+        hash = CombineHash(hash, (ulong)snapshot.phaseDelayTicks);
+        hash = CombineHash(hash, (ulong)snapshot.simulationScale.rawValue);
+        hash = CombineHash(hash, (ulong)snapshot.timeAccumulator.rawValue);
 
         return hash;
     }

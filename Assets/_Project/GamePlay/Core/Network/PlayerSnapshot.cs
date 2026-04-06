@@ -46,7 +46,7 @@ public struct PlayerSnapshot
     public int controllerFrame;
     public InputFlags previousRawFlags;
     public InputFlags accumulatedHitstopFlags;
-
+    public InputFlags accumulatedLogicFlags;
     public FP64 lastImpactFallSpeed;
 }
 

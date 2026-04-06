@@ -102,7 +102,7 @@ public class VfxObject : MonoBehaviour
 
     private void UpdateAnimation()
     {
-        timer += Time.deltaTime;
+        timer += Time.deltaTime * VfxManager.Instance.GlobalSimulationScale;
         float frameDuration = 1f / currentClip.frameRate;
 
         bool isNextFrameReady = timer >= frameDuration;

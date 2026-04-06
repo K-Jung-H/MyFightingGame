@@ -18,12 +18,14 @@ public class PlayerController : ITargetable, ISnapshotSync
 
     private InputFlags previousRawFlags = InputFlags.None;
     private InputFlags accumulatedHitstopFlags = InputFlags.None;
+    private InputFlags accumulatedLogicFlags = InputFlags.None;
 
     public void Initialize(Vector3 startPosition, CharacterDataSO characterData)
     {
         config = characterData.config;
         currentFrame = 0;
         accumulatedHitstopFlags = InputFlags.None;
+        accumulatedLogicFlags = InputFlags.None;
 
         inputTracker = new InputStateTracker();
         inputTracker.Initialize();
@@ -54,6 +56,7 @@ public class PlayerController : ITargetable, ISnapshotSync
         snapshot.controllerFrame = currentFrame;
         snapshot.previousRawFlags = previousRawFlags;
         snapshot.accumulatedHitstopFlags = accumulatedHitstopFlags;
+        snapshot.accumulatedLogicFlags = accumulatedLogicFlags;
     }
 
     public void ImportState(PlayerSnapshot snapshot)
@@ -67,58 +70,66 @@ public class PlayerController : ITargetable, ISnapshotSync
         currentFrame = snapshot.controllerFrame;
         previousRawFlags = snapshot.previousRawFlags;
         accumulatedHitstopFlags = snapshot.accumulatedHitstopFlags;
+        accumulatedLogicFlags = snapshot.accumulatedLogicFlags;
     }
-    
-    public void UpdateTick(PlayerInput input)
+
+    public void UpdateTick(PlayerInput input, bool isLogicStep)
     {
         PlayerInput sanitizedInput = ApplyReleaseDebounce(input);
-        
         inputTracker.UpdateTick(sanitizedInput.flags);
-        
         currentInput = sanitizedInput;
         currentKeyDownFlags = inputTracker.currentFlags & ~inputTracker.previousFlags;
 
-        bool isHitstopActive = combat.ProcessHitstopTick();
+        accumulatedLogicFlags |= currentKeyDownFlags;
+
+        bool isHitstopActive = combat.GetHitstopCounter() > 0;
+
+        if (isLogicStep)
+        {
+            isHitstopActive = combat.ProcessHitstopTick();
+        }
+
         if (isHitstopActive)
         {
-            accumulatedHitstopFlags |= currentKeyDownFlags;
+            accumulatedHitstopFlags |= accumulatedLogicFlags;
+            accumulatedLogicFlags = InputFlags.None;
             return;
         }
 
         if (accumulatedHitstopFlags != InputFlags.None)
         {
-            currentKeyDownFlags |= accumulatedHitstopFlags;
-            sanitizedInput.flags |= accumulatedHitstopFlags;
-            currentInput = sanitizedInput;
-            
+            accumulatedLogicFlags |= accumulatedHitstopFlags;
             accumulatedHitstopFlags = InputFlags.None;
         }
 
-        currentFrame++;
-        sanitizedInput.frame = currentFrame;
-
-        PlayerState_Type currentState = stateMachine.GetCurrentState();
-        actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, currentState);
-
-        bool isHoming = false;
-
-        if (currentState == PlayerState_Type.Attacking)
+        if (isLogicStep)
         {
-            ActionDataSO currentAction = stateMachine.GetCurrentActionData();
-            bool hasValidFrameData = currentAction != null && currentAction.frameData != null;
-            if (hasValidFrameData)
+            currentFrame++;
+            sanitizedInput.frame = currentFrame; 
+            sanitizedInput.flags |= accumulatedLogicFlags;
+            
+            PlayerState_Type currentState = stateMachine.GetCurrentState();
+            actionController.ProcessInput(sanitizedInput, accumulatedLogicFlags, currentFrame, currentState);
+
+            accumulatedLogicFlags = InputFlags.None;
+
+            bool isHoming = false;
+            if (currentState == PlayerState_Type.Attacking)
             {
-                isHoming = currentAction.frameData.logicData.isHoming;
+                ActionDataSO currentAction = stateMachine.GetCurrentActionData();
+                bool hasValidFrameData = currentAction != null && currentAction.frameData != null;
+                if (hasValidFrameData)
+                {
+                    isHoming = currentAction.frameData.logicData.isHoming;
+                }
             }
+
+            physics.UpdateLookDirection(targetEntity, currentState, isHoming);
+            ProcessActionBuffer();
+            physics.ResetRootMotionFlag();
+            stateMachine.UpdateTick(sanitizedInput);
+            physics.ProcessPhysicsTick();
         }
-
-        physics.UpdateLookDirection(targetEntity, currentState, isHoming);
-
-        ProcessActionBuffer();
-
-        physics.ResetRootMotionFlag();
-        stateMachine.UpdateTick(sanitizedInput);
-        physics.ProcessPhysicsTick();
     }
 
     private PlayerInput ApplyReleaseDebounce(PlayerInput rawInput)
@@ -161,6 +172,4 @@ public class PlayerController : ITargetable, ISnapshotSync
 
     public FPVector3 GetFPPosition() => physics.GetFPPosition(); 
     public FPVector3 GetFPLookDirection() => physics.GetFPLookDirection(); 
-
-
 }

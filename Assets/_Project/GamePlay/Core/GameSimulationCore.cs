@@ -12,19 +12,24 @@ public class GameSimulationCore
         fpCollisionMinDistanceSqr = fpCollisionMinDistance * fpCollisionMinDistance;
     }
 
-    public void SimulateFrame(PlayerController p1Controller, PlayerController p2Controller, PlayerInput p1Input, PlayerInput p2Input, ref FPVector3 sharedDepthAxis, Action<PlayerController, Vector3, EffectType> onHitSpark)
+    public void SimulateFrame(PlayerController p1Controller, PlayerController p2Controller, PlayerInput p1Input, PlayerInput p2Input, ref SimulationState simState, Action<PlayerController, Vector3, EffectType> onHitSpark)
     {
-        bool isBothControllersValid = p1Controller != null && p2Controller != null;
-        if (isBothControllersValid)
+        if (p1Controller != null && p2Controller != null)
         {
-            UpdateSharedDepthAxis(p1Controller, p2Controller, ref sharedDepthAxis);
+            if (simState.isLogicStep)
+            {
+                UpdateSharedDepthAxis(p1Controller, p2Controller, ref simState.sharedDepthAxis);
+            }
             
-            p1Controller.UpdateTick(p1Input);
-            p2Controller.UpdateTick(p2Input);
+            p1Controller.UpdateTick(p1Input, simState.isLogicStep);
+            p2Controller.UpdateTick(p2Input, simState.isLogicStep);
 
-            ResolveAttacks(p1Controller, p2Controller, onHitSpark);
-            ResolveAttacks(p2Controller, p1Controller, onHitSpark);
-            ResolvePlayerCollision(p1Controller, p2Controller);
+            if (simState.isLogicStep)
+            {
+                ResolveAttacks(p1Controller, p2Controller, onHitSpark);
+                ResolveAttacks(p2Controller, p1Controller, onHitSpark);
+                ResolvePlayerCollision(p1Controller, p2Controller);
+            }
         }
     }
 
@@ -36,15 +41,20 @@ public class GameSimulationCore
         FPVector3 diffPos = p2LogicalPos - p1LogicalPos;
         diffPos.y = new FP64(0);
 
-        bool isOverlapping = diffPos.x.rawValue == 0 && diffPos.z.rawValue == 0;
-        if (isOverlapping)
+        FP64 distSqr = (diffPos.x * diffPos.x) + (diffPos.z * diffPos.z);
+        FP64 epsilonSqr = FP64.FromFloat(0.0001f);
+        
+        if (distSqr.rawValue < epsilonSqr.rawValue)
         {
-            diffPos.x = FP64.FromFloat(1f);
+            p1.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
+            p2.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
+            return;
         }
 
-        FPVector3 up = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
-        FPVector3 normal1 = FPVector3.Cross(up, diffPos).Normalized();
-        FPVector3 normal2 = FPVector3.Cross(diffPos, up).Normalized();
+        diffPos = diffPos.Normalized();
+
+        FPVector3 normal1 = new FPVector3(new FP64(-diffPos.z.rawValue), new FP64(0), new FP64(diffPos.x.rawValue));
+        FPVector3 normal2 = new FPVector3(new FP64(diffPos.z.rawValue), new FP64(0), new FP64(-diffPos.x.rawValue));
 
         FP64 dot1 = FPVector3.Dot(normal1, sharedDepthAxis);
         FP64 dot2 = FPVector3.Dot(normal2, sharedDepthAxis);

@@ -20,6 +20,7 @@ public static class HashTraceUtility
         hash = CombineAndLog(sb, hash, snapshot.isTimerPaused ? 1UL : 0UL, "IsTimerPaused");
         hash = CombineAndLog(sb, hash, (ulong)snapshot.currentPhase, "CurrentPhase");
         hash = CombineAndLog(sb, hash, (ulong)snapshot.phaseDelayTicks, "PhaseDelayTicks");
+        hash = CombineAndLog(sb, hash, (ulong)snapshot.simulationScale.rawValue, "SimulationScale");
         
         sb.AppendLine("--- P1 ---");
         hash = TracePlayer(sb, hash, snapshot.p1Snapshot, "P1");

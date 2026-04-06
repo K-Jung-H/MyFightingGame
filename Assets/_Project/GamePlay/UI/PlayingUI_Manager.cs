@@ -87,6 +87,14 @@ public class PlayingUI_Manager : MonoBehaviour
         }
     }
 
+    public void HideMatchResult()
+    {
+        if (matchResultUI != null)
+        {
+            matchResultUI.gameObject.SetActive(false);
+        }
+    }
+
     public void UpdateRematchSync(bool p1Ready, bool p2Ready, bool isFlipped)
     {
         if (matchResultUI != null) matchResultUI.UpdateRematchSync(p1Ready, p2Ready, isFlipped);

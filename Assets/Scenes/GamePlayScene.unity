@@ -232,13 +232,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04183c00f241045438e60929e25ff40d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLoopManager
-  envSettings:
-    playerCollisionMinDistance: 0.5
-    globalGravity: 0.02
-    p1SpawnPos: {x: -2, y: 0, z: 0}
-    p2SpawnPos: {x: 2, y: 0, z: 0}
-    preRoundDelaySeconds: 3
-    postRoundDelaySeconds: 5
+  ruleConfig: {fileID: 11400000, guid: e34b9794997ce164882de6d89e3e4d92, type: 2}
   playingUI: {fileID: 22342372}
   playerOne:
     characterData: {fileID: 11400000, guid: 914a4ffd064c33e47925cfabf435e814, type: 2}

@@ -15,6 +15,7 @@ public class PlayerRenderer : MonoBehaviour
     private float currentSpeed;
     private PlayerState_Type previousState;
     private ActionDataSO previousActionData;
+    private int previousStateFrame = -1;
 
     private static readonly int MoveSpeedHash = Animator.StringToHash("MoveSpeed");
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
@@ -29,9 +30,10 @@ public class PlayerRenderer : MonoBehaviour
         effectTable = fxTable;
         previousState = (PlayerState_Type)(-1);
         previousActionData = null;
+        previousStateFrame = -1;
     }
 
-    public void UpdateRenderer()
+    public void UpdateRenderer(float simulationScale = 1f)
     {
         if (controller == null) return;
 
@@ -39,13 +41,13 @@ public class PlayerRenderer : MonoBehaviour
 
         if (characterAnimator != null)
         {
-            characterAnimator.speed = isHitstopActive ? 0f : 1f;
+            characterAnimator.speed = isHitstopActive ? 0f : simulationScale;
         }
 
         if (isHitstopActive) return;
 
         SyncTransformWithLogic();
-        EvaluateAndPlayAnimation();
+        EvaluateAndPlayAnimation(simulationScale); 
     }
 
     public void PlayHitSpark(Vector3 hitPosition, EffectType effectType)
@@ -95,22 +97,22 @@ public class PlayerRenderer : MonoBehaviour
         }
     }
 
-    private void EvaluateAndPlayAnimation()
+    private void EvaluateAndPlayAnimation(float currentScale)
     {
         PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
         int stateFrame = controller.GetStateMachine().GetStateFrameCounter();
         ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
-        
+
         bool isStateChanged = previousState != currentState;
         bool isActionChanged = previousActionData != currentAction;
 
-        bool isStrictSyncState = currentState == PlayerState_Type.Attacking || 
-                                 currentState == PlayerState_Type.StandHit || 
+        bool isStrictSyncState = currentState == PlayerState_Type.Attacking ||
+                                 currentState == PlayerState_Type.StandHit ||
                                  currentState == PlayerState_Type.CrouchHit ||
                                  currentState == PlayerState_Type.StandBlock ||
                                  currentState == PlayerState_Type.CrouchBlock ||
-                                 currentState == PlayerState_Type.AirHit || 
-                                 currentState == PlayerState_Type.Stunning || 
+                                 currentState == PlayerState_Type.AirHit ||
+                                 currentState == PlayerState_Type.Stunning ||
                                  currentState == PlayerState_Type.GroundSmash ||
                                  currentState == PlayerState_Type.LayingDown ||
                                  currentState == PlayerState_Type.WakeUp ||
@@ -145,12 +147,11 @@ public class PlayerRenderer : MonoBehaviour
                 float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
                 bool needsSync = isStateChanged || isActionChanged;
 
-                if (!needsSync)
+                if (!needsSync && previousStateFrame != -1)
                 {
-                    AnimatorStateInfo stateInfo = characterAnimator.GetCurrentAnimatorStateInfo(0);
-                    float currentVisualTime = stateInfo.normalizedTime * stateInfo.length;
+                    int frameDiff = stateFrame - previousStateFrame;
                     
-                    if (stateInfo.shortNameHash != hash || Mathf.Abs(currentVisualTime - exactTime) > 0.034f)
+                    if (frameDiff < 0 || frameDiff > 1)
                     {
                         needsSync = true;
                     }
@@ -167,10 +168,11 @@ public class PlayerRenderer : MonoBehaviour
             EvaluateLocomotionTransition(currentState);
         }
 
-        EvaluateVfxEvents();
-        
+        EvaluateVfxEvents(currentScale);
+
         previousState = currentState;
         previousActionData = currentAction;
+        previousStateFrame = stateFrame; 
     }
 
     private int GetStaticStateHash(PlayerState_Type currentState)
@@ -263,12 +265,18 @@ public class PlayerRenderer : MonoBehaviour
         }
     }
 
-    private void EvaluateVfxEvents()
+    private void EvaluateVfxEvents(float currentScale)
     {
         ActionDataSO currentAction = controller.GetStateMachine().GetCurrentActionData();
         if (currentAction == null || currentAction.frameData.vfxEvents == null) return;
 
+        PlayerState_Type currentState = controller.GetStateMachine().GetCurrentState();
         int currentFrame = controller.GetStateMachine().GetStateFrameCounter();
+
+        if (currentFrame == previousStateFrame && currentState == previousState) 
+        {
+            return;
+        }
 
         foreach (var vfxEvent in currentAction.frameData.vfxEvents)
         {
@@ -290,7 +298,8 @@ public class PlayerRenderer : MonoBehaviour
                             targetBoneTransform, 
                             vfxEvent.localPositionOffset, 
                             vfxEvent.localRotationOffset, 
-                            vfxEvent.isAttached
+                            vfxEvent.isAttached,
+                            currentScale
                         );
                     }
                 }
