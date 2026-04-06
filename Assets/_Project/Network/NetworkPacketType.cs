@@ -38,4 +38,5 @@ public static class NetworkPacketType
     public const byte RematchSyncBroadcast = 43;
 
     public const byte CancelPhaseRequest = 44;
+    public const byte RandomMatchRequest = 45;
 }

@@ -10,6 +10,7 @@ public class LobbyUIManager : MonoBehaviour
     public ErrorPanelController errorPanel;
 
     public event Action<RoomCreateData> OnCreateRoomRequested;
+    public event Action OnRandomMatchRequested;
     public event Action<string> OnTitleSearchRequested;
     public event Action<string> OnCodeJoinRequested;
     public event Action<string, string> OnJoinWithPasswordRequested;
@@ -20,6 +21,7 @@ public class LobbyUIManager : MonoBehaviour
         {
             baseCanvas.OnOpenCreateClicked += OpenCreateRoomCanvas;
             baseCanvas.OnOpenJoinSearchClicked += OpenSearchRoomCanvas;
+            baseCanvas.OnRandomMatchClicked += HandleRandomMatchClicked;
         }
 
         if (createRoomPanel != null)
@@ -48,10 +50,16 @@ public class LobbyUIManager : MonoBehaviour
         {
             errorPanel.OnPasswordErrorClosed += HandlePasswordErrorClosed;
             errorPanel.OnRoomFullErrorClosed += HandleRoomFullErrorClosed;
+            errorPanel.OnNoRoomsErrorClosed += HandleNoRoomsErrorClosed;
             errorPanel.gameObject.SetActive(false);
         }
 
         SwitchCanvas(null);
+    }
+
+    private void HandleRandomMatchClicked()
+    {
+        OnRandomMatchRequested?.Invoke();
     }
 
     private void HandleSearchRequested(byte searchType, string query)
@@ -104,6 +112,8 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    private void HandleNoRoomsErrorClosed() {}
+
     private void HandlePasswordErrorClosed()
     {
         if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
@@ -117,6 +127,14 @@ public class LobbyUIManager : MonoBehaviour
         if (passwordPanel != null && passwordPanel.gameObject.activeSelf)
         {
             passwordPanel.ClosePrompt();
+        }
+    }
+
+    public void HandleNoRoomsAvailableFailure()
+    {
+        if (errorPanel != null)
+        {
+            errorPanel.ShowNoRoomsError();
         }
     }
 

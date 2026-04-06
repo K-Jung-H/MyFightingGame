@@ -329,6 +329,9 @@ public class DummyMatchServer : MonoBehaviour
             case NetworkPacketType.JoinRoomRequest: 
                 HandleJoinRoomRequest(conn, ref stream); 
                 return;
+            case NetworkPacketType.RandomMatchRequest:
+                HandleRandomMatchRequest(conn); 
+                return;
             case 22: 
                 SendServerPong(conn, stream.ReadFloat()); 
                 return;
@@ -699,6 +702,53 @@ public class DummyMatchServer : MonoBehaviour
         }
         
         driver.EndSend(writer);
+    }
+
+    private void HandleRandomMatchRequest(NetworkConnection conn)
+    {
+        List<ServerRoom> validRooms = new List<ServerRoom>();
+
+        foreach (var kvp in activeRooms)
+        {
+            ServerRoom room = kvp.Value;
+            bool isJoinable = !room.isPrivate && !room.HasPassword() && !room.IsFull() && room.currentState == RoomStateType.Lobby;
+            
+            if (isJoinable)
+            {
+                validRooms.Add(room);
+            }
+        }
+
+        bool success = false;
+        string codeOrReason = "NoRoomsAvailable.";
+        ServerRoom targetRoom = null;
+
+        if (validRooms.Count > 0)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, validRooms.Count);
+            targetRoom = validRooms[randomIndex];
+            
+            targetRoom.p2 = conn;
+            connectionToRoom[conn] = targetRoom;
+            targetRoom.stateModel.isP2Connected = true;
+            
+            success = true;
+            codeOrReason = targetRoom.roomCode;
+            LogEvent($"Client randomly joined Room [{targetRoom.roomCode}].");
+        }
+
+        driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        writer.WriteByte(NetworkPacketType.JoinRoomResponse);
+        writer.WriteByte(success ? (byte)1 : (byte)0);
+        writer.WriteFixedString64(new FixedString64Bytes(codeOrReason));
+        writer.WriteByte(0);
+        driver.EndSend(writer);
+
+        if (success)
+        {
+            SendSlotId(conn, 1);
+            BroadcastRoomState(targetRoom);
+        }
     }
 
     private void HandleJoinRoomRequest(NetworkConnection conn, ref DataStreamReader stream)

@@ -104,6 +104,18 @@ public class ServerNetworkManager : MonoBehaviour
         }
     }
 
+    public void SendRandomMatchRequest()
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.RandomMatchRequest);
+            serverDriver.EndSend(writer);
+        }
+    }
+
     public void SendJoinRoomRequest(string roomCode, string password)
     {
         if (!isConnected || !serverConnection.IsCreated) return;

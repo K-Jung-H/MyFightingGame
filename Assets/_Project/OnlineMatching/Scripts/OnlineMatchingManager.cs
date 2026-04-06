@@ -28,6 +28,7 @@ public class OnlineMatchingManager : MonoBehaviour
             lobbyUI.OnTitleSearchRequested += HandleTitleSearch;
             lobbyUI.OnCodeJoinRequested += HandleCodeJoin;
             lobbyUI.OnJoinWithPasswordRequested += HandleJoinWithPassword;
+            lobbyUI.OnRandomMatchRequested += HandleRandomMatchRequest;
         }
 
         if (returnButton != null)
@@ -79,6 +80,14 @@ public class OnlineMatchingManager : MonoBehaviour
         if (ServerNetworkManager.Instance != null)
         {
             ServerNetworkManager.Instance.SendCreateRoomRequest(data);
+        }
+    }
+
+    private void HandleRandomMatchRequest()
+    {
+        if (ServerNetworkManager.Instance != null)
+        {
+            ServerNetworkManager.Instance.SendRandomMatchRequest();
         }
     }
 
@@ -143,6 +152,10 @@ public class OnlineMatchingManager : MonoBehaviour
                 else if (roomCodeOrReason == "IncorrectPassword.")
                 {
                     lobbyUI.HandlePasswordFailure();
+                }
+                else if (roomCodeOrReason == "NoRoomsAvailable.")
+                {
+                    lobbyUI.HandleNoRoomsAvailableFailure();
                 }
             }
         }
