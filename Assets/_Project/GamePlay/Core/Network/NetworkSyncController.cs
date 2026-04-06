@@ -66,7 +66,7 @@ public class NetworkSyncController
     /*
      * 온라인 시뮬레이션의 단일 틱 처리를 수행하고 틱 진행 가능 여부를 반환합니다.
      */
-    public bool TryProcessNetworkTick(int currentTick, bool isCameraFlipped, out PlayerInput p1Input, out PlayerInput p2Input)
+    public bool TryProcessNetworkTick(int currentTick, bool isFacingRight, out PlayerInput p1Input, out PlayerInput p2Input)
     {
         p1Input = new PlayerInput();
         p2Input = new PlayerInput();
@@ -94,7 +94,7 @@ public class NetworkSyncController
             return false;
         }
 
-        UpdateLocalInput(isP1Local, currentTick, isCameraFlipped);
+        UpdateLocalInput(isP1Local, currentTick, isFacingRight);
         PredictRemoteInput(isP1Local, currentTick);
 
         p1Input.flags = p1InputBuffer[currentTick % rollbackWindow];
@@ -102,6 +102,8 @@ public class NetworkSyncController
 
         return true;
     }
+
+
 
     /*
      * 해시 버퍼를 순회하여 디싱크 여부를 검증합니다.
@@ -226,9 +228,9 @@ public class NetworkSyncController
     /*
      * 로컬 물리 입력을 샘플링하여 지연 버퍼에 넣고 P2P 망으로 발송합니다.
      */
-    private void UpdateLocalInput(bool isP1Local, int currentTick, bool isCameraFlipped)
+    private void UpdateLocalInput(bool isP1Local, int currentTick, bool isFacingRight)
     {
-        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localPlayerSlot, isCameraFlipped);
+        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localPlayerSlot, isFacingRight);
         int targetTick = currentTick + networkSettings.inputDelayFrames;
         int bufferIndex = targetTick % rollbackWindow;
 

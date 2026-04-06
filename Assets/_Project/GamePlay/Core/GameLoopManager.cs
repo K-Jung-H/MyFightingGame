@@ -221,7 +221,28 @@ public class GameLoopManager : MonoBehaviour
 
                 syncController.VerifySyncState();
 
-                bool isTickProcessed = syncController.TryProcessNetworkTick(simState.currentTick, simState.isCameraFlipped, out PlayerInput p1Input, out PlayerInput p2Input);
+                bool isLocalFacingRight = true;
+                if (playerOne.controller != null && playerTwo.controller != null)
+                {
+                    FPVector3 p1Pos = playerOne.controller.GetFPPosition();
+                    FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
+                    FPVector3 diff = p2Pos - p1Pos;
+                    
+                    FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+                    FPVector3 cameraRight = FPVector3.Cross(upVector, simState.sharedDepthAxis);
+                    
+                    FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
+                    bool isP1VisuallyOnLeft = dotProduct.rawValue > 0;
+
+                    isLocalFacingRight = connectionState.localPlayerSlot == 0 ? isP1VisuallyOnLeft : !isP1VisuallyOnLeft;
+                    
+                    if (simState.isCameraFlipped)
+                    {
+                        isLocalFacingRight = !isLocalFacingRight;
+                    }
+                }
+
+                bool isTickProcessed = syncController.TryProcessNetworkTick(simState.currentTick, isLocalFacingRight, out PlayerInput p1Input, out PlayerInput p2Input);
                 
                 if (isTickProcessed)
                 {
