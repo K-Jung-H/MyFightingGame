@@ -42,7 +42,9 @@ public class GameSimulationCore
         diffPos.y = new FP64(0);
 
         FP64 distSqr = (diffPos.x * diffPos.x) + (diffPos.z * diffPos.z);
-        FP64 epsilonSqr = FP64.FromFloat(0.0001f);
+        
+        long oneFP = FP64.FromFloat(1f).rawValue;
+        FP64 epsilonSqr = new FP64(oneFP / 10000);
         
         if (distSqr.rawValue < epsilonSqr.rawValue)
         {
@@ -88,8 +90,7 @@ public class GameSimulationCore
             defender.GetFPLookDirection(),
             defenderBoxes,
             out HitboxEvent hitEvent,
-            out FPVector3 fpHitPoint,
-            out string debugReason
+            out FPVector3 fpHitPoint
         );
 
         if (isHit)
@@ -187,9 +188,11 @@ public class GameSimulationCore
         bool isRunning = state == PlayerState_Type.Running;
         bool isWalking = state == PlayerState_Type.Walking;
 
+        long oneFP = FP64.FromFloat(1f).rawValue;
+
         if (isSprinting) return new FP64(0);
-        if (isRunning) return FP64.FromFloat(0.2f);
-        if (isWalking) return FP64.FromFloat(0.5f);
-        return FP64.FromFloat(1.0f);
+        if (isRunning) return new FP64(oneFP / 5);
+        if (isWalking) return new FP64(oneFP / 2);
+        return new FP64(oneFP);
     }
 }

@@ -173,40 +173,31 @@ public class PlayerActionController
         actionBuffer.InitializeBuffer();
     }
 
-    public void ExportState(ref PlayerSnapshot snapshot)
+    public unsafe void ExportState(ref PlayerSnapshot snapshot)
     {
         snapshot.actionControllerState.deterministicInputBuffer = inputBuffer;
-
-        bool isComboArrayMissing = snapshot.actionControllerState.comboSequence == null || snapshot.actionControllerState.comboSequence.Length != 10;
-        if (isComboArrayMissing)
-        {
-            snapshot.actionControllerState.comboSequence = new InputFlags[10];
-        }
 
         int currentComboCount = comboSequence.Count;
         for (int i = 0; i < currentComboCount; i++)
         {
-            snapshot.actionControllerState.comboSequence[i] = comboSequence[i];
+            if (i >= 10) break;
+            snapshot.actionControllerState.comboSequence[i] = (int)comboSequence[i];
         }
 
         snapshot.actionControllerState.comboCount = currentComboCount;
         snapshot.actionControllerState.pendingAction = actionBuffer.GetPendingAction();
     }
 
-    public void ImportState(PlayerSnapshot snapshot)
+    public unsafe void ImportState(PlayerSnapshot snapshot)
     {
         inputBuffer = snapshot.actionControllerState.deterministicInputBuffer;
 
         comboSequence.Clear();
         int savedComboCount = snapshot.actionControllerState.comboCount;
-        bool hasValidComboArray = snapshot.actionControllerState.comboSequence != null;
         
-        if (hasValidComboArray)
+        for (int i = 0; i < savedComboCount; i++)
         {
-            for (int i = 0; i < savedComboCount; i++)
-            {
-                comboSequence.Add(snapshot.actionControllerState.comboSequence[i]);
-            }
+            comboSequence.Add((InputFlags)snapshot.actionControllerState.comboSequence[i]);
         }
 
         actionBuffer.SetPendingAction(snapshot.actionControllerState.pendingAction);

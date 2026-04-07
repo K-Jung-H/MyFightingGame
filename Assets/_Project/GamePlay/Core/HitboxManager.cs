@@ -5,39 +5,21 @@ public static class HitboxManager
     public static bool EvaluateHit(
         FPVector3 attackerPos, FPVector3 attackerDir, HitboxEvent[] hitboxEvents, int attackerFrame,
         FPVector3 defenderPos, FPVector3 defenderDir, CollisionBox[] defenderHurtboxes,
-        out HitboxEvent successfulHit, out FPVector3 hitPoint, out string debugReason)
+        out HitboxEvent successfulHit, out FPVector3 hitPoint)
     {
         successfulHit = default;
         hitPoint = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
-        debugReason = string.Empty;
-
-        bool isDefenderHurtboxMissing = defenderHurtboxes == null || defenderHurtboxes.Length == 0;
-        if (isDefenderHurtboxMissing)
-        {
-            debugReason = "HurtboxMissing";
-            return false;
-        }
-
-        bool isHitboxMissing = hitboxEvents == null || hitboxEvents.Length == 0;
-        if (isHitboxMissing)
-        {
-            debugReason = "HitboxMissing";
-            return false;
-        }
 
         GetAxesFromDirection(attackerDir, out FPAxisSet axesA);
         GetAxesFromDirection(defenderDir, out FPAxisSet axesB);
 
-        bool hasActiveBoxThisFrame = false;
-        bool isIntersectionFailed = false;
-
-        foreach (var evt in hitboxEvents)
+        for (int e = 0; e < hitboxEvents.Length; e++)
         {
+            HitboxEvent evt = hitboxEvents[e];
             bool isAttackBoxActive = TryGetActiveAttackBox(evt, attackerFrame, out CollisionBox attackBox);
+            
             if (isAttackBoxActive)
             {
-                hasActiveBoxThisFrame = true;
-
                 FPVector3 fpAttackLocal = FPVector3.FromVector3(attackBox.localPosition);
                 FPVector3 fpAttackExtents = FPVector3.FromVector3(attackBox.extents);
                 FPVector3 worldCenterA = attackerPos + TransformLocalToWorld(fpAttackLocal, ref axesA);
@@ -51,7 +33,6 @@ public static class HitboxManager
                     bool isZeroExtents = fpAttackExtents.x.rawValue == 0 && fpAttackExtents.y.rawValue == 0 && fpAttackExtents.z.rawValue == 0;
                     if (isZeroExtents)
                     {
-                        debugReason = "ZeroExtents";
                         continue;
                     }
 
@@ -62,21 +43,8 @@ public static class HitboxManager
                         hitPoint = CalculateIntersectionCenter(worldCenterA, fpAttackExtents, worldCenterB, fpHurtExtents);
                         return true;
                     }
-                    else
-                    {
-                        isIntersectionFailed = true;
-                    }
                 }
             }
-        }
-
-        if (!hasActiveBoxThisFrame)
-        {
-            debugReason = "NoActiveBox";
-        }
-        else if (isIntersectionFailed && string.IsNullOrEmpty(debugReason))
-        {
-            debugReason = "OBBMiss";
         }
 
         return false;

@@ -61,8 +61,12 @@ public unsafe struct DeterministicInputBuffer
         bool isListInvalid = commandList == null || commandList.commands == null;
         if (isListInvalid) return null;
 
-        foreach (var command in commandList.commands)
+        int commandCount = commandList.commands.Count;
+        
+        for (int i = 0; i < commandCount; i++)
         {
+            CommandDefinition command = commandList.commands[i];
+            
             bool hasStateRestriction = command.validStates != 0;
             bool isStateValid = (command.validStates & currentState) != 0;
 

@@ -56,14 +56,16 @@ public class WalkingState : PlayerStateBase
             return;
         }
 
-        ProcessMovementLogic(input);
+        PlayerInput linearInput = input;
+        linearInput.flags &= ~InputFlags.Up;
+        linearInput.flags &= ~InputFlags.Down;
+
+        ProcessMovementLogic(linearInput);
     }
 }
 
 public class RunningState : PlayerStateBase
 {
-    private int runningForwardFrames;
-
     public RunningState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
     public override PlayerState_Type GetStateType() => PlayerState_Type.Running;
@@ -71,7 +73,6 @@ public class RunningState : PlayerStateBase
     public override void Enter()
     {
         base.Enter();
-        runningForwardFrames = 0;
     }
 
     public override void UpdateTick(PlayerInput input)
@@ -91,10 +92,13 @@ public class RunningState : PlayerStateBase
             return;
         }
 
-        ProcessMovementLogic(input);
+        PlayerInput linearInput = input;
+        linearInput.flags &= ~InputFlags.Up;
+        linearInput.flags &= ~InputFlags.Down;
 
-        runningForwardFrames++;
-        bool isSprintThresholdReached = runningForwardFrames >= config.GetAutoSprintFrames(); 
+        ProcessMovementLogic(linearInput);
+
+        bool isSprintThresholdReached = stateMachine.GetStateFrameCounter() >= config.GetAutoSprintFrames(); 
         if (isSprintThresholdReached)
         {
             stateMachine.TransitionTo(PlayerState_Type.Sprinting);
@@ -126,7 +130,11 @@ public class SprintingState : PlayerStateBase
             return;
         }
 
-        ProcessMovementLogic(input);
+        PlayerInput linearInput = input;
+        linearInput.flags &= ~InputFlags.Up;
+        linearInput.flags &= ~InputFlags.Down;
+
+        ProcessMovementLogic(linearInput);
     }
 }
 

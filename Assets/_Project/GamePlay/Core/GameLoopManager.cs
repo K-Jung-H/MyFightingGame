@@ -609,7 +609,7 @@ public class GameLoopManager : MonoBehaviour
         if (isOver)
         {
             simState.currentPhase = RoundPhase.PostRound;
-            simState.phaseDelayTicks = Mathf.RoundToInt(ruleConfig.postRoundDelaySeconds * 60f);
+            simState.phaseDelayTicks = ruleConfig.postRoundDelayFrames;
         }
     }
 
@@ -672,11 +672,11 @@ public class GameLoopManager : MonoBehaviour
     {
         simState.currentTick = 0;
         simState.currentPhase = RoundPhase.PreRound;
-        simState.phaseDelayTicks = Mathf.RoundToInt(ruleConfig.preRoundDelaySeconds * 60f);
+        simState.phaseDelayTicks = ruleConfig.preRoundDelayFrames;
         simState.simulationScale = FP64.FromFloat(1f);
         simState.timeAccumulator = FP64.FromFloat(0f);
         
-        long recoveryTicksLong = (long)Mathf.Max(1f, ruleConfig.climaxRecoverySeconds * 60f);
+        long recoveryTicksLong = (long)Mathf.Max(1, ruleConfig.climaxRecoveryFrames);
         long oneRaw = FP64.FromFloat(1f).rawValue;
         long slowMoRaw = FP64.FromFloat(ruleConfig.climaxSlowMoScale).rawValue;
         climaxRecoveryStepFP = new FP64((oneRaw - slowMoRaw) / recoveryTicksLong);

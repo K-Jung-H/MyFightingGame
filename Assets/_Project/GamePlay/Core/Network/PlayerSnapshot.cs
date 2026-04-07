@@ -1,18 +1,18 @@
-public struct ActionControllerSnapshot
+public unsafe struct ActionControllerSnapshot
 {
-    public InputFlags[] comboSequence;
+    public fixed int comboSequence[10];
     public int comboCount;
     public BufferedAction? pendingAction;
     public DeterministicInputBuffer deterministicInputBuffer;
 }
 
-public struct CombatStateSnapshot
+public unsafe struct CombatStateSnapshot
 {
-    public int[] registeredHitGroups;
+    public fixed int registeredHitGroups[10];
     public int hitGroupCount;
 }
 
-public struct PlayerSnapshot
+public unsafe struct PlayerSnapshot
 {
     public FPVector3 position;
     public FPVector3 velocity;

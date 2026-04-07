@@ -22,16 +22,11 @@ public class PlayerCombat
         evaluator.Initialize(config);
     }
 
-    public void ExportState(ref PlayerSnapshot snapshot)
+    public unsafe void ExportState(ref PlayerSnapshot snapshot)
     {
         snapshot.currentHealth = this.currentHealth;
         snapshot.hitstopCounter = this.hitstopCounter;
         snapshot.currentHurtInfo = this.currentHurtInfo;
-
-        if (snapshot.combatState.registeredHitGroups == null || snapshot.combatState.registeredHitGroups.Length != 10)
-        {
-            snapshot.combatState.registeredHitGroups = new int[10];
-        }
 
         int index = 0;
         foreach (int hitId in registeredHitGroupIds)
@@ -43,7 +38,7 @@ public class PlayerCombat
         snapshot.combatState.hitGroupCount = index;
     }
 
-    public void ImportState(PlayerSnapshot snapshot)
+    public unsafe void ImportState(PlayerSnapshot snapshot)
     {
         if (this.currentHealth != snapshot.currentHealth)
         {
@@ -56,13 +51,9 @@ public class PlayerCombat
 
         registeredHitGroupIds.Clear();
         
-        bool hasValidHitGroups = snapshot.combatState.registeredHitGroups != null;
-        if (hasValidHitGroups)
+        for (int i = 0; i < snapshot.combatState.hitGroupCount; i++)
         {
-            for (int i = 0; i < snapshot.combatState.hitGroupCount; i++)
-            {
-                registeredHitGroupIds.Add(snapshot.combatState.registeredHitGroups[i]);
-            }
+            registeredHitGroupIds.Add(snapshot.combatState.registeredHitGroups[i]);
         }
     }
 
