@@ -12,18 +12,18 @@ public class LocalInputProvider
         playerTwoBinding = secondBinding;
     }
 
-    public PlayerInput GetCurrentInput(int currentFrame, int playerIndex, bool isFacingRight)
+    public PlayerInput GetCurrentInput(int currentFrame, int playerIndex, bool isFacingRight, bool isCameraFlipped)
     {
         PlayerInput input = new PlayerInput();
         input.frame = currentFrame;
 
         InputBinding binding = playerIndex == 0 ? playerOneBinding : playerTwoBinding;
-        input.flags = PollInput(binding, isFacingRight);
+        input.flags = PollInput(binding, isFacingRight, isCameraFlipped);
 
         return input;
     }
 
-    private InputFlags PollInput(InputBinding binding, bool isFacingRight)
+    private InputFlags PollInput(InputBinding binding, bool isFacingRight, bool isCameraFlipped)
     {
         bool isKeyboardValid = Keyboard.current != null;
         if (!isKeyboardValid)
@@ -31,8 +31,8 @@ public class LocalInputProvider
             return InputFlags.None;
         }
 
-        bool isUp = Keyboard.current[binding.upKey].isPressed;
-        bool isDown = Keyboard.current[binding.downKey].isPressed;
+        bool isPhysicalUp = Keyboard.current[binding.upKey].isPressed;
+        bool isPhysicalDown = Keyboard.current[binding.downKey].isPressed;
         bool isPhysicalLeft = Keyboard.current[binding.leftKey].isPressed;
         bool isPhysicalRight = Keyboard.current[binding.rightKey].isPressed;
         
@@ -43,6 +43,9 @@ public class LocalInputProvider
 
         bool isForward = isFacingRight ? isPhysicalRight : isPhysicalLeft;
         bool isBack = isFacingRight ? isPhysicalLeft : isPhysicalRight;
+
+        bool isUp = isPhysicalUp;
+        bool isDown = isPhysicalDown;
 
         return PacketManager.CreateFlags(isUp, isDown, isForward, isBack, isLP, isRP, isLK, isRK);
     }

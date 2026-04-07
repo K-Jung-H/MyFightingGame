@@ -212,7 +212,7 @@ public class GameLoopManager : MonoBehaviour
             if (connectionState.currentP2PNetwork != null)
             {
                 connectionState.currentP2PNetwork.PumpNetworkTick();
-                
+
                 if (!connectionState.currentP2PNetwork.GetIsConnected())
                 {
                     TriggerDesyncError();
@@ -221,29 +221,16 @@ public class GameLoopManager : MonoBehaviour
 
                 syncController.VerifySyncState();
 
-                bool isLocalFacingRight = true;
-                if (playerOne.controller != null && playerTwo.controller != null)
-                {
-                    FPVector3 p1Pos = playerOne.controller.GetFPPosition();
-                    FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
-                    FPVector3 diff = p2Pos - p1Pos;
-                    
-                    FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
-                    FPVector3 cameraRight = FPVector3.Cross(upVector, simState.sharedDepthAxis);
-                    
-                    FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
-                    bool isP1VisuallyOnLeft = dotProduct.rawValue > 0;
+                bool isP1VisuallyOnLeft = GetIsP1VisuallyOnLeft();
+                bool isLocalFacingRight = connectionState.localPlayerSlot == 0 ? isP1VisuallyOnLeft : !isP1VisuallyOnLeft;
 
-                    isLocalFacingRight = connectionState.localPlayerSlot == 0 ? isP1VisuallyOnLeft : !isP1VisuallyOnLeft;
-                    
-                    if (simState.isCameraFlipped)
-                    {
-                        isLocalFacingRight = !isLocalFacingRight;
-                    }
+                if (simState.isCameraFlipped)
+                {
+                    isLocalFacingRight = !isLocalFacingRight;
                 }
 
-                bool isTickProcessed = syncController.TryProcessNetworkTick(simState.currentTick, isLocalFacingRight, out PlayerInput p1Input, out PlayerInput p2Input);
-                
+                bool isTickProcessed = syncController.TryProcessNetworkTick(simState.currentTick, isLocalFacingRight, simState.isCameraFlipped, out PlayerInput p1Input, out PlayerInput p2Input);
+
                 if (isTickProcessed)
                 {
                     ProcessTick(p1Input, p2Input);
@@ -426,8 +413,20 @@ public class GameLoopManager : MonoBehaviour
             TriggerDesyncError
         );
 
-        SetupPlayer(playerOne, ruleConfig.p1SpawnPos);
-        SetupPlayer(playerTwo, ruleConfig.p2SpawnPos);
+        bool p1InvertDepth = false;
+        bool p2InvertDepth = false;
+
+        if (RoomStateManager.Instance != null)
+        {
+            int p1Side = RoomStateManager.Instance.roomModel.p1PreferredSide;
+            int p2Side = RoomStateManager.Instance.roomModel.p2PreferredSide;
+            
+            p1InvertDepth = p1Side == 1;
+            p2InvertDepth = p2Side == 0;
+        }
+
+        SetupPlayer(playerOne, ruleConfig.p1SpawnPos, p1InvertDepth);
+        SetupPlayer(playerTwo, ruleConfig.p2SpawnPos, p2InvertDepth);
 
         if (playerOne.controller != null && playerTwo.controller != null)
         {
@@ -443,6 +442,18 @@ public class GameLoopManager : MonoBehaviour
         if (playingUI != null) playingUI.SetCameraTargets(playerOne.instance, playerTwo.instance);
 
         ResetForNextRound();
+    }
+
+    private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos, bool invertDepth)
+    {
+        if (context.characterData == null) return;
+
+        context.instance = Instantiate(context.characterData.characterPrefab, spawnPos, Quaternion.identity);
+        context.renderer = context.instance.GetComponent<PlayerRenderer>();
+        context.controller = new PlayerController();
+        context.controller.Initialize(spawnPos, context.characterData, invertDepth);
+        context.controller.GetPhysics().SetGlobalGravity(ruleConfig.globalGravity);
+        if (context.renderer != null) context.renderer.InitializeRenderer(context.controller, context.characterData.animationMap.stateMap, context.characterData.effectTable);
     }
 
     private void ProcessP2PHandshake()
@@ -698,6 +709,8 @@ public class GameLoopManager : MonoBehaviour
             connectionState.currentP2PNetwork.ClearBuffer();
         }
 
+        syncController.ResetForNextRound();
+
         System.Array.Clear(stateBuffer, 0, stateBuffer.Length);
         
         SaveGameState(0);
@@ -816,18 +829,6 @@ public class GameLoopManager : MonoBehaviour
         simState.isResimulating = false;
     }
 
-    private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos)
-    {
-        if (context.characterData == null) return;
-
-        context.instance = Instantiate(context.characterData.characterPrefab, spawnPos, Quaternion.identity);
-        context.renderer = context.instance.GetComponent<PlayerRenderer>();
-        context.controller = new PlayerController();
-        context.controller.Initialize(spawnPos, context.characterData);
-        context.controller.GetPhysics().SetGlobalGravity(ruleConfig.globalGravity);
-        if (context.renderer != null) context.renderer.InitializeRenderer(context.controller, context.characterData.animationMap.stateMap, context.characterData.effectTable);
-    }
-
     private void SyncVisuals()
     {
         float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64.FromFloat(1f).rawValue;
@@ -854,11 +855,36 @@ public class GameLoopManager : MonoBehaviour
         if (ctx.renderer != null) ctx.renderer.PlayHitSpark(point, effect);
     }
 
-    private void ProcessOfflineTick()
+    private bool GetIsP1VisuallyOnLeft()
     {
-        bool isP1Right = playingUI != null && playingUI.IsPlayerOneOnRightSide();
-        PlayerInput p1 = inputProvider.GetCurrentInput(simState.currentTick, 0, !isP1Right);
-        PlayerInput p2 = inputProvider.GetCurrentInput(simState.currentTick, 1, isP1Right);
+        if (playerOne.controller == null || playerTwo.controller == null)
+        {
+            return true;
+        }
+
+        FPVector3 p1Pos = playerOne.controller.GetFPPosition();
+        FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
+        FPVector3 diff = p2Pos - p1Pos;
+
+        FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+        FPVector3 cameraRight = FPVector3.Cross(upVector, simState.sharedDepthAxis);
+
+        FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
+        return dotProduct.rawValue > 0;
+    }
+
+   private void ProcessOfflineTick()
+    {
+        bool isP1VisuallyOnLeft = GetIsP1VisuallyOnLeft();
+        bool isP1FacingRight = isP1VisuallyOnLeft;
+
+        if (simState.isCameraFlipped)
+        {
+            isP1FacingRight = !isP1FacingRight;
+        }
+
+        PlayerInput p1 = inputProvider.GetCurrentInput(simState.currentTick, 0, isP1FacingRight, simState.isCameraFlipped);
+        PlayerInput p2 = inputProvider.GetCurrentInput(simState.currentTick, 1, !isP1FacingRight, simState.isCameraFlipped);
         ProcessTick(p1, p2);
     }
 }

@@ -20,8 +20,11 @@ public class PlayerController : ITargetable, ISnapshotSync
     private InputFlags accumulatedHitstopFlags = InputFlags.None;
     private InputFlags accumulatedLogicFlags = InputFlags.None;
 
-    public void Initialize(Vector3 startPosition, CharacterDataSO characterData)
+    public bool invertDepthAxis { get; private set; }
+
+    public void Initialize(Vector3 startPosition, CharacterDataSO characterData, bool invertDepth = false)
     {
+        invertDepthAxis = invertDepth;
         config = characterData.config;
         currentFrame = 0;
         accumulatedHitstopFlags = InputFlags.None;

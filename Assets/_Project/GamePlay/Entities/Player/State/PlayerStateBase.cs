@@ -51,8 +51,10 @@ public abstract class PlayerStateBase
         if (isForwardPressed) inputVector.z = inputVector.z + FP64.FromFloat(1f);
         if (isBackPressed) inputVector.z = inputVector.z - FP64.FromFloat(1f);
 
-        if (isUpPressed) inputVector.x = inputVector.x - FP64.FromFloat(1f);
-        if (isDownPressed) inputVector.x = inputVector.x + FP64.FromFloat(1f);
+        FP64 depthMultiplier = controller.invertDepthAxis ? FP64.FromFloat(-1f) : FP64.FromFloat(1f);
+
+        if (isUpPressed) inputVector.x = inputVector.x + depthMultiplier;
+        if (isDownPressed) inputVector.x = inputVector.x - depthMultiplier;
 
         bool isMagnitudeZero = inputVector.x.rawValue == 0 && inputVector.z.rawValue == 0;
         if (isMagnitudeZero) return new FPVector3(new FP64(0), new FP64(0), new FP64(0));

@@ -58,6 +58,19 @@ public class NetworkSyncController
         syncState.isDesyncDetected = false;
     }
 
+    public void ResetForNextRound()
+    {
+        syncState.latestConfirmedTick = 0;
+        syncState.lastHashedTick = -1;
+        syncState.consecutiveDesyncCount = 0;
+        syncState.isDesyncDetected = false;
+        syncState.isSoftStalling = false;
+        
+        localHashBuffer.Clear();
+        System.Array.Clear(p1InputBuffer, 0, p1InputBuffer.Length);
+        System.Array.Clear(p2InputBuffer, 0, p2InputBuffer.Length);
+    }
+
     public RollbackNetworkSettings GetSettings()
     {
         return networkSettings;
@@ -66,7 +79,7 @@ public class NetworkSyncController
     /*
      * 온라인 시뮬레이션의 단일 틱 처리를 수행하고 틱 진행 가능 여부를 반환합니다.
      */
-    public bool TryProcessNetworkTick(int currentTick, bool isFacingRight, out PlayerInput p1Input, out PlayerInput p2Input)
+    public bool TryProcessNetworkTick(int currentTick, bool isFacingRight, bool isCameraFlipped, out PlayerInput p1Input, out PlayerInput p2Input)
     {
         p1Input = new PlayerInput();
         p2Input = new PlayerInput();
@@ -94,7 +107,7 @@ public class NetworkSyncController
             return false;
         }
 
-        UpdateLocalInput(isP1Local, currentTick, isFacingRight);
+        UpdateLocalInput(isP1Local, currentTick, isFacingRight, isCameraFlipped);
         PredictRemoteInput(isP1Local, currentTick);
 
         p1Input.flags = p1InputBuffer[currentTick % rollbackWindow];
@@ -228,9 +241,9 @@ public class NetworkSyncController
     /*
      * 로컬 물리 입력을 샘플링하여 지연 버퍼에 넣고 P2P 망으로 발송합니다.
      */
-    private void UpdateLocalInput(bool isP1Local, int currentTick, bool isFacingRight)
+    private void UpdateLocalInput(bool isP1Local, int currentTick, bool isFacingRight, bool isCameraFlipped)
     {
-        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localPlayerSlot, isFacingRight);
+        PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localPlayerSlot, isFacingRight, isCameraFlipped);
         int targetTick = currentTick + networkSettings.inputDelayFrames;
         int bufferIndex = targetTick % rollbackWindow;
 
