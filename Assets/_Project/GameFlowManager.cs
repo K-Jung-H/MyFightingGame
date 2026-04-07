@@ -38,7 +38,6 @@ public class GameFlowManager : MonoBehaviour
     [SerializeField] private string serverSceneName = "EmptyServerScene";
 
     private DummyMatchServer dummyServer;
-    private bool isFlowInitialized;
 
     private void Awake()
     {
@@ -49,16 +48,6 @@ public class GameFlowManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-
-    private void OnGUI()
-    {
-        bool isOnlineMode = (currentMode == ConnectionMode.OnlineClient);
-        if (isFlowInitialized && isOnlineMode)
-        {
-            DrawNetworkStatusGUI();
-            if (currentScene == GameSceneType.Server) return;
-        }
     }
 
     public void ChangeScene(GameSceneType targetSceneType)
@@ -76,9 +65,7 @@ public class GameFlowManager : MonoBehaviour
 
     public void StartDedicatedServer()
     {
-        currentMode = ConnectionMode.DedicatedServer;
-        isFlowInitialized = true;
-            
+        currentMode = ConnectionMode.DedicatedServer;            
         dummyServer = gameObject.AddComponent<DummyMatchServer>();
         dummyServer.StartServer();
         ChangeScene(GameSceneType.Server);
@@ -92,26 +79,12 @@ public class GameFlowManager : MonoBehaviour
     public void SelectOfflineMode()
     {
         currentMode = ConnectionMode.Offline;
-        isFlowInitialized = true;
         ChangeScene(GameSceneType.CharacterSelect);
     }
 
     public void SelectOnlineMode()
     {
         currentMode = ConnectionMode.OnlineClient;
-
-        if (ServerNetworkManager.Instance == null)
-        {
-            GameObject serverObj = new GameObject("ServerNetworkManager");
-            serverObj.AddComponent<ServerNetworkManager>();
-        }
-
-        if (RoomStateManager.Instance == null)
-        {
-            GameObject roomObj = new GameObject("RoomStateManager");
-            roomObj.AddComponent<RoomStateManager>();
-        }
-
         ChangeScene(GameSceneType.OnlineLobby);
     }
 
@@ -123,9 +96,12 @@ public class GameFlowManager : MonoBehaviour
             {
                 case GameSceneType.OnlineLobby:
                     currentMode = ConnectionMode.None;
-                    isFlowInitialized = false;
-                    if (ServerNetworkManager.Instance != null) Destroy(ServerNetworkManager.Instance.gameObject);
-                    if (RoomStateManager.Instance != null) Destroy(RoomStateManager.Instance.gameObject);
+                    
+                    if (ServerNetworkManager.Instance != null) 
+                    {
+                        Destroy(ServerNetworkManager.Instance.gameObject);
+                    }
+                    
                     ChangeScene(GameSceneType.GameModeSelect);
                     break;
                 case GameSceneType.OnlineMatchedRoom:
@@ -148,44 +124,5 @@ public class GameFlowManager : MonoBehaviour
                 ChangeScene(GameSceneType.GameModeSelect);
                 break;
         }
-    }
-    
-    private void HandleMatchAborted(GameSceneType targetScene)
-    {
-        isFlowInitialized = false;
-        
-        if (targetScene == GameSceneType.Start || targetScene == GameSceneType.GameModeSelect)
-        {
-            currentMode = ConnectionMode.None;
-            
-            if (ServerNetworkManager.Instance != null) Destroy(ServerNetworkManager.Instance.gameObject);
-            if (RoomStateManager.Instance != null) Destroy(RoomStateManager.Instance.gameObject);
-        }
-        else if (targetScene == GameSceneType.OnlineLobby)
-        {
-            currentMode = ConnectionMode.OnlineClient;
-        }
-        
-        ChangeScene(targetScene);
-    }
-
-    private void DrawNetworkStatusGUI()
-    {
-        float boxWidth = 420f;
-        float boxHeight = 60f;
-        float startX = 10f;
-        float startY = 360f;
-        
-        string modeStr = currentMode.ToString();
-        string netStatus = (currentMode == ConnectionMode.DedicatedServer) ? "[Dedicated Server Running]" : "[Online Mode]";
-
-        string displayText = $"{modeStr} | {netStatus}";
-        
-        GUIStyle customLabelStyle = new GUIStyle(GUI.skin.label);
-        customLabelStyle.fontSize = 18;
-        customLabelStyle.alignment = TextAnchor.MiddleLeft;
-
-        GUI.Box(new Rect(startX, startY, boxWidth, boxHeight), "");
-        GUI.Label(new Rect(startX + 10f, startY + 5f, boxWidth - 20f, boxHeight - 10f), displayText, customLabelStyle);
     }
 }

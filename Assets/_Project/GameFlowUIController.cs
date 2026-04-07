@@ -18,14 +18,6 @@ public class GameFlowUIController : MonoBehaviour
         }
     }
 
-    public void OnOnlineButtonClicked()
-    {
-        if (GameFlowManager.Instance != null)
-        {
-            GameFlowManager.Instance.SelectOnlineMode();
-        }
-    }
-
     public void OnBackButtonClicked()
     {
         if (GameFlowManager.Instance != null)

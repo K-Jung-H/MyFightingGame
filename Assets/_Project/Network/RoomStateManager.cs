@@ -62,6 +62,11 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnSceneChangeReceived -= HandleSceneChangeCommand;
             ServerNetworkManager.Instance.OnRoomStateBroadcastReceived -= HandleRoomStateBroadcast;
         }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public RoomStateType GetCurrentState()

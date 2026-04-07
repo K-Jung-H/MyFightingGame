@@ -152,7 +152,7 @@ public class GameLoopManager : MonoBehaviour
         }
         else
         {
-            InitializeMatch(false);
+            InitializeMatch();
         }
     }
 
@@ -336,12 +336,12 @@ public class GameLoopManager : MonoBehaviour
         if (connectionState.isWaitingForServerSync)
         {
             connectionState.isWaitingForServerSync = false;
-            InitializeMatch(true);
+            InitializeMatch();
             simState.isSimulationRunning = true;
         }
     }
 
-    private void InitializeMatch(bool isNetworkReset)
+    private void InitializeMatch()
     {
         int timeLimit = 99;
         int maxRds = 3;
@@ -754,7 +754,7 @@ public class GameLoopManager : MonoBehaviour
                     break;
                 case MatchEndActionType.Rematch:
                     if (playingUI != null) playingUI.HideMatchResult();
-                    InitializeMatch(false);
+                    InitializeMatch();
                     simState.isSimulationRunning = true;
                     break;
             }

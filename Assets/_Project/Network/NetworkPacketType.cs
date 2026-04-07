@@ -17,6 +17,9 @@ public static class NetworkPacketType
     public const byte P2PPing = 20;
     public const byte P2PPong = 21;
 
+    public const byte ServerPing = 22;
+    public const byte ServerPong = 23;
+
     public const byte ReportDisconnect = 24;
     public const byte MatchAborted = 25;
 

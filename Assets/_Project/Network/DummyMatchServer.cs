@@ -154,7 +154,7 @@ public class DummyMatchServer : MonoBehaviour
         UpdateRoomTimers();
     }
 
-    private void OnGUI()
+private void OnGUI()
     {
         GUI.skin.label.richText = true;
 
@@ -166,8 +166,35 @@ public class DummyMatchServer : MonoBehaviour
         GUILayout.BeginVertical("box");
         GUILayout.Label("<color=cyan><b>[ Lobby Server Status ]</b></color>");
         GUILayout.Space(5);
-        GUILayout.Label($"Active Connections: {connectionToRoom.Count}");
+        
+        int activeConnectionCount = 0;
+        for (int i = 0; i < connections.Length; i++)
+        {
+            if (connections[i].IsCreated)
+            {
+                activeConnectionCount++;
+            }
+        }
+        
+        GUILayout.Label($"Total Connections: {activeConnectionCount}");
         GUILayout.Label($"Active Rooms: {activeRooms.Count}");
+        
+        GUILayout.Space(5);
+        GUILayout.Label("<color=orange><b>- Connected Clients -</b></color>");
+        
+        for (int i = 0; i < connections.Length; i++)
+        {
+            if (!connections[i].IsCreated) continue;
+            
+            string locationInfo = "In Lobby";
+            if (connectionToRoom.TryGetValue(connections[i], out ServerRoom room))
+            {
+                locationInfo = $"Room [{room.roomCode}]";
+            }
+            
+            GUILayout.Label($"Client [{connections[i].GetHashCode()}] : {locationInfo}");
+        }
+        
         GUILayout.EndVertical();
 
         GUILayout.Space(15);
@@ -332,7 +359,7 @@ public class DummyMatchServer : MonoBehaviour
             case NetworkPacketType.RandomMatchRequest:
                 HandleRandomMatchRequest(conn); 
                 return;
-            case 22: 
+            case NetworkPacketType.ServerPing: 
                 SendServerPong(conn, stream.ReadFloat()); 
                 return;
         }
@@ -803,7 +830,7 @@ public class DummyMatchServer : MonoBehaviour
         int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
         if (sendStatus == 0)
         {
-            writer.WriteByte(23);
+            writer.WriteByte(NetworkPacketType.ServerPong);
             writer.WriteFloat(receivedTime);
             driver.EndSend(writer);
         }

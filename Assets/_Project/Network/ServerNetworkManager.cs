@@ -7,6 +7,7 @@ public class ServerNetworkManager : MonoBehaviour
 {
     public static ServerNetworkManager Instance { get; private set; }
 
+    public event Action<string> OnConnectionFailed;
     public event Action OnConnectionEstablished;
     public event Action<byte, RoomMetadata[]> OnSearchRoomResponseReceived;
     public event Action<bool, string, bool> OnJoinRoomResponseReceived;
@@ -29,12 +30,9 @@ public class ServerNetworkManager : MonoBehaviour
     private bool isConnected;
     private float lastPingTime;
     private float lastServerPacketReceiveTime;
-
     private const float PING_INTERVAL = 2.0f;
-    private const float SERVER_TIMEOUT_LIMIT = 10.0f;
+    private const float SERVER_TIMEOUT_LIMIT = 5.0f;
 
-    private const byte SERVER_PING_PACKET = 22;
-    private const byte SERVER_PONG_PACKET = 23;
 
     private void Awake()
     {
@@ -64,6 +62,12 @@ public class ServerNetworkManager : MonoBehaviour
     public void InitializeNetwork(string serverIp, ushort port)
     {
         if (isInitialized) return;
+
+        if (serverDriver.IsCreated)
+        {
+            serverDriver.ScheduleUpdate().Complete();
+            serverDriver.Dispose();
+        }
 
         serverDriver = NetworkDriver.Create();
         NetworkEndpoint endpoint = NetworkEndpoint.Parse(serverIp, port);
@@ -300,7 +304,7 @@ public class ServerNetworkManager : MonoBehaviour
 
     private void ProcessServerPing()
     {
-        if (!isConnected || !serverConnection.IsCreated) return;
+        if (!serverConnection.IsCreated) return;
 
         float currentTime = Time.realtimeSinceStartup;
         
@@ -310,6 +314,8 @@ public class ServerNetworkManager : MonoBehaviour
             return;
         }
 
+        if (!isConnected) return;
+
         if (currentTime - lastPingTime > PING_INTERVAL)
         {
             lastPingTime = currentTime;
@@ -317,7 +323,7 @@ public class ServerNetworkManager : MonoBehaviour
             int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
             if (sendStatus == 0)
             {
-                writer.WriteByte(SERVER_PING_PACKET);
+                writer.WriteByte(NetworkPacketType.ServerPing);
                 writer.WriteFloat(currentTime);
                 serverDriver.EndSend(writer);
             }
@@ -352,12 +358,22 @@ public class ServerNetworkManager : MonoBehaviour
             }
             else if (cmd == NetworkEvent.Type.Disconnect)
             {
+                bool wasConnected = isConnected;
                 isConnected = false;
+                isInitialized = false;
                 serverConnection = default;
-                OnMatchAbortedReceived?.Invoke(GameSceneType.Start);
+
+                if (wasConnected)
+                {
+                    OnMatchAbortedReceived?.Invoke(GameSceneType.Start);
+                }
+                else
+                {
+                    OnConnectionFailed?.Invoke("Failed to connect to the server.");
+                }
             }
         }
-    }
+    }    
 
     private void HandleServerData(byte packetType, ref DataStreamReader stream)
     {
@@ -444,7 +460,7 @@ public class ServerNetworkManager : MonoBehaviour
             stream.ReadFixedString64();
             OnGameStartReceived?.Invoke();
         }
-        else if (packetType == SERVER_PONG_PACKET)
+        else if (packetType == NetworkPacketType.ServerPong)
         {
             float sentTime = stream.ReadFloat();
         }
@@ -467,14 +483,28 @@ public class ServerNetworkManager : MonoBehaviour
 
     private void HandleServerTimeout()
     {
+        bool wasConnected = isConnected;
         isConnected = false;
+        isInitialized = false;
+        
         if (serverConnection.IsCreated)
         {
             serverDriver.Disconnect(serverConnection);
         }
+        
         serverConnection = default;
-        OnMatchAbortedReceived?.Invoke(GameSceneType.Start);
+
+        if (wasConnected)
+        {
+            OnMatchAbortedReceived?.Invoke(GameSceneType.Start);
+        }
+        else
+        {
+            OnConnectionFailed?.Invoke("Server connection timed out.");
+        }
     }
+
+
 
     private void CleanupDriver()
     {

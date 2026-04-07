@@ -12,11 +12,6 @@ public class OnlineMatchingManager : MonoBehaviour
 
     private void Start()
     {
-        if (ServerNetworkManager.Instance != null)
-        {
-            ServerNetworkManager.Instance.InitializeNetwork("127.0.0.1", 9000);
-        }
-
         if (playerSetting != null)
         {
             playerSetting.OnSideSelected += HandleSideChanged;
