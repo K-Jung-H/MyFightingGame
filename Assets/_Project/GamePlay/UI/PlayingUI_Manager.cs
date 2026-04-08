@@ -14,11 +14,22 @@ public class PlayingUI_Manager : MonoBehaviour
     public Sprite[] timerNumberSprites;
     public Sprite[] counterNumberSprites;
 
+    private bool isTrainingMode = false;
+
     public void InitializeUI()
     {
+        if (GameFlowManager.Instance != null)
+        {
+            isTrainingMode = GameFlowManager.Instance.currentBattleType == BattleType.Training;
+        }
+
         if (roundTimerDisplay != null)
         {
             roundTimerDisplay.InitializeSprites(timerNumberSprites);
+            if (isTrainingMode)
+            {
+                roundTimerDisplay.gameObject.SetActive(false);
+            }
         }
         
         if (roundBannerUI != null)
@@ -29,6 +40,11 @@ public class PlayingUI_Manager : MonoBehaviour
         if (matchResultUI != null)
         {
             matchResultUI.gameObject.SetActive(false);
+        }
+
+        if (isTrainingMode && winCounterUI != null)
+        {
+            winCounterUI.HideAllCounters();
         }
     }
 
@@ -56,6 +72,8 @@ public class PlayingUI_Manager : MonoBehaviour
 
     public void SetupWinCounter(int requiredWins)
     {
+        if (isTrainingMode) return;
+        
         if (winCounterUI != null)
         {
             winCounterUI.InitializeCounters(requiredWins);
@@ -65,16 +83,19 @@ public class PlayingUI_Manager : MonoBehaviour
 
     public void UpdateWinCounter(int leftWins, int rightWins)
     {
+        if (isTrainingMode) return;
         if (winCounterUI != null) winCounterUI.UpdateCounters(leftWins, rightWins);
     }
 
     public void UpdateRoundTimer(int remainingSeconds)
     {
+        if (isTrainingMode) return;
         if (roundTimerDisplay != null) roundTimerDisplay.SetNumber(remainingSeconds);
     }
 
     public void SyncBannerState(RoundPhase phase, int delayTicks, int timerFrames)
     {
+        if (isTrainingMode) return;
         if (roundBannerUI != null) roundBannerUI.SyncBannerState(phase, delayTicks, timerFrames);
     }
 

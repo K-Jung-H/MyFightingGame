@@ -26,6 +26,24 @@ public class WinCounterUIManager : MonoBehaviour
         UpdateActiveIcons(rightWinSlots, rightWins);
     }
 
+    public void HideAllCounters()
+    {
+        HideSlots(leftWinSlots);
+        HideSlots(rightWinSlots);
+    }
+
+    private void HideSlots(WinCounterSlot[] slots)
+    {
+        if (slots == null) return;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i].rootObject != null)
+            {
+                slots[i].rootObject.SetActive(false);
+            }
+        }
+    }
+
     private void SetSlotsState(WinCounterSlot[] slots, int requiredWins)
     {
         for (int i = 0; i < slots.Length; i++)
