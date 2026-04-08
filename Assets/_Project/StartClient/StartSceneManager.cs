@@ -69,9 +69,13 @@ public class StartSceneManager : MonoBehaviour
         if (animationCoroutine != null)
         {
             StopCoroutine(animationCoroutine);
+            animationCoroutine = null;
         }
         
+        backgroundAnimator.ResetTrigger("PlayAnim"); 
         backgroundAnimator.Play(targetAnimationStateName, 0, 1.0f);
+        backgroundAnimator.Update(0f); 
+        
         currentSceneState = StartSceneState.Finished;
     }
 
@@ -87,11 +91,19 @@ public class StartSceneManager : MonoBehaviour
 
     private IEnumerator TrackAnimationProgress()
     {
-        yield return null;
+        while (!backgroundAnimator.GetCurrentAnimatorStateInfo(0).IsName(targetAnimationStateName))
+        {
+            yield return null;
+        }
 
-        AnimatorStateInfo stateInfo = backgroundAnimator.GetCurrentAnimatorStateInfo(0);
-        yield return new WaitForSeconds(stateInfo.length);
+        while (backgroundAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1.0f)
+        {
+            yield return null;
+        }
 
-        currentSceneState = StartSceneState.Finished;
+        if (currentSceneState == StartSceneState.Animating)
+        {
+            currentSceneState = StartSceneState.Finished;
+        }
     }
 }

@@ -117,6 +117,14 @@ public class DummyMatchServer : MonoBehaviour
     private const int MAX_LOG_LINES = 15;
     private Vector2 scrollPosition;
 
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+        QualitySettings.vSyncCount = 0;
+        Physics.simulationMode = SimulationMode.Script;
+        Physics2D.simulationMode = SimulationMode2D.Script;
+    }
+
     private void Update()
     {
         if (!driver.IsCreated) return;
@@ -156,7 +164,7 @@ public class DummyMatchServer : MonoBehaviour
         UpdateRoomTimers();
     }
 
-private void OnGUI()
+    private void OnGUI()
     {
         GUI.skin.label.richText = true;
 
