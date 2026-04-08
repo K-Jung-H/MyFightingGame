@@ -35,22 +35,27 @@ public class CharacterSelectManager : MonoBehaviour
     public PlayerSelectContext leftContext;
     public PlayerSelectContext rightContext;
 
-    [Header("Start Sequence UI")]
     public TextMeshProUGUI countdownText;
     public GameObject startButtonObject;
     public TextMeshProUGUI startButtonText;
     public Color normalStartColor = Color.white;
     public Color pressedStartColor = Color.yellow;
 
+    public Button changeSideButton;
+
     private CharacterSelectTile[] gridTiles;
     private int gridColumns;
     private int character3DLayer;
-    private bool isLobbyReady;
+
+    public bool isLobbyReady { get; private set; }
     private bool isLocalCountdownActive;
     private float localCountdownTimer;
-    private bool isStartButtonReady;
     private int lastDisplayedCountdown = -1;
-    private bool isStartRequestSent;
+
+    public bool isStartButtonReady { get; private set; }
+    public bool isStartRequestSent { get; private set; }
+
+    private ICharacterSelectLogic currentLogic;
 
     private void Start()
     {
@@ -62,7 +67,8 @@ public class CharacterSelectManager : MonoBehaviour
 
         if (countdownText != null) countdownText.text = "";
         if (startButtonObject != null) startButtonObject.SetActive(false);
-        
+        if (changeSideButton != null) changeSideButton.gameObject.SetActive(false);
+
         character3DLayer = LayerMask.NameToLayer("Character3D");
         gridTiles = characterGridPanel.GetComponentsInChildren<CharacterSelectTile>();
 
@@ -89,6 +95,14 @@ public class CharacterSelectManager : MonoBehaviour
         UpdateLockUI(leftContext);
         UpdateLockUI(rightContext);
 
+        BattleType currentBattle = GameFlowManager.Instance.currentBattleType;
+        
+        if (currentBattle == BattleType.Training) currentLogic = new TrainingSelectLogic();
+        else if (currentBattle == BattleType.OnlineBattle) currentLogic = new OnlineSelectLogic();
+        else currentLogic = new OfflineSelectLogic();
+
+        currentLogic.Initialize(this);
+
         SubscribeToStateEvents();
         SyncInitialRoomState();
         isLobbyReady = true;
@@ -99,18 +113,7 @@ public class CharacterSelectManager : MonoBehaviour
         if (!isLobbyReady) return;
 
         UpdateCountdownUI();
-
-        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
-        
-        if (currentMode == ConnectionMode.Offline)
-        {
-            ProcessOfflineModeInput();
-            EvaluateOfflineState();
-        }
-        else if (currentMode == ConnectionMode.OnlineClient)
-        {
-            ProcessOnlineModeInput();
-        }
+        currentLogic.ProcessInput();
     }
 
     private void OnDestroy()
@@ -140,7 +143,7 @@ public class CharacterSelectManager : MonoBehaviour
 
     private void SyncInitialRoomState()
     {
-        if (RoomStateManager.Instance != null && GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        if (RoomStateManager.Instance != null && GameFlowManager.Instance.currentConnectionMode == ConnectionMode.OnlineClient)
         {
             RoomStateModel model = RoomStateManager.Instance.roomModel;
             HandleCharacterSelectUpdated(
@@ -160,7 +163,7 @@ public class CharacterSelectManager : MonoBehaviour
             {
                 isLocalCountdownActive = false;
                 
-                if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
+                if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.Offline)
                 {
                     HandleStartButtonActivated();
                 }
@@ -177,7 +180,13 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
-    private void EvaluateOfflineState()
+    public void SetStartRequestSent()
+    {
+        isStartRequestSent = true;
+        if (startButtonText != null) startButtonText.color = pressedStartColor;
+    }
+
+    public void EvaluateOfflineState()
     {
         if (leftContext.isLocked && rightContext.isLocked)
         {
@@ -192,151 +201,9 @@ public class CharacterSelectManager : MonoBehaviour
         }
     }
 
-    private void ProcessOfflineModeInput()
-    {
-        HandleLocalInput(1, leftContext);
-        HandleLocalInput(2, rightContext);
-    }
-
-    private void ProcessOnlineModeInput()
-    {
-        if (RoomStateManager.Instance == null) return;
-
-        int localSlot = RoomStateManager.Instance.GetLocalPlayerSlot(); 
-        RoomStateModel model = RoomStateManager.Instance.roomModel;
-
-        int mySide = (localSlot == 0) ? model.p1PreferredSide : model.p2PreferredSide;
-        PlayerSelectContext myContext = GetContextBySide(mySide);
-
-        HandleLocalInput(localSlot + 1, myContext);
-    }
-
-    private PlayerSelectContext GetContextBySide(int side)
-    {
-        return side == 0 ? leftContext : rightContext;
-    }
-
-    private void HandleLocalInput(int playerId, PlayerSelectContext context)
-    {
-        if (Keyboard.current == null) return;
-
-        ConnectionMode currentMode = GameFlowManager.Instance.currentMode;
-        bool isOfflineMode = currentMode == ConnectionMode.Offline;
-
-        bool isSelectPressed = GetSelectInput(context);
-        bool isLockInput = isOfflineMode ? GetOfflineLockInput(context) : isSelectPressed;
-        bool isUnlockInput = isOfflineMode ? GetOfflineUnlockInput(context) : isSelectPressed;
-
-        if (isStartButtonReady)
-        {
-            if (isSelectPressed && !isStartRequestSent)
-            {
-                isStartRequestSent = true;
-                if (startButtonText != null) startButtonText.color = pressedStartColor;
-                
-                if (isOfflineMode)
-                {
-                    GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
-                }
-                else if (ServerNetworkManager.Instance != null)
-                {
-                    ServerNetworkManager.Instance.SendStartRequest();
-                }
-            }
-            return;
-        }
-
-        if (!context.isLocked && isLockInput)
-        {
-            context.isLocked = true;
-            UpdateLockUI(context);
-            NotifyStateToServer(playerId, context);
-        }
-        else if (context.isLocked && isUnlockInput)
-        {
-            context.isLocked = false;
-            UpdateLockUI(context);
-            NotifyStateToServer(playerId, context);
-        }
-
-        if (context.isLocked) return;
-
-        int move = GetMovementInput(context);
-        if (move != 0)
-        {
-            int oldIndex = context.currentIndex;
-            context.currentIndex = (context.currentIndex + move + characterRoster.Length) % characterRoster.Length;
-            
-            UpdateCharacterDisplay(context);
-            UpdateSpecificTiles(oldIndex, context.currentIndex);
-            NotifyStateToServer(playerId, context);
-        }
-    }
-
-    private void NotifyStateToServer(int playerId, PlayerSelectContext context)
-    {
-        if (context.isLocked)
-        {
-            SaveCharacterData(playerId, context.currentIndex);
-        }
-
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient && ServerNetworkManager.Instance != null)
-        {
-            ServerNetworkManager.Instance.SendSelectUpdate(playerId == 1 ? 0 : 1, context.currentIndex, context.isLocked);
-        }
-    }
-
     private void HandleCharacterSelectUpdated(int p1Idx, bool p1Lock, int p1Side, int p2Idx, bool p2Lock, int p2Side)
     {
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
-        {
-            UpdateRemoteState(GetContextBySide(p1Side), p1Idx, p1Lock, 1);
-            UpdateRemoteState(GetContextBySide(p2Side), p2Idx, p2Lock, 2);
-            return;
-        }
-
-        int localSlot = RoomStateManager.Instance != null ? RoomStateManager.Instance.GetLocalPlayerSlot() : 0;
-        
-        int mySide = (localSlot == 0) ? p1Side : p2Side;
-        int opponentSide = 1 - mySide; 
-
-        PlayerSelectContext myContext = GetContextBySide(mySide);
-        PlayerSelectContext opponentContext = GetContextBySide(opponentSide);
-
-        if (localSlot == 0) 
-        {
-            UpdateRemoteState(myContext, p1Idx, p1Lock, 1);        
-            UpdateRemoteState(opponentContext, p2Idx, p2Lock, 2);  
-        }
-        else 
-        {
-            UpdateRemoteState(opponentContext, p1Idx, p1Lock, 1);  
-            UpdateRemoteState(myContext, p2Idx, p2Lock, 2);     
-        }
-    }
-
-    private void UpdateRemoteState(PlayerSelectContext context, int newIdx, bool newLock, int playerId)
-    {
-        newIdx = Mathf.Clamp(newIdx, 0, characterRoster.Length - 1);
-
-        if (context.currentIndex != newIdx)
-        {
-            int oldIdx = context.currentIndex;
-            context.currentIndex = newIdx;
-            UpdateCharacterDisplay(context);
-            UpdateSpecificTiles(oldIdx, newIdx);
-        }
-
-        if (context.isLocked != newLock)
-        {
-            context.isLocked = newLock;
-            UpdateLockUI(context);
-            
-            if (newLock)
-            {
-                SaveCharacterData(playerId, newIdx);
-            }
-        }
+        currentLogic.OnStateUpdatedFromServer(p1Idx, p1Lock, p1Side, p2Idx, p2Lock, p2Side);
     }
 
     private void HandleCountdownUpdated(bool isStarted)
@@ -364,46 +231,46 @@ public class CharacterSelectManager : MonoBehaviour
         if (startButtonText != null) startButtonText.color = normalStartColor;
     }
 
-    private void SaveCharacterData(int playerId, int index)
+    public void SaveCharacterData(int playerId, int index)
     {
         if (playerId == 1) MatchDataManager.P1CharacterData = characterRoster[index].inGameData;
         else if (playerId == 2) MatchDataManager.P2CharacterData = characterRoster[index].inGameData;
     }
 
-    private bool GetSelectInput(PlayerSelectContext context)
+    public bool GetSelectInput(PlayerSelectContext context)
     {
         if (context.inputBinding.selectKey == Key.None) return false;
         return Keyboard.current[context.inputBinding.selectKey].wasPressedThisFrame;
     }
 
-    private bool GetOfflineLockInput(PlayerSelectContext context)
+    public bool GetOfflineLockInput(PlayerSelectContext context)
     {
         bool isLpPressed = context.inputBinding.lpKey != Key.None && Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
         bool isRpPressed = context.inputBinding.rpKey != Key.None && Keyboard.current[context.inputBinding.rpKey].wasPressedThisFrame;
         return isLpPressed || isRpPressed;
     }
 
-    private bool GetOfflineUnlockInput(PlayerSelectContext context)
+    public bool GetOfflineUnlockInput(PlayerSelectContext context)
     {
         bool isLkPressed = context.inputBinding.lkKey != Key.None && Keyboard.current[context.inputBinding.lkKey].wasPressedThisFrame;
         bool isRkPressed = context.inputBinding.rkKey != Key.None && Keyboard.current[context.inputBinding.rkKey].wasPressedThisFrame;
         return isLkPressed || isRkPressed;
     }
 
-    private int GetMovementInput(PlayerSelectContext context)
+    public int GetMovementInput(PlayerSelectContext context)
     {
         if (context.inputBinding.leftKey != Key.None && Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame) return -1;
         if (context.inputBinding.rightKey != Key.None && Keyboard.current[context.inputBinding.rightKey].wasPressedThisFrame) return 1;
         return 0;
     }
 
-    private void UpdateLockUI(PlayerSelectContext context)
+    public void UpdateLockUI(PlayerSelectContext context)
     {
         if (context.statusText != null) context.statusText.text = context.isLocked ? "Ready" : "Selecting";
         if (context.lockIconObject != null) context.lockIconObject.SetActive(context.isLocked);
     }
 
-    private void UpdateSpecificTiles(int oldIndex, int newIndex)
+    public void UpdateSpecificTiles(int oldIndex, int newIndex)
     {
         UpdateTileVisual(oldIndex);
         UpdateTileVisual(newIndex);
@@ -412,12 +279,17 @@ public class CharacterSelectManager : MonoBehaviour
     private void UpdateTileVisual(int targetIndex)
     {
         if (targetIndex < 0 || targetIndex >= gridTiles.Length) return;
-        bool isLeft = (targetIndex == leftContext.currentIndex);
-        bool isRight = (targetIndex == rightContext.currentIndex);
+        
+        bool isLeftVisible = leftContext.illustrationImage != null && leftContext.illustrationImage.gameObject.activeSelf;
+        bool isRightVisible = rightContext.illustrationImage != null && rightContext.illustrationImage.gameObject.activeSelf;
+
+        bool isLeft = isLeftVisible && (targetIndex == leftContext.currentIndex);
+        bool isRight = isRightVisible && (targetIndex == rightContext.currentIndex);
+        
         gridTiles[targetIndex].UpdateVisuals(isLeft, isRight, leftContext.cursorColor, rightContext.cursorColor);
     }
 
-    private void UpdateCharacterDisplay(PlayerSelectContext context)
+    public void UpdateCharacterDisplay(PlayerSelectContext context)
     {
         CharacterSelectDataSO data = characterRoster[context.currentIndex];
         
@@ -433,6 +305,18 @@ public class CharacterSelectManager : MonoBehaviour
         context.loadCoroutine = StartCoroutine(SpawnModelRoutine(context, context.currentIndex));
     }
 
+    public void SetContextVisibility(PlayerSelectContext context, bool visible)
+    {
+        if (context.illustrationImage != null) context.illustrationImage.gameObject.SetActive(visible);
+        if (context.nameText != null) context.nameText.gameObject.SetActive(visible);
+        if (context.statusText != null) context.statusText.gameObject.SetActive(visible);
+        if (context.lockIconObject != null) context.lockIconObject.SetActive(visible && context.isLocked);
+        
+        if (context.currentModel != null) context.currentModel.SetActive(visible);
+        
+        UpdateSpecificTiles(context.currentIndex, context.currentIndex);
+    }
+
     private IEnumerator SpawnModelRoutine(PlayerSelectContext context, int targetIndex)
     {
         yield return new WaitForSeconds(modelLoadDelay);
@@ -444,13 +328,20 @@ public class CharacterSelectManager : MonoBehaviour
         {
             context.currentModel = Instantiate(data.modelPrefab, context.displayTransform.position, context.displayTransform.rotation, context.displayTransform);
             SetLayerRecursively(context.currentModel, character3DLayer);
-            Animator anim = context.currentModel.GetComponentInChildren<Animator>();
-            if (anim != null && sharedSelectAnimator != null)
+            
+            bool isVisible = (context.illustrationImage != null && context.illustrationImage.gameObject.activeSelf);
+            context.currentModel.SetActive(isVisible);
+
+            if (isVisible)
             {
-                anim.runtimeAnimatorController = sharedSelectAnimator;
-                anim.SetBool("IsMirrored", context.isMirrored);
-                context.lastIdleIndex = (maxRandomIdles > 1) ? UnityEngine.Random.Range(0, maxRandomIdles) : 0;
-                anim.Play("Selecting_Idle_" + context.lastIdleIndex, 0, 0f);
+                Animator anim = context.currentModel.GetComponentInChildren<Animator>();
+                if (anim != null && sharedSelectAnimator != null)
+                {
+                    anim.runtimeAnimatorController = sharedSelectAnimator;
+                    anim.SetBool("IsMirrored", context.isMirrored);
+                    context.lastIdleIndex = (maxRandomIdles > 1) ? UnityEngine.Random.Range(0, maxRandomIdles) : 0;
+                    anim.Play("Selecting_Idle_" + context.lastIdleIndex, 0, 0f);
+                }
             }
         }
     }

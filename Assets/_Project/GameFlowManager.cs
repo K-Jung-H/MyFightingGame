@@ -10,6 +10,14 @@ public enum ConnectionMode
     DedicatedServer
 }
 
+public enum BattleType
+{
+    None,
+    Training,
+    OfflineBattle,
+    OnlineBattle
+}
+
 public enum GameSceneType
 {
     Start,
@@ -26,7 +34,8 @@ public class GameFlowManager : MonoBehaviour
 {
     public static GameFlowManager Instance { get; private set; }
 
-    public ConnectionMode currentMode = ConnectionMode.None;
+    public ConnectionMode currentConnectionMode = ConnectionMode.None;
+    public BattleType currentBattleType = BattleType.None;
     public GameSceneType currentScene = GameSceneType.Start;
     
     [SerializeField] private string startSceneName = "StartScene";
@@ -65,7 +74,8 @@ public class GameFlowManager : MonoBehaviour
 
     public void StartDedicatedServer()
     {
-        currentMode = ConnectionMode.DedicatedServer;            
+        currentConnectionMode = ConnectionMode.DedicatedServer;            
+        currentBattleType = BattleType.None;
         dummyServer = gameObject.AddComponent<DummyMatchServer>();
         dummyServer.StartServer();
         ChangeScene(GameSceneType.Server);
@@ -73,29 +83,34 @@ public class GameFlowManager : MonoBehaviour
 
     public void SelectTrainingMode()
     {
-        Debug.Log("Training Mode Selected");
+        currentConnectionMode = ConnectionMode.Offline;
+        currentBattleType = BattleType.Training;
+        ChangeScene(GameSceneType.CharacterSelect);
     }
 
     public void SelectOfflineMode()
     {
-        currentMode = ConnectionMode.Offline;
+        currentConnectionMode = ConnectionMode.Offline;
+        currentBattleType = BattleType.OfflineBattle;
         ChangeScene(GameSceneType.CharacterSelect);
     }
 
     public void SelectOnlineMode()
     {
-        currentMode = ConnectionMode.OnlineClient;
+        currentConnectionMode = ConnectionMode.OnlineClient;
+        currentBattleType = BattleType.OnlineBattle;
         ChangeScene(GameSceneType.OnlineLobby);
     }
 
     public void GoBack()
     {
-        if (currentMode == ConnectionMode.OnlineClient)
+        if (currentConnectionMode == ConnectionMode.OnlineClient)
         {
             switch (currentScene)
             {
                 case GameSceneType.OnlineLobby:
-                    currentMode = ConnectionMode.None;
+                    currentConnectionMode = ConnectionMode.None;
+                    currentBattleType = BattleType.None;
                     
                     if (ServerNetworkManager.Instance != null) 
                     {

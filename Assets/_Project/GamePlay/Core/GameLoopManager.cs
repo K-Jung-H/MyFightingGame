@@ -139,7 +139,7 @@ public class GameLoopManager : MonoBehaviour
     {
         DetermineCameraFlipState();
 
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.OnlineClient)
         {
             simState.isSimulationRunning = false;
             connectionState.isWaitingForP2PConnection = true;
@@ -179,7 +179,7 @@ public class GameLoopManager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.OnlineClient)
         {
             if (connectionState.isWaitingForP2PConnection)
             {
@@ -246,7 +246,7 @@ public class GameLoopManager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline) return;
+        if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.Offline) return;
 
         NetworkSyncState syncState = syncController.GetSyncState();
         int rollbackFrames = Mathf.Max(0, simState.currentTick - syncState.latestConfirmedTick);
@@ -381,12 +381,12 @@ public class GameLoopManager : MonoBehaviour
             ? MatchDataManager.RightKeyBindPreset.bindingData 
             : InputBinding.GetDefaultP2();
 
-        if (GameFlowManager.Instance.currentMode == ConnectionMode.Offline)
+        if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.Offline)
         {
             playerOne.customBinding = leftBinding;
             playerTwo.customBinding = rightBinding;
         }
-        else if (GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient)
+        else if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.OnlineClient)
         {
             int localSlot = RoomStateManager.Instance != null ? RoomStateManager.Instance.GetLocalPlayerSlot() : 0;
             
@@ -585,7 +585,7 @@ public class GameLoopManager : MonoBehaviour
                     
                     if (!simState.isResimulating)
                     {
-                        bool isOnline = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient;
+                        bool isOnline = GameFlowManager.Instance.currentConnectionMode == ConnectionMode.OnlineClient;
                         
                         if (isOnline)
                         {
@@ -733,7 +733,7 @@ public class GameLoopManager : MonoBehaviour
 
     private void HandleMatchEndAction(MatchEndActionType actionType)
     {
-        bool isOnline = GameFlowManager.Instance.currentMode == ConnectionMode.OnlineClient;
+        bool isOnline = GameFlowManager.Instance.currentConnectionMode == ConnectionMode.OnlineClient;
 
         if (isOnline)
         {

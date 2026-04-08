@@ -27,7 +27,7 @@ public class DebugHUD : MonoBehaviour
 
     private void Start()
     {
-        bool isOnline = GameFlowManager.Instance.currentMode != ConnectionMode.Offline;
+        bool isOnline = GameFlowManager.Instance.currentConnectionMode != ConnectionMode.Offline;
         isShowAllHUD = isOnline;
         isShowServer = isOnline;
         
