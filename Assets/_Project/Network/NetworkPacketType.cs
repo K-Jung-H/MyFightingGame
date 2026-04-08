@@ -42,4 +42,6 @@ public static class NetworkPacketType
 
     public const byte CancelPhaseRequest = 44;
     public const byte RandomMatchRequest = 45;
+
+    public const byte ChatMessage = 50;
 }

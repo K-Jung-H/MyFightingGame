@@ -375,6 +375,9 @@ private void OnGUI()
             case NetworkPacketType.RoomLeaveRequest: 
                 HandleRoomLeaveRequest(conn, currentRoom); 
                 break;
+            case NetworkPacketType.ChatMessage:
+                HandleChatMessage(conn, currentRoom, ref stream);
+                break;
             case NetworkPacketType.ReportDisconnect: 
                 ResolveDisconnect(conn, currentRoom); 
                 break;
@@ -775,6 +778,7 @@ private void OnGUI()
         {
             SendSlotId(conn, 1);
             BroadcastRoomState(targetRoom);
+            BroadcastChatMessage(targetRoom, 0, "Player 2 joined the room.");
         }
     }
 
@@ -822,6 +826,7 @@ private void OnGUI()
         {
             SendSlotId(conn, 1);
             BroadcastRoomState(targetRoom);
+            BroadcastChatMessage(targetRoom, 0, "Player 2 joined the room.");
         }
     }
 
@@ -858,6 +863,8 @@ private void OnGUI()
             
             if (room.p2.IsCreated && room.currentState != RoomStateType.InGame)
             {
+                BroadcastChatMessage(room, 0, "Player 1 left the room.");
+
                 room.p1 = room.p2;
                 room.p2 = default;
                 
@@ -895,6 +902,9 @@ private void OnGUI()
         else if (conn == room.p2)
         {
             LogEvent($"Room [{room.roomCode}] P2 Disconnected.");
+
+            BroadcastChatMessage(room, 0, "Player 2 left the room.");
+            
             room.p2 = default;
             room.stateModel.isP2Connected = false;
             room.stateModel.p2Wins = 0;
@@ -948,6 +958,32 @@ private void OnGUI()
         if (suspectConn.IsCreated) BroadcastMatchAborted(suspectConn, targetSceneInt);
 
         DestroyRoom(room);
+    }
+
+    private void HandleChatMessage(NetworkConnection conn, ServerRoom room, ref DataStreamReader stream)
+    {
+        string msg = stream.ReadFixedString128().ToString();
+        byte senderType = (conn == room.p1) ? (byte)1 : (byte)2;
+
+        BroadcastChatMessage(room, senderType, msg);
+    }
+
+    private void BroadcastChatMessage(ServerRoom room, byte senderType, string message)
+    {
+        if (room.p1.IsCreated) SendChatMessageToClient(room.p1, senderType, message);
+        if (room.p2.IsCreated) SendChatMessageToClient(room.p2, senderType, message);
+    }
+
+    private void SendChatMessageToClient(NetworkConnection conn, byte senderType, string message)
+    {
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.ChatMessage);
+            writer.WriteByte(senderType);
+            writer.WriteFixedString128(new FixedString128Bytes(message));
+            driver.EndSend(writer);
+        }
     }
 
     private void BroadcastRoomState(ServerRoom room)

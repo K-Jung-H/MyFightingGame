@@ -11,6 +11,7 @@ public class ServerNetworkManager : MonoBehaviour
     public event Action OnConnectionEstablished;
     public event Action<byte, RoomMetadata[]> OnSearchRoomResponseReceived;
     public event Action<bool, string, bool> OnJoinRoomResponseReceived;
+    public event Action<byte, string> OnChatMessageReceived;
     public event Action<RoomStateModel> OnRoomStateBroadcastReceived;
 
     public event Action<int, bool, int, int, bool, int> OnSelectBroadcastReceived;
@@ -130,6 +131,19 @@ public class ServerNetworkManager : MonoBehaviour
             writer.WriteByte(NetworkPacketType.JoinRoomRequest);
             writer.WriteFixedString64(new FixedString64Bytes(roomCode));
             writer.WriteFixedString64(new FixedString64Bytes(password ?? ""));
+            serverDriver.EndSend(writer);
+        }
+    }
+
+    public void SendChatMessage(string message)
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.ChatMessage);
+            writer.WriteFixedString128(new FixedString128Bytes(message));
             serverDriver.EndSend(writer);
         }
     }
@@ -404,6 +418,12 @@ public class ServerNetworkManager : MonoBehaviour
             bool isHost = stream.ReadByte() == 1;
             
             OnJoinRoomResponseReceived?.Invoke(isSuccess, roomCodeOrReason, isHost);
+        }
+        else if (packetType == NetworkPacketType.ChatMessage)
+        {
+            byte senderType = stream.ReadByte();
+            string message = stream.ReadFixedString128().ToString();
+            OnChatMessageReceived?.Invoke(senderType, message);
         }
         else if (packetType == NetworkPacketType.RoomStateBroadcast)
         {
