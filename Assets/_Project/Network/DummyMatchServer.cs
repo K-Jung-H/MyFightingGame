@@ -376,7 +376,10 @@ public class DummyMatchServer : MonoBehaviour
         
         if (!connectionToRoom.TryGetValue(conn, out ServerRoom currentRoom))
         {
-            LogEvent($"<color=red>Dropped Packet [{packetType}] - Client not in a room.</color>");
+            if (packetType != NetworkPacketType.ReportPing)
+            {
+                LogEvent($"<color=red>Dropped Packet [{packetType}] - Client not in a room.</color>");
+            }
             return;
         }
 
@@ -927,6 +930,9 @@ public class DummyMatchServer : MonoBehaviour
                 room.stateModel.isP2Ready = false;
                 room.stateModel.p2CharacterIndex = 0;
                 room.stateModel.isP2CharacterLocked = false;
+
+                room.p1Ping = room.p2Ping;
+                room.p2Ping = 0;
                 
                 SendSlotId(room.p1, 0);
             }
@@ -939,6 +945,8 @@ public class DummyMatchServer : MonoBehaviour
                 room.stateModel.isP1CharacterLocked = false;
                 room.stateModel.isP1Ready = false;
                 room.isP1StartRequested = false;
+
+                room.p1Ping = 0;
             }
             isMatched = true;
         }
@@ -955,6 +963,9 @@ public class DummyMatchServer : MonoBehaviour
             room.stateModel.isP2CharacterLocked = false;
             room.stateModel.isP2Ready = false;
             room.isP2StartRequested = false;
+
+            room.p2Ping = 0;
+
             isMatched = true;
         }
 
