@@ -14,6 +14,8 @@ public class ServerRoom
 
     public NetworkConnection p1;
     public NetworkConnection p2;
+    public int p1Ping = 0;
+    public int p2Ping = 0;
     public RoomStateModel stateModel;
     
     public bool isCountdownStarted;
@@ -377,6 +379,9 @@ private void OnGUI()
                 break;
             case NetworkPacketType.ChatMessage:
                 HandleChatMessage(conn, currentRoom, ref stream);
+                break;
+            case NetworkPacketType.ReportPing:
+                HandleReportPing(conn, currentRoom, ref stream);
                 break;
             case NetworkPacketType.ReportDisconnect: 
                 ResolveDisconnect(conn, currentRoom); 
@@ -841,6 +846,36 @@ private void OnGUI()
         }
     }
 
+    private void HandleReportPing(NetworkConnection conn, ServerRoom room, ref DataStreamReader stream)
+    {
+        if (room == null) return;
+
+        int reportedPing = stream.ReadInt();
+        
+        if (conn == room.p1) room.p1Ping = reportedPing;
+        else if (conn == room.p2) room.p2Ping = reportedPing;
+
+        BroadcastRoomPings(room);
+    }
+
+    private void BroadcastRoomPings(ServerRoom room)
+    {
+        if (room.p1.IsCreated) SendPingUpdateToClient(room.p1, room.p1Ping, room.p2Ping);
+        if (room.p2.IsCreated) SendPingUpdateToClient(room.p2, room.p1Ping, room.p2Ping);
+    }
+
+    private void SendPingUpdateToClient(NetworkConnection conn, int p1Ping, int p2Ping)
+    {
+        int sendStatus = driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.RoomPingUpdate);
+            writer.WriteInt(p1Ping);
+            writer.WriteInt(p2Ping);
+            driver.EndSend(writer);
+        }
+    }
+
     private void HandleRoomLeaveRequest(NetworkConnection conn, ServerRoom room)
     {
         string sender = (conn == room.p1) ? "P1" : "P2";
@@ -904,7 +939,7 @@ private void OnGUI()
             LogEvent($"Room [{room.roomCode}] P2 Disconnected.");
 
             BroadcastChatMessage(room, 0, "Player 2 left the room.");
-            
+
             room.p2 = default;
             room.stateModel.isP2Connected = false;
             room.stateModel.p2Wins = 0;

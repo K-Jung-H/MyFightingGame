@@ -39,12 +39,28 @@ public class PlayerInfoPanel : MonoBehaviour
         }
     }
 
-    private void UpdatePingVisual(int pingMs)
+    public void UpdatePingVisual(int pingMs)
     {
-        pingText.text = $"{pingMs} ms";
-        
-        if (pingMs <= 50) pingText.color = Color.green;
-        else if (pingMs <= 100) pingText.color = Color.yellow;
-        else pingText.color = Color.red;
+        if (pingMs <= 0) 
+        {
+            pingText.text = "Ping: -";
+            return;
+        }
+
+        string colorHex = "#00FFCC";
+        string statusStr = "Good";
+
+        if (pingMs >= 150) 
+        {
+            colorHex = "#FF4444";
+            statusStr = "Bad";
+        }
+        else if (pingMs >= 80) 
+        {
+            colorHex = "#FFCC00";
+            statusStr = "Fair";
+        }
+
+        pingText.text = $"Ping: <color={colorHex}>{pingMs}ms ({statusStr})</color>";
     }
 }

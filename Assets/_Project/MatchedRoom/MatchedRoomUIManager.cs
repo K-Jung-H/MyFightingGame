@@ -24,6 +24,25 @@ public class MatchedRoomUIManager : MonoBehaviour
     [SerializeField] private Button startMatchButton;
     [SerializeField] private Button leaveButton;
 
+    private int lastP1Ping = 0;
+    private int lastP2Ping = 0;
+
+    private void OnEnable()
+    {
+        if (ServerNetworkManager.Instance != null)
+        {
+            ServerNetworkManager.Instance.OnRoomPingsUpdated += HandleRoomPings;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (ServerNetworkManager.Instance != null)
+        {
+            ServerNetworkManager.Instance.OnRoomPingsUpdated -= HandleRoomPings;
+        }
+    }
+
     private void Start()
     {
         foreach (RuleOption option in roundOptions)
@@ -68,8 +87,8 @@ public class MatchedRoomUIManager : MonoBehaviour
             UpdateRadioButtonVisual(option.button, model.roundTimeLimit == option.value);
         }
 
-        p1InfoPanel.UpdatePanel("Player 1", 0, model.p1Wins, model.p1Losses, model.isP1Ready, model.isP1Connected);
-        p2InfoPanel.UpdatePanel("Player 2", 0, model.p2Wins, model.p2Losses, model.isP2Ready, isP2Present);
+        p1InfoPanel.UpdatePanel("Player 1", lastP1Ping, model.p1Wins, model.p1Losses, model.isP1Ready, model.isP1Connected);
+        p2InfoPanel.UpdatePanel("Player 2", lastP2Ping, model.p2Wins, model.p2Losses, model.isP2Ready, isP2Present);
 
         readyToggleButton.gameObject.SetActive(true);
         startMatchButton.gameObject.SetActive(isHost);
@@ -131,5 +150,14 @@ public class MatchedRoomUIManager : MonoBehaviour
     private void OnLeaveClicked()
     {
         roomManager.LeaveRoom();
+    }
+
+    private void HandleRoomPings(int p1Ping, int p2Ping)
+    {
+        lastP1Ping = p1Ping;
+        lastP2Ping = p2Ping;
+
+        if (p1InfoPanel != null) p1InfoPanel.UpdatePingVisual(p1Ping);
+        if (p2InfoPanel != null) p2InfoPanel.UpdatePingVisual(p2Ping);
     }
 }

@@ -7,6 +7,7 @@ public class ServerNetworkManager : MonoBehaviour
 {
     public static ServerNetworkManager Instance { get; private set; }
 
+    public event Action<int, int> OnRoomPingsUpdated;
     public event Action<string> OnConnectionFailed;
     public event Action OnConnectionEstablished;
     public event Action<byte, RoomMetadata[]> OnSearchRoomResponseReceived;
@@ -483,6 +484,15 @@ public class ServerNetworkManager : MonoBehaviour
         else if (packetType == NetworkPacketType.ServerPong)
         {
             float sentTime = stream.ReadFloat();
+            int pingMs = Mathf.RoundToInt((Time.realtimeSinceStartup - sentTime) * 1000f);
+            
+            SendPingReport(pingMs);
+        }
+        else if (packetType == NetworkPacketType.RoomPingUpdate)
+        {
+            int p1Ping = stream.ReadInt();
+            int p2Ping = stream.ReadInt();
+            OnRoomPingsUpdated?.Invoke(p1Ping, p2Ping);
         }
         else if (packetType == NetworkPacketType.MatchAborted)
         {
@@ -498,6 +508,20 @@ public class ServerNetworkManager : MonoBehaviour
             bool p1Ready = stream.ReadByte() == 1;
             bool p2Ready = stream.ReadByte() == 1;
             OnRematchSyncReceived?.Invoke(p1Ready, p2Ready);
+        }
+
+    }
+
+    private void SendPingReport(int pingMs)
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.ReportPing);
+            writer.WriteInt(pingMs);
+            serverDriver.EndSend(writer);
         }
     }
 

@@ -44,4 +44,7 @@ public static class NetworkPacketType
     public const byte RandomMatchRequest = 45;
 
     public const byte ChatMessage = 50;
+
+    public const byte ReportPing = 51;
+    public const byte RoomPingUpdate = 52;
 }
