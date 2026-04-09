@@ -657,13 +657,15 @@ public class HitboxBakerWindow : EditorWindow
     {
         if (targetActionData.animationClip == null || targetCharacter == null) return;
 
+        int totalFrames = targetActionData.frameData.logicData.totalFrames;
+
         VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
-        System.Collections.Generic.List<VfxEvent> bakedEvents = new System.Collections.Generic.List<VfxEvent>();
+        List<VfxEvent> bakedEvents = new List<VfxEvent>();
 
         foreach (var marker in markers)
         {
             if (!marker.isIncludeInBake) continue;
-
+            if (marker.recordStartFrame < 0 || marker.recordEndFrame > totalFrames || marker.recordStartFrame > marker.recordEndFrame) continue;
             VfxEvent newEvent = new VfxEvent
             {
                 startFrame = marker.recordStartFrame,

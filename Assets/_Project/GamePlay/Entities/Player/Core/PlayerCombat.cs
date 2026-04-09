@@ -11,6 +11,8 @@ public class PlayerCombat
     private int maxHealth;
     private int currentHealth;
 
+    private bool isGuardDisabled = false;
+
     public event System.Action<int, int> OnHealthChanged;
 
     public PlayerCombat(PlayerConfigSO playerconfig)
@@ -110,8 +112,8 @@ public class PlayerCombat
             isMoving = sqrMag.rawValue > 0;
         }
 
-        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState, isMoving);
-
+        EvaluationResult result = evaluator.EvaluateHit(hitEvent, currentState, isMoving, isGuardDisabled);
+        
         if (!result.isEvaded)
         {
             ApplyHit(result, attacker, defender);
@@ -186,4 +188,8 @@ public class PlayerCombat
     public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;
     public int GetCurrentHealth() => currentHealth;
     public int GetMaxHealth() => maxHealth;
+    public void SetTrainingMode(bool disabled)
+    {
+        isGuardDisabled = disabled;
+    }
 }

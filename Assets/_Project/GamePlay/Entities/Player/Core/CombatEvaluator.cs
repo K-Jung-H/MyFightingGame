@@ -17,11 +17,11 @@ public class CombatEvaluator
         config = playerConfig;
     }
 
-    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving)
+    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving, bool disableGuard = false)
     {
         EvaluationResult result = new EvaluationResult();
 
-        PlayerState_Type? determinedState = DetermineTargetState(hitEvent, defenderState, isMoving);
+        PlayerState_Type? determinedState = DetermineTargetState(hitEvent, defenderState, isMoving, disableGuard);
         result.isEvaded = determinedState == null;
 
         if (result.isEvaded)
@@ -72,6 +72,42 @@ public class CombatEvaluator
         };
 
         return result;
+    }
+
+    private PlayerState_Type? DetermineTargetState(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving, bool disableGuard)
+    {
+        bool isStanding = defenderState == PlayerState_Type.Idle ||
+                          defenderState == PlayerState_Type.Walking ||
+                          defenderState == PlayerState_Type.SideWalk ||
+                          defenderState == PlayerState_Type.Running ||
+                          defenderState == PlayerState_Type.Sprinting ||
+                          defenderState == PlayerState_Type.SideStep ||
+                          defenderState == PlayerState_Type.StandBlock ||
+                          defenderState == PlayerState_Type.StandHit;
+
+        bool isCrouching = defenderState == PlayerState_Type.Crouching ||
+                           defenderState == PlayerState_Type.CrouchBlock ||
+                           defenderState == PlayerState_Type.CrouchHit;
+
+        bool isAbleToBlock = !disableGuard && (defenderState == PlayerState_Type.Idle ||
+                             (defenderState == PlayerState_Type.Crouching && !isMoving) ||
+                             defenderState == PlayerState_Type.StandBlock ||
+                             defenderState == PlayerState_Type.CrouchBlock);
+
+        if (isStanding)
+        {
+            if (hitEvent.attackHeight == Attack_Height.Low) return PlayerState_Type.StandHit;
+            return isAbleToBlock ? PlayerState_Type.StandBlock : PlayerState_Type.StandHit;
+        }
+
+        if (isCrouching)
+        {
+            if (hitEvent.attackHeight == Attack_Height.High) return null;
+            if (hitEvent.attackHeight == Attack_Height.Low) return isAbleToBlock ? PlayerState_Type.CrouchBlock : PlayerState_Type.CrouchHit;
+            if (hitEvent.attackHeight == Attack_Height.Mid) return PlayerState_Type.CrouchHit;
+        }
+
+        return PlayerState_Type.StandHit;
     }
 
     private PlayerState_Type? DetermineTargetState(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving)

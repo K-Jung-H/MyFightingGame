@@ -9,9 +9,21 @@ public class TrainingModeLogic : IGameModeLogic
     private int maxLogCount = 10;
     private bool isShowDebugPanel = false;
 
-    public void Initialize(GameLoopManager manager) { this.manager = manager; }
+    public void Initialize(GameLoopManager manager) 
+    { 
+        this.manager = manager; 
+    }
     
-    public void StartGame() { manager.InitializeMatch(); }
+    public void StartGame() 
+    {
+        manager.InitializeMatch();
+        
+        PlayerController p2 = manager.GetPlayerTwoController();
+        if (p2 != null && p2.GetCombat() != null)
+        {
+            p2.GetCombat().SetTrainingMode(true); 
+        }
+    }
 
     public void ProcessFixedUpdate()
     {
