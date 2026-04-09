@@ -36,31 +36,8 @@ MonoBehaviour:
     targetState: 8
     validStates: 29
     actionData: {fileID: 0}
-  - commandName: Swing
-    priority: 0
-    sequence:
-    - requiredFlags: 2
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    - requiredFlags: 10
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    - requiredFlags: 8
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    - requiredFlags: 16
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    timeWindowFrames: 15
-    targetState: 128
-    validStates: 23
-    actionData: {fileID: 11400000, guid: daaa05b8b6674a34caa40eda1a3eba46, type: 2}
   - commandName: SideStep_Up
-    priority: 0
+    priority: 20
     sequence:
     - requiredFlags: 0
       executeType: 0
@@ -83,7 +60,7 @@ MonoBehaviour:
     validStates: 7
     actionData: {fileID: 0}
   - commandName: SideStep_Down
-    priority: 0
+    priority: 20
     sequence:
     - requiredFlags: 0
       executeType: 0
@@ -105,3 +82,79 @@ MonoBehaviour:
     targetState: 32
     validStates: 7
     actionData: {fileID: 0}
+  - commandName: Punch_All_Swing
+    priority: 0
+    sequence:
+    - requiredFlags: 2
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 10
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 8
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 16
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    timeWindowFrames: 15
+    targetState: 128
+    validStates: 7
+    actionData: {fileID: 11400000, guid: daaa05b8b6674a34caa40eda1a3eba46, type: 2}
+  - commandName: Punch_All_SmashVertical
+    priority: 0
+    sequence:
+    - requiredFlags: 1
+      executeType: 1
+      requiredHoldFrames: 10
+      isExactMatchRequired: 0
+    - requiredFlags: 48
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    timeWindowFrames: 15
+    targetState: 128
+    validStates: 7
+    actionData: {fileID: 11400000, guid: 990c1531c9e493443954aa08b879d10d, type: 2}
+  - commandName: Punch_All_SmashHorizontal
+    priority: 0
+    sequence:
+    - requiredFlags: 8
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 4
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 48
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    timeWindowFrames: 30
+    targetState: 128
+    validStates: 7
+    actionData: {fileID: 11400000, guid: ca07ecedf8d5b18418f9c6f278cd1a13, type: 2}
+  - commandName: PowerHook
+    priority: 0
+    sequence:
+    - requiredFlags: 8
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 8
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    - requiredFlags: 32
+      executeType: 0
+      requiredHoldFrames: 0
+      isExactMatchRequired: 0
+    timeWindowFrames: 15
+    targetState: 128
+    validStates: 135
+    actionData: {fileID: 11400000, guid: 7dfa31f3b1bb918469de1d55bf1d2a60, type: 2}

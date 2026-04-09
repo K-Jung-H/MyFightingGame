@@ -4,6 +4,7 @@ public class PlayerRenderer : MonoBehaviour
 {
     [SerializeField] private Animator characterAnimator;
     [SerializeField] private float locomotionBlendTime = 0.1f;
+    [SerializeField] private float actionBlendTime = 0.05f; 
     
     private EffectTableSO effectTable;
     private PlayerController controller;
@@ -145,19 +146,31 @@ public class PlayerRenderer : MonoBehaviour
             if (hash != 0)
             {
                 float exactTime = (stateFrame > 0 ? stateFrame - 1 : 0) * (1f / 60f);
-                bool needsSync = isStateChanged || isActionChanged;
+                
+                bool isNewTransition = isStateChanged || isActionChanged;
+                bool isRollbackDesync = false;
 
-                if (!needsSync && previousStateFrame != -1)
+                if (!isNewTransition && previousStateFrame != -1)
                 {
                     int frameDiff = stateFrame - previousStateFrame;
-                    
                     if (frameDiff < 0 || frameDiff > 1)
                     {
-                        needsSync = true;
+                        isRollbackDesync = true;
                     }
                 }
 
-                if (needsSync)
+                if (isNewTransition)
+                {
+                    if (currentState == PlayerState_Type.Attacking)
+                    {
+                        characterAnimator.CrossFadeInFixedTime(hash, actionBlendTime, 0, exactTime);
+                    }
+                    else
+                    {
+                        characterAnimator.PlayInFixedTime(hash, 0, exactTime);
+                    }
+                }
+                else if (isRollbackDesync)
                 {
                     characterAnimator.PlayInFixedTime(hash, 0, exactTime);
                 }

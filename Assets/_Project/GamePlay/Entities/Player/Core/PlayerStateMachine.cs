@@ -256,6 +256,48 @@ public class PlayerStateMachine : ISnapshotSync
         return hash;
     }
 
+    public Hurtbox_Type GetCurrentHurtboxType()
+    {
+        bool hasValidActionData = currentActionData != null && currentActionData.frameData.hurtboxEvents != null;
+        
+        if (hasValidActionData)
+        {
+            foreach (var evt in currentActionData.frameData.hurtboxEvents)
+            {
+                bool isFrameMatch = stateFrameCounter >= evt.startFrame && stateFrameCounter <= evt.endFrame;
+                if (isFrameMatch)
+                {
+                    return evt.hurtboxType;
+                }
+            }
+        }
+
+        switch (cachedCurrentState)
+        {
+            case PlayerState_Type.Crouching:
+            case PlayerState_Type.CrouchBlock:
+            case PlayerState_Type.CrouchHit:
+                return Hurtbox_Type.Crouching;
+
+
+            case PlayerState_Type.LayingDown:
+            case PlayerState_Type.GroundSmash:
+            case PlayerState_Type.Dead:
+                return Hurtbox_Type.Laying;
+
+            case PlayerState_Type.AirHit:
+            case PlayerState_Type.WakeUp:
+                return Hurtbox_Type.Airborne;
+
+            case PlayerState_Type.Defeat:
+            case PlayerState_Type.Win:
+                return Hurtbox_Type.Invincible;
+
+            default:
+                return Hurtbox_Type.Standing;
+        }
+    }
+
     public PlayerState_Type GetCurrentState() => cachedCurrentState;
     public PlayerState_Type GetPreviousStateType() => previousStateType;
     public int GetStateFrameCounter() => stateFrameCounter;

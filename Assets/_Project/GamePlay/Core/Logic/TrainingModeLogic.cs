@@ -78,6 +78,8 @@ public class TrainingModeLogic : IGameModeLogic
         DrawDebugPanel(targetController, startX, bottomY, panelWidth, humanSide);
     }
 
+    
+
     private void DrawDebugPanel(PlayerController controller, float startX, float bottomY, float width, int sideIndex)
     {
         if (controller == null) return;

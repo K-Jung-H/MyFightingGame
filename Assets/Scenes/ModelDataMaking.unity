@@ -421,7 +421,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 172659805008412858, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 46
       objectReference: {fileID: 0}
     - target: {fileID: 288876018879974970, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -597,7 +597,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2426980939678438703, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 47
       objectReference: {fileID: 0}
     - target: {fileID: 2514202242111645720, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -769,7 +769,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: damage
-      value: 0
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackType
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: attackHeight
@@ -780,24 +784,28 @@ PrefabInstance:
       value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: boxExtents.y
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: boxExtents.z
       value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: hitstunFrames
-      value: 0
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordEndFrame
-      value: 0
+      value: 45
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: blockStunFrames
-      value: 0
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: targetHurtState
@@ -805,19 +813,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordStartFrame
-      value: 0
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: localPushbackVector.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.y
-      value: 0
+      value: -0.1
       objectReference: {fileID: 0}
     - target: {fileID: 3594336387360778632, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.z
-      value: 0
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 3686516251718616266, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -957,7 +969,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4678195897016455575, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 46
       objectReference: {fileID: 0}
     - target: {fileID: 4919808231816584743, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1089,7 +1101,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: damage
-      value: 5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: attackType
@@ -1097,10 +1109,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: attackHeight
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: boxExtents.x
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: boxExtents.y
       value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
@@ -1109,19 +1125,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: hitstunFrames
-      value: 5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordEndFrame
-      value: 13
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: blockStunFrames
-      value: 5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: targetHurtState
@@ -1129,11 +1145,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordStartFrame
-      value: 7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 46
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.y
@@ -1141,7 +1157,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6282795578145083803, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.z
-      value: 0.1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6284065659483105012, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1292,11 +1308,19 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: attackHeight
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: boxExtents.x
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: boxExtents.y
       value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
@@ -1321,7 +1345,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: targetHurtState
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: recordStartFrame
@@ -1329,7 +1353,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 46
       objectReference: {fileID: 0}
     - target: {fileID: 7521467202765632063, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.y
@@ -1357,19 +1381,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: effectType
-      value: 0
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: isAttached
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: targetBone
-      value: 0
+      value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: intervalFrames
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordEndFrame
+      value: 35
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: isIncludeInBake
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: recordStartFrame
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7936606628919351169, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 47
       objectReference: {fileID: 0}
     - target: {fileID: 7991960534824270214, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1432,6 +1472,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
+      propertyPath: attackType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: attackHeight
       value: 1
       objectReference: {fileID: 0}
@@ -1469,7 +1513,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: currentPreviewFrame
-      value: 0
+      value: 46
       objectReference: {fileID: 0}
     - target: {fileID: 8705509841047498894, guid: 3ddc0c580cf47ea428b43a834370a28a, type: 3}
       propertyPath: localPushbackVector.y

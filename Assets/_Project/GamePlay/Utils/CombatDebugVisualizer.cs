@@ -88,7 +88,7 @@ public class CombatDebugVisualizer : MonoBehaviour
 
     private void DrawGizmoHurtboxes(PlayerController controller)
     {
-        Hurtbox_Type currentType = Hurtbox_Type.Standing;
+        Hurtbox_Type currentType = controller.GetStateMachine().GetCurrentHurtboxType();
         PlayerConfigSO config = controller.GetConfig();
 
         bool hasConfig = config != null;
@@ -165,7 +165,7 @@ public class CombatDebugVisualizer : MonoBehaviour
 
     private void DrawGLHurtboxes(PlayerController controller)
     {
-        Hurtbox_Type currentType = Hurtbox_Type.Standing;
+        Hurtbox_Type currentType = controller.GetStateMachine().GetCurrentHurtboxType();
         PlayerConfigSO config = controller.GetConfig();
 
         bool hasConfig = config != null;

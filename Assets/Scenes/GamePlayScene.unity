@@ -1338,10 +1338,10 @@ MonoBehaviour:
   playerOne: {fileID: 0}
   playerTwo: {fileID: 0}
   isReverseView: 0
-  heightOffset: 1.5
-  distanceOffset: 2
+  heightOffset: 1.2
+  distanceOffset: 1
   zoomSensitivity: 1
-  minDistance: 2
+  minDistance: 1
   maxDistance: 15
   movementSmoothTime: 0.15
   rotationSmoothTime: 0.1

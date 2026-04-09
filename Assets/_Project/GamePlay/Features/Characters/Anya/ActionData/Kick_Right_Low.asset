@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
-  m_Name: Kick_Left_High
+  m_Name: Kick_Right_Low
   m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
-  animationClip: {fileID: 7400000, guid: 32ed0de2e84ee9540870e3c35b13272c, type: 3}
-  animationStateName: Kick_Left_High
+  animationClip: {fileID: 7400000, guid: eea3a4476bab05b458d87a5b376889c8, type: 3}
+  animationStateName: Kick_Right_Low
   frameData:
     logicData:
       totalFrames: 42
@@ -25,23 +25,23 @@ MonoBehaviour:
       isHoming: 0
     rootMotionPath: []
     hitboxEvents:
-    - markerName: Hitbox_L_K
+    - markerName: Hitbox_R_K
       activeStartFrame: 13
       boxPath:
-      - localPosition: {x: 0.08053213, y: 1.036239, z: 0.60769105}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.05618444, y: 1.1333141, z: 0.7138455}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.037867494, y: 1.2273555, z: 0.8266573}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.024157545, y: 1.3247702, z: 0.94744134}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.023953672, y: 1.3226233, z: 0.939921}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.027323399, y: 1.298926, z: 0.9174738}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: 0.32274935, y: 0.6742623, z: 0.65194654}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.3438524, y: 0.627862, z: 0.8634242}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.25224388, y: 0.60142916, z: 1.0752463}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.0581996, y: 0.593109, z: 1.180246}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.071679085, y: 0.58924246, z: 1.1714616}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.11084359, y: 0.5829828, z: 1.1506194}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
       hitGroupID: 0
-      attackHeight: 0
+      attackHeight: 2
       attackType: 1
       targetHurtState: 0
       damage: 5

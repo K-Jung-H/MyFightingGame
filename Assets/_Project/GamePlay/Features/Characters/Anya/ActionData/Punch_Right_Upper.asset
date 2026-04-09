@@ -10,45 +10,47 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
-  m_Name: Kick_Right_High
+  m_Name: Punch_Right_Upper
   m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
-  animationClip: {fileID: 7400000, guid: 6d57102141fc7184db95eafa963b4572, type: 3}
-  animationStateName: Kick_Right_High
+  animationClip: {fileID: 7400000, guid: 59c7dab75889cc747a38565aacf425cb, type: 3}
+  animationStateName: Punch_Right_Upper
   frameData:
     logicData:
-      totalFrames: 48
-      startupFrames: 16
-      recoveryFrames: 27
-      cancelWindowStartFrame: 34
+      totalFrames: 38
+      startupFrames: 13
+      recoveryFrames: 19
+      cancelWindowStartFrame: 28
       useRootMotion: 0
       useRootRotation: 0
       isHoming: 0
     rootMotionPath: []
     hitboxEvents:
-    - markerName: Hitbox_R_K
-      activeStartFrame: 16
+    - markerName: Hitbox_R_P
+      activeStartFrame: 13
       boxPath:
-      - localPosition: {x: 0.17639214, y: 1.1136644, z: 1.0399438}
+      - localPosition: {x: -0.019784782, y: 0.86935204, z: 0.51105917}
         extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.10349537, y: 1.3289559, z: 1.0466726}
+      - localPosition: {x: -0.06413227, y: 0.9565216, z: 0.57932526}
         extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.031342074, y: 1.4960432, z: 0.9762192}
+      - localPosition: {x: -0.08384748, y: 1.0370435, z: 0.6236035}
         extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.020711035, y: 1.485239, z: 0.97069407}
+      - localPosition: {x: -0.080498785, y: 1.1196812, z: 0.65100074}
         extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.01142256, y: 1.4438436, z: 0.9812883}
+      - localPosition: {x: -0.08893134, y: 1.2158432, z: 0.6435918}
+        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition: {x: -0.10977761, y: 1.3073782, z: 0.5847694}
         extents: {x: 0.1, y: 0.1, z: 0.1}
       hitGroupID: 0
       attackHeight: 0
-      attackType: 0
-      targetHurtState: 0
-      damage: 5
+      attackType: 2
+      targetHurtState: 1
+      damage: 10
       hitstunFrames: 20
-      blockStunFrames: 20
-      localPushbackVector: {x: 0, y: 0, z: 0}
+      blockStunFrames: 5
+      localPushbackVector: {x: 0, y: 0.5, z: 0.05}
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0
-      endFrame: 48
+      endFrame: 38
       hurtboxType: 0
     vfxEvents: []

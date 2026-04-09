@@ -13,30 +13,102 @@ MonoBehaviour:
   m_Name: Anya_ComboTree
   m_EditorClassIdentifier: Assembly-CSharp::ComboTreeSO
   startingAttacks:
-  - rid: 4673247879905935441
-  - rid: 4673247879905935442
-  - rid: 4673247879905935443
+  - rid: 4673247879905935583
+  - rid: 4673247879905935584
+  - rid: 4673247879905935585
+  - rid: 4673247879905935586
   references:
     version: 2
     RefIds:
-    - rid: 4673247879905935441
+    - rid: 4673247879905935583
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 32
+        actionData: {fileID: 11400000, guid: 447d0f0346e760b4b94a813e689ebcc0, type: 2}
+        position: {x: -540.8, y: 187.2}
+        nextAttacks:
+        - rid: 4673247879905935587
+    - rid: 4673247879905935584
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 16
+        actionData: {fileID: 11400000, guid: 9f80d38a44024ff4ca9e369aec94a4bd, type: 2}
+        position: {x: -532, y: -82.4}
+        nextAttacks:
+        - rid: 4673247879905935588
+    - rid: 4673247879905935585
       type: {class: ComboNode, ns: , asm: Assembly-CSharp}
       data:
         requiredInput: 64
         actionData: {fileID: 11400000, guid: 2847b1cb43a19ed4892174c13a60d86a, type: 2}
-        position: {x: -501.59998, y: -281.6}
-        nextAttacks: []
-    - rid: 4673247879905935442
+        position: {x: -532, y: 461.6}
+        nextAttacks:
+        - rid: 4673247879905935589
+    - rid: 4673247879905935586
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 128
+        actionData: {fileID: 11400000, guid: 79c2139607cc18c4b9bcb7a711da1808, type: 2}
+        position: {x: -532, y: 745.6}
+        nextAttacks:
+        - rid: 4673247879905935590
+    - rid: 4673247879905935587
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 32
+        actionData: {fileID: 11400000, guid: dbd20f52197ff8e43b88ee4e2d2c1913, type: 2}
+        position: {x: 244, y: 187.2}
+        nextAttacks:
+        - rid: 4673247879905935591
+    - rid: 4673247879905935588
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 16
+        actionData: {fileID: 11400000, guid: 3b8097139ad59604b94200672295eec6, type: 2}
+        position: {x: 252.8, y: -82.4}
+        nextAttacks:
+        - rid: 4673247879905935592
+    - rid: 4673247879905935589
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 64
+        actionData: {fileID: 11400000, guid: fa9a6b017e52caa47a3d1e6090083784, type: 2}
+        position: {x: 252.8, y: 461.6}
+        nextAttacks:
+        - rid: 4673247879905935593
+    - rid: 4673247879905935590
       type: {class: ComboNode, ns: , asm: Assembly-CSharp}
       data:
         requiredInput: 128
         actionData: {fileID: 11400000, guid: c57c6edd48daf7a4594fa91e075ca950, type: 2}
-        position: {x: -500.8, y: -18.4}
-        nextAttacks: []
-    - rid: 4673247879905935443
+        position: {x: 244, y: 745.6}
+        nextAttacks:
+        - rid: 4673247879905935594
+    - rid: 4673247879905935591
       type: {class: ComboNode, ns: , asm: Assembly-CSharp}
       data:
-        requiredInput: 48
-        actionData: {fileID: 11400000, guid: daaa05b8b6674a34caa40eda1a3eba46, type: 2}
-        position: {x: -500.8, y: 286.4}
+        requiredInput: 32
+        actionData: {fileID: 11400000, guid: 9ecb56fc28233a944a906bd8c25b6045, type: 2}
+        position: {x: 1009.60004, y: 187.2}
+        nextAttacks: []
+    - rid: 4673247879905935592
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 16
+        actionData: {fileID: 11400000, guid: f3a8aa0bcb6d65047bbcb18a2e637262, type: 2}
+        position: {x: 1009.60004, y: -82.4}
+        nextAttacks: []
+    - rid: 4673247879905935593
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 64
+        actionData: {fileID: 11400000, guid: 762f70a6aae49864689d959d7968b98f, type: 2}
+        position: {x: 1009.60004, y: 461.6}
+        nextAttacks: []
+    - rid: 4673247879905935594
+      type: {class: ComboNode, ns: , asm: Assembly-CSharp}
+      data:
+        requiredInput: 128
+        actionData: {fileID: 11400000, guid: 0fc80b7311649964ab1839982d95e4a7, type: 2}
+        position: {x: 1009.60004, y: 745.6}
         nextAttacks: []

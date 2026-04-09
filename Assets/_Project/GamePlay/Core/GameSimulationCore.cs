@@ -79,7 +79,8 @@ public class GameSimulationCore
     {
         if (!IsValidAttackAttempt(attacker, out ActionDataSO attackerAction)) return;
 
-        CollisionBox[] defenderBoxes = defender.GetConfig().GetHurtboxBoxes(Hurtbox_Type.Standing);
+        Hurtbox_Type defenderHurtboxType = defender.GetStateMachine().GetCurrentHurtboxType();
+        CollisionBox[] defenderBoxes = defender.GetConfig().GetHurtboxBoxes(defenderHurtboxType);
 
         bool isHit = HitboxManager.EvaluateHit(
             attacker.GetFPPosition(),
