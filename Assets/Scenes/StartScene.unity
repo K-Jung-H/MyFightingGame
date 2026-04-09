@@ -824,10 +824,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d60447a3fa4eeaa4297f6f3d164550b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameFlowManager
-  currentMode: 0
+  currentConnectionMode: 0
+  currentBattleType: 0
   currentScene: 0
-  previousScene: 0
-  referenceResolution: {x: 1920, y: 1080}
   startSceneName: StartScene
   gameModeSelectSceneName: GameModeSelectScene
   onlineMatchingSceneName: OnlineMatchingScene

@@ -22,7 +22,6 @@ public enum GameSceneType
 {
     Start,
     GameModeSelect,
-    Training,
     OnlineLobby,
     OnlineMatchedRoom,
     CharacterSelect,
@@ -134,7 +133,6 @@ public class GameFlowManager : MonoBehaviour
             case GameSceneType.GameModeSelect:
                 ChangeScene(GameSceneType.Start);
                 break;
-            case GameSceneType.Training:
             case GameSceneType.CharacterSelect:
                 ChangeScene(GameSceneType.GameModeSelect);
                 break;

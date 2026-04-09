@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
-  m_Name: NewActionData 4
+  m_Name: NewActionData 7
   m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
   animationClip: {fileID: 0}
   animationStateName: 

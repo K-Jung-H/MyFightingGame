@@ -59,17 +59,6 @@ MonoBehaviour:
     targetState: 128
     validStates: 23
     actionData: {fileID: 11400000, guid: daaa05b8b6674a34caa40eda1a3eba46, type: 2}
-  - commandName: Dash_Kick_Attack
-    priority: 0
-    sequence:
-    - requiredFlags: 36
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    timeWindowFrames: 15
-    targetState: 128
-    validStates: 24
-    actionData: {fileID: 11400000, guid: 4c03114c24ab093448171b8e1140b882, type: 2}
   - commandName: SideStep_Up
     priority: 0
     sequence:
@@ -116,40 +105,3 @@ MonoBehaviour:
     targetState: 32
     validStates: 7
     actionData: {fileID: 0}
-  - commandName: Dash_Punch_Attack
-    priority: 0
-    sequence:
-    - requiredFlags: 20
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    timeWindowFrames: 15
-    targetState: 128
-    validStates: 28
-    actionData: {fileID: 11400000, guid: 2609f7e24efcb4942b213130991d1680, type: 2}
-  - commandName: Upper Punch
-    priority: 0
-    sequence:
-    - requiredFlags: 34
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 1
-    timeWindowFrames: 15
-    targetState: 128
-    validStates: 31
-    actionData: {fileID: 11400000, guid: 8583e93afe8bc9449999de1b56e39b98, type: 2}
-  - commandName: Hook
-    priority: 0
-    sequence:
-    - requiredFlags: 2
-      executeType: 1
-      requiredHoldFrames: 50
-      isExactMatchRequired: 0
-    - requiredFlags: 18
-      executeType: 0
-      requiredHoldFrames: 0
-      isExactMatchRequired: 0
-    timeWindowFrames: 15
-    targetState: 128
-    validStates: 31
-    actionData: {fileID: 11400000, guid: e440f3913713b0644b4acc517709829d, type: 2}

@@ -11,6 +11,7 @@ public struct HurtboxEvent
 [System.Serializable]
 public struct HitboxEvent
 {
+    public string markerName; 
     public int activeStartFrame;
     public CollisionBox[] boxPath;
     public int hitGroupID;
@@ -27,6 +28,7 @@ public struct HitboxEvent
 [System.Serializable]
 public struct VfxEvent
 {
+    public string markerName; 
     public int startFrame;
     public int endFrame;
     public int intervalFrames;

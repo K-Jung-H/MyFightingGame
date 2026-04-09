@@ -9,6 +9,7 @@ public enum Hurtbox_Type
 {
     Standing,
     Crouching,
+    Laying,
     Airborne,
     Invincible,
 }

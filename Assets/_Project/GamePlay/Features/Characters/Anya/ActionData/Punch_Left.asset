@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
-  m_Name: FallDown
+  m_Name: Punch_Left
   m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
-  animationClip: {fileID: -203655887218126122, guid: d5a328ab938234e469428eb760a32843, type: 3}
-  animationStateName: Sweep Fall
+  animationClip: {fileID: 0}
+  animationStateName: 
   frameData:
     logicData:
-      totalFrames: 150
-      startupFrames: 50
-      recoveryFrames: 50
-      cancelWindowStartFrame: 100
+      totalFrames: 0
+      startupFrames: 0
+      recoveryFrames: 0
+      cancelWindowStartFrame: 0
     useRootMotion: 0
     useRootRotation: 0
     rootMotionPath: []
