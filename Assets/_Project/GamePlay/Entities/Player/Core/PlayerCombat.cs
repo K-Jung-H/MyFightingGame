@@ -130,7 +130,11 @@ public class PlayerCombat
 
         if (isDamageValid)
         {
-            currentHealth = Mathf.Max(0, currentHealth - damage);
+            currentHealth -= damage;
+            if (currentHealth < 0)
+            {
+                currentHealth = 0;
+            }
             OnHealthChanged?.Invoke(currentHealth, maxHealth);
         }
 
@@ -156,7 +160,7 @@ public class PlayerCombat
         bool isJuggleBumpNeeded = (!physics.GetIsGrounded() || isAlreadyInAirHit) && finalPushback.y.rawValue < 16384;
         if (isJuggleBumpNeeded)
         {
-            finalPushback.y = FP64.FromFloat(0.25f);
+            finalPushback.y = new FP64(16384);
         }
 
         physics.SetFPVelocity(finalPushback);
@@ -175,7 +179,7 @@ public class PlayerCombat
 
     private FPVector3 CalculateWorldPushbackFP(FPVector3 lookDirection, FPVector3 localPushback)
     {
-        FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+        FPVector3 upVector = new FPVector3(new FP64(0), new FP64(65536), new FP64(0));
         FPVector3 rightDirection = FPVector3.Cross(upVector, lookDirection);
         
         FPVector3 forwardPush = lookDirection * localPushback.z;

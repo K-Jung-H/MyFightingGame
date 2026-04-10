@@ -43,10 +43,9 @@ public class GameSimulationCore
 
         FP64 distSqr = (diffPos.x * diffPos.x) + (diffPos.z * diffPos.z);
         
-        long oneFP = FP64.FromFloat(1f).rawValue;
-        FP64 epsilonSqr = new FP64(oneFP / 10000);
+        long epsilonRaw = 655;
         
-        if (distSqr.rawValue < epsilonSqr.rawValue)
+        if (distSqr.rawValue < epsilonRaw)
         {
             p1.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
             p2.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
@@ -80,24 +79,41 @@ public class GameSimulationCore
         if (!IsValidAttackAttempt(attacker, out ActionDataSO attackerAction)) return;
 
         Hurtbox_Type defenderHurtboxType = defender.GetStateMachine().GetCurrentHurtboxType();
-        CollisionBox[] defenderBoxes = defender.GetConfig().GetHurtboxBoxes(defenderHurtboxType);
+        FPCollisionBox[] defenderBoxes = defender.GetConfig().GetFPHurtboxBoxes(defenderHurtboxType);
+
+        if (defenderBoxes == null) return;
 
         bool isHit = HitboxManager.EvaluateHit(
             attacker.GetFPPosition(),
             attacker.GetFPLookDirection(),
-            attackerAction.frameData.hitboxEvents,
+            attackerAction.GetCachedFPHitboxEvents(),
             attacker.GetStateMachine().GetStateFrameCounter(),
             defender.GetFPPosition(),
             defender.GetFPLookDirection(),
             defenderBoxes,
-            out HitboxEvent hitEvent,
+            out FPHitboxEvent fpEvt,
             out FPVector3 fpHitPoint
         );
 
         if (isHit)
         {
+            HitboxEvent originalEvent = new HitboxEvent
+            {
+                markerName = fpEvt.markerName,
+                activeStartFrame = fpEvt.activeStartFrame,
+                hitGroupID = fpEvt.hitGroupID,
+                attackHeight = fpEvt.attackHeight,
+                attackType = fpEvt.attackType,
+                targetHurtState = fpEvt.targetHurtState,
+                damage = fpEvt.damage,
+                hitstunFrames = fpEvt.hitstunFrames,
+                blockStunFrames = fpEvt.blockStunFrames,
+                localPushbackVector = fpEvt.localPushbackVector.ToVector3(),
+                isHardKnockdown = fpEvt.isHardKnockdown
+            };
+
             Vector3 hitPoint = fpHitPoint.ToVector3();
-            ProcessSuccessfulHit(attacker, defender, hitEvent, hitPoint, onHitSpark);
+            ProcessSuccessfulHit(attacker, defender, originalEvent, hitPoint, onHitSpark);
         }
     }
 
@@ -165,12 +181,13 @@ public class GameSimulationCore
             FP64 w2 = GetPushbackWeight(p2State);
             FP64 totalWeight = w1 + w2;
 
-            bool isWeightTooSmall = totalWeight.rawValue <= FP64.FromFloat(0.0001f).rawValue;
+            long epsilonRaw = 6;
+            bool isWeightTooSmall = totalWeight.rawValue <= epsilonRaw;
             if (isWeightTooSmall)
             {
-                w1 = FP64.FromFloat(0.5f);
-                w2 = FP64.FromFloat(0.5f);
-                totalWeight = FP64.FromFloat(1.0f);
+                w1 = new FP64(32768);
+                w2 = new FP64(32768);
+                totalWeight = new FP64(65536);
             }
 
             FP64 p1Ratio = w1 / totalWeight;
@@ -189,7 +206,7 @@ public class GameSimulationCore
         bool isRunning = state == PlayerState_Type.Running;
         bool isWalking = state == PlayerState_Type.Walking;
 
-        long oneFP = FP64.FromFloat(1f).rawValue;
+        long oneFP = 65536;
 
         if (isSprinting) return new FP64(0);
         if (isRunning) return new FP64(oneFP / 5);

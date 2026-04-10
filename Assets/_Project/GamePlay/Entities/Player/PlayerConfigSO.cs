@@ -55,7 +55,8 @@ public class PlayerConfigSO : ScriptableObject
     [Header("Status Settings")]
     [SerializeField] private int maxHealth = 1000;
 
-
+    [System.NonSerialized]
+    private Dictionary<Hurtbox_Type, FPCollisionBox[]> cachedFPHurtboxes;
 
     public float GetBounceVelocityThreshold() => bounceVelocityThreshold;
     public float GetBounceVelocityMultiplier() => bounceVelocityMultiplier;
@@ -65,6 +66,7 @@ public class PlayerConfigSO : ScriptableObject
     public int GetDefaultBlockStunFrames() => defaultBlockStunFrames;
     public int GetAutoSprintFrames() => autoSprintFrames;
     public int GetStunningFrames() => stunningFrames;
+
     public CollisionBox[] GetHurtboxBoxes(Hurtbox_Type type)
     {
         if (defaultHurtboxes == null)
@@ -79,7 +81,35 @@ public class PlayerConfigSO : ScriptableObject
                 return preset.boxes;
             }
         }
+        return null;
+    }
 
+    public FPCollisionBox[] GetFPHurtboxBoxes(Hurtbox_Type type)
+    {
+        if (cachedFPHurtboxes == null)
+        {
+            cachedFPHurtboxes = new Dictionary<Hurtbox_Type, FPCollisionBox[]>();
+            if (defaultHurtboxes != null)
+            {
+                foreach (var preset in defaultHurtboxes)
+                {
+                    FPCollisionBox[] fpBoxes = new FPCollisionBox[preset.boxes.Length];
+                    for (int i = 0; i < preset.boxes.Length; i++)
+                    {
+                        FPCollisionBox box = new FPCollisionBox();
+                        box.localPosition = FPVector3.FromVector3(preset.boxes[i].localPosition);
+                        box.extents = FPVector3.FromVector3(preset.boxes[i].extents);
+                        fpBoxes[i] = box;
+                    }
+                    cachedFPHurtboxes[preset.type] = fpBoxes;
+                }
+            }
+        }
+
+        if (cachedFPHurtboxes.TryGetValue(type, out FPCollisionBox[] result))
+        {
+            return result;
+        }
         return null;
     }
 

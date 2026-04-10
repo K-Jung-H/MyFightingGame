@@ -3,9 +3,9 @@ using UnityEngine;
 public static class HitboxManager
 {
     public static bool EvaluateHit(
-        FPVector3 attackerPos, FPVector3 attackerDir, HitboxEvent[] hitboxEvents, int attackerFrame,
-        FPVector3 defenderPos, FPVector3 defenderDir, CollisionBox[] defenderHurtboxes,
-        out HitboxEvent successfulHit, out FPVector3 hitPoint)
+        FPVector3 attackerPos, FPVector3 attackerDir, FPHitboxEvent[] hitboxEvents, int attackerFrame,
+        FPVector3 defenderPos, FPVector3 defenderDir, FPCollisionBox[] defenderHurtboxes,
+        out FPHitboxEvent successfulHit, out FPVector3 hitPoint)
     {
         successfulHit = default;
         hitPoint = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
@@ -15,38 +15,30 @@ public static class HitboxManager
 
         for (int e = 0; e < hitboxEvents.Length; e++)
         {
-            HitboxEvent evt = hitboxEvents[e];
-            bool isAttackBoxActive = TryGetActiveAttackBox(evt, attackerFrame, out CollisionBox attackBox);
+            FPHitboxEvent evt = hitboxEvents[e];
+            bool isAttackBoxActive = TryGetActiveAttackBox(evt, attackerFrame, out FPCollisionBox attackBox);
             
             if (isAttackBoxActive)
             {
-                FPVector3 fpAttackLocal = FPVector3.FromVector3(attackBox.localPosition);
-                FPVector3 fpAttackExtents = FPVector3.FromVector3(attackBox.extents);
-                FPVector3 worldCenterA = attackerPos + TransformLocalToWorld(fpAttackLocal, ref axesA);
+                FPVector3 worldCenterA = attackerPos + TransformLocalToWorld(attackBox.localPosition, ref axesA);
 
                 for (int i = 0; i < defenderHurtboxes.Length; i++)
                 {
-                    FPVector3 fpHurtLocal = FPVector3.FromVector3(defenderHurtboxes[i].localPosition);
-                    FPVector3 fpHurtExtents = FPVector3.FromVector3(defenderHurtboxes[i].extents);
-                    FPVector3 worldCenterB = defenderPos + TransformLocalToWorld(fpHurtLocal, ref axesB);
+                    FPVector3 worldCenterB = defenderPos + TransformLocalToWorld(defenderHurtboxes[i].localPosition, ref axesB);
 
-                    bool isZeroExtents = fpAttackExtents.x.rawValue == 0 && fpAttackExtents.y.rawValue == 0 && fpAttackExtents.z.rawValue == 0;
-                    if (isZeroExtents)
-                    {
-                        continue;
-                    }
+                    bool isZeroExtents = attackBox.extents.x.rawValue == 0 && attackBox.extents.y.rawValue == 0 && attackBox.extents.z.rawValue == 0;
+                    if (isZeroExtents) continue;
 
-                    bool isIntersecting = CheckOBBIntersection(worldCenterA, fpAttackExtents, ref axesA, worldCenterB, fpHurtExtents, ref axesB);
+                    bool isIntersecting = CheckOBBIntersection(worldCenterA, attackBox.extents, ref axesA, worldCenterB, defenderHurtboxes[i].extents, ref axesB);
                     if (isIntersecting)
                     {
                         successfulHit = evt;
-                        hitPoint = CalculateIntersectionCenter(worldCenterA, fpAttackExtents, worldCenterB, fpHurtExtents);
+                        hitPoint = CalculateIntersectionCenter(worldCenterA, attackBox.extents, worldCenterB, defenderHurtboxes[i].extents);
                         return true;
                     }
                 }
             }
         }
-
         return false;
     }
 
@@ -96,22 +88,16 @@ public static class HitboxManager
         return (minIntersection + maxIntersection) * half;
     }
 
-    private static bool TryGetActiveAttackBox(HitboxEvent hitboxEvent, int currentActionFrame, out CollisionBox activeBox)
+    private static bool TryGetActiveAttackBox(FPHitboxEvent hitboxEvent, int currentActionFrame, out FPCollisionBox activeBox)
     {
         activeBox = default;
         int pathIndex = currentActionFrame - hitboxEvent.activeStartFrame;
-        bool isIndexValid = pathIndex >= 0;
 
-        if (isIndexValid && hitboxEvent.boxPath != null)
+        if (pathIndex >= 0 && hitboxEvent.boxPath != null && pathIndex < hitboxEvent.boxPath.Length)
         {
-            bool isPathLengthValid = pathIndex < hitboxEvent.boxPath.Length;
-            if (isPathLengthValid)
-            {
-                activeBox = hitboxEvent.boxPath[pathIndex];
-                return true;
-            }
+            activeBox = hitboxEvent.boxPath[pathIndex];
+            return true;
         }
-
         return false;
     }
 

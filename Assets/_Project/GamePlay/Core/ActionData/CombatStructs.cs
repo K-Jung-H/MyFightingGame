@@ -38,3 +38,25 @@ public struct HurtInfo
     public bool isHardKnockdown;
     public Attack_Height attackHeight;
 }
+
+public struct FPCollisionBox
+{
+    public FPVector3 localPosition;
+    public FPVector3 extents;
+}
+
+public struct FPHitboxEvent
+{
+    public string markerName;
+    public int activeStartFrame;
+    public FPCollisionBox[] boxPath;
+    public int hitGroupID;
+    public Attack_Height attackHeight;
+    public Attack_Type attackType;
+    public HurtState_Type targetHurtState;
+    public int damage;
+    public int hitstunFrames;
+    public int blockStunFrames;
+    public FPVector3 localPushbackVector;
+    public bool isHardKnockdown;
+}
