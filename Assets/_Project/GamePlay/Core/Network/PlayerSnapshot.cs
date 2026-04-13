@@ -12,6 +12,14 @@ public unsafe struct CombatStateSnapshot
     public int hitGroupCount;
 }
 
+public unsafe struct InputBufferSnapshot
+{
+    public int head;
+    public int count;
+    public fixed int frames[60];
+    public fixed int rawFlags[60];
+}
+
 public unsafe struct PlayerSnapshot
 {
     public FPVector3 position;
@@ -39,6 +47,7 @@ public unsafe struct PlayerSnapshot
     public int currentHealth;
     public int hitstopCounter;
 
+    public InputBufferSnapshot inputBufferState;
     public InputStateTracker inputTrackerState;
     public ActionControllerSnapshot actionControllerState;
     public CombatStateSnapshot combatState;

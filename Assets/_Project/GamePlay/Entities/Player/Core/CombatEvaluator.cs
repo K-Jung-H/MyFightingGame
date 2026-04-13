@@ -17,7 +17,7 @@ public class CombatEvaluator
         config = playerConfig;
     }
 
-    public EvaluationResult EvaluateHit(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving, bool disableGuard = false)
+    public EvaluationResult EvaluateHit(FPHitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving, bool disableGuard = false)
     {
         EvaluationResult result = new EvaluationResult();
 
@@ -58,7 +58,7 @@ public class CombatEvaluator
         {
             damage = isBlocked ? 0 : hitEvent.damage,
             hurtStunFrames = isBlocked ? actualBlockStun : actualHitStun,
-            pushbackVector = isBlocked ? new FPVector3(new FP64(0), new FP64(0), new FP64(0)) : FPVector3.FromVector3(hitEvent.localPushbackVector),
+            pushbackVector = isBlocked ? new FPVector3(new FP64(0), new FP64(0), new FP64(0)) : hitEvent.localPushbackVector,
             targetHurtState = isBlocked ? HurtState_Type.Hit : hitEvent.targetHurtState,
             isHardKnockdown = isBlocked ? false : hitEvent.isHardKnockdown,
             attackHeight = hitEvent.attackHeight
@@ -74,7 +74,7 @@ public class CombatEvaluator
         return result;
     }
 
-    private PlayerState_Type? DetermineTargetState(HitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving, bool disableGuard)
+    private PlayerState_Type? DetermineTargetState(FPHitboxEvent hitEvent, PlayerState_Type defenderState, bool isMoving, bool disableGuard)
     {
         bool isStanding = defenderState == PlayerState_Type.Idle ||
                           defenderState == PlayerState_Type.Walking ||
@@ -112,7 +112,6 @@ public class CombatEvaluator
         return PlayerState_Type.StandHit;
     }
 
-
     private int CalculateHitstop(Attack_Type type, bool isBlocked)
     {
         bool isAttackBlocked = isBlocked;
@@ -125,11 +124,10 @@ public class CombatEvaluator
     {
         if (isBlocked) return 0f;
 
-        return type switch
-        {
-            Attack_Type.HeavyHit => 2.0f,
-            Attack_Type.Crash => 5.0f,
-            _ => 0f
-        };
+        if (type == Attack_Type.LightHit) return 2f;
+        if (type == Attack_Type.HeavyHit) return 5f;
+        if (type == Attack_Type.Crash) return 8f;
+
+        return 1f;
     }
 }

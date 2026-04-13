@@ -6,7 +6,7 @@ public class PlayerCombat
     private PlayerConfigSO config;
     private int hitstopCounter;
     private HurtInfo currentHurtInfo;
-    private HashSet<int> registeredHitGroupIds;
+    private List<int> registeredHitGroupIds;
     private CombatEvaluator evaluator;
     private int maxHealth;
     private int currentHealth;
@@ -18,7 +18,7 @@ public class PlayerCombat
     public PlayerCombat(PlayerConfigSO playerconfig)
     {
         config = playerconfig;
-        registeredHitGroupIds = new HashSet<int>();
+        registeredHitGroupIds = new List<int>(10);
         InitializeHealth();
         evaluator = new CombatEvaluator();
         evaluator.Initialize(config);
@@ -30,14 +30,12 @@ public class PlayerCombat
         snapshot.hitstopCounter = this.hitstopCounter;
         snapshot.currentHurtInfo = this.currentHurtInfo;
 
-        int index = 0;
-        foreach (int hitId in registeredHitGroupIds)
+        int count = Mathf.Min(registeredHitGroupIds.Count, 10);
+        for (int i = 0; i < count; i++)
         {
-            if (index >= 10) break;
-            snapshot.combatState.registeredHitGroups[index] = hitId;
-            index++;
+            snapshot.combatState.registeredHitGroups[i] = registeredHitGroupIds[i];
         }
-        snapshot.combatState.hitGroupCount = index;
+        snapshot.combatState.hitGroupCount = count;
     }
 
     public unsafe void ImportState(PlayerSnapshot snapshot)
@@ -96,10 +94,13 @@ public class PlayerCombat
 
     public void RegisterHitGroup(int hitGroupID)
     {
-        registeredHitGroupIds.Add(hitGroupID);
+        if (!registeredHitGroupIds.Contains(hitGroupID))
+        {
+            registeredHitGroupIds.Add(hitGroupID);
+        }
     }
 
-    public EvaluationResult ProcessIncomingHit(HitboxEvent hitEvent, PlayerController attacker, PlayerController defender)
+    public EvaluationResult ProcessIncomingHit(FPHitboxEvent hitEvent, PlayerController attacker, PlayerController defender)
     {
         PlayerState_Type currentState = defender.GetStateMachine().GetCurrentState();
         bool isMoving = currentState != PlayerState_Type.Idle && currentState != PlayerState_Type.Crouching;

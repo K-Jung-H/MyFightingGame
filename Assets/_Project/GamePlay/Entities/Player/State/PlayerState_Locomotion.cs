@@ -186,10 +186,10 @@ public class SideStepState : PlayerStateBase
         bool isUpTriggered = tracker.IsHeld(InputFlags.Up);
         bool isDownTriggered = tracker.IsHeld(InputFlags.Down);
 
-        FP64 depthMultiplier = controller.invertDepthAxis ? FP64.FromFloat(-1f) : FP64.FromFloat(1f);
+        FP64 depthMultiplier = controller.invertDepthAxis ? new FP64(-65536) : new FP64(65536);
 
         if (isUpTriggered) stepDirection = depthMultiplier;
-        else if (isDownTriggered) stepDirection = FP64.FromFloat(-1f) * depthMultiplier;
+        else if (isDownTriggered) stepDirection = new FP64(-65536) * depthMultiplier;
 
         bool isFallbackNeeded = stepDirection.rawValue == 0;
         if (isFallbackNeeded) stepDirection = depthMultiplier;
@@ -197,13 +197,11 @@ public class SideStepState : PlayerStateBase
 
     public override void UpdateTick(PlayerInput input)
     {
-        FP64 speedFP = FP64.FromFloat(config.sideStepSpeed);
-        
-        FPVector3 moveVelocity = physics.GetFPDepthAxis() * (stepDirection * speedFP);
+        FPVector3 moveVelocity = physics.GetFPDepthAxis() * (stepDirection * cachedSideStepSpeed);
         moveVelocity.y = physics.GetFPVelocity().y;
         physics.SetFPVelocity(moveVelocity);
 
-        FP64 depthMultiplier = controller.invertDepthAxis ? FP64.FromFloat(-1f) : FP64.FromFloat(1f);
+        FP64 depthMultiplier = controller.invertDepthAxis ? new FP64(-65536) : new FP64(65536);
         FP64 logicalDirection = stepDirection * depthMultiplier;
 
         InputStateTracker tracker = controller.GetTracker();
@@ -246,11 +244,10 @@ public class SideWalkState : PlayerStateBase
             return;
         }
 
-        FP64 depthMultiplier = controller.invertDepthAxis ? FP64.FromFloat(-1f) : FP64.FromFloat(1f);
-        FP64 currentDirFP = isHoldingDown ? (FP64.FromFloat(-1f) * depthMultiplier) : depthMultiplier;
-        FP64 speedFP = FP64.FromFloat(config.sideWalkSpeed);
+        FP64 depthMultiplier = controller.invertDepthAxis ? new FP64(-65536) : new FP64(65536);
+        FP64 currentDirFP = isHoldingDown ? (new FP64(-65536) * depthMultiplier) : depthMultiplier;
 
-        FPVector3 moveVelocity = physics.GetFPDepthAxis() * (currentDirFP * speedFP);
+        FPVector3 moveVelocity = physics.GetFPDepthAxis() * (currentDirFP * cachedSideWalkSpeed);
         moveVelocity.y = physics.GetFPVelocity().y;
         physics.SetFPVelocity(moveVelocity);
     }

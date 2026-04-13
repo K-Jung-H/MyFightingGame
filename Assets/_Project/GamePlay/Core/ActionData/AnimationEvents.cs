@@ -48,6 +48,5 @@ public struct ActionLogicData
     public int cancelWindowStartFrame;
 
     public bool useRootMotion;
-    public bool useRootRotation;
     public bool isHoming;
 }

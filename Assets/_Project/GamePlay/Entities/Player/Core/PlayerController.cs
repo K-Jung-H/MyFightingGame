@@ -76,63 +76,56 @@ public class PlayerController : ITargetable, ISnapshotSync
         accumulatedLogicFlags = snapshot.accumulatedLogicFlags;
     }
 
-    public void UpdateTick(PlayerInput input, bool isLogicStep)
+public void UpdateTick(PlayerInput input, bool isLogicStep)
     {
+        if (!isLogicStep) return;
+
         PlayerInput sanitizedInput = ApplyReleaseDebounce(input);
+        
         inputTracker.UpdateTick(sanitizedInput.flags);
+        
+        sanitizedInput.flags = inputTracker.currentFlags;
+        
         currentInput = sanitizedInput;
         currentKeyDownFlags = inputTracker.currentFlags & ~inputTracker.previousFlags;
 
-        accumulatedLogicFlags |= currentKeyDownFlags;
-
         bool isHitstopActive = combat.GetHitstopCounter() > 0;
-
-        if (isLogicStep)
-        {
-            isHitstopActive = combat.ProcessHitstopTick();
-        }
+        isHitstopActive = combat.ProcessHitstopTick();
 
         if (isHitstopActive)
         {
-            accumulatedHitstopFlags |= accumulatedLogicFlags;
-            accumulatedLogicFlags = InputFlags.None;
+            accumulatedHitstopFlags |= currentKeyDownFlags;
             return;
         }
 
-        if (accumulatedHitstopFlags != InputFlags.None)
+        currentFrame++;
+        sanitizedInput.frame = currentFrame; 
+        
+        InputFlags mergedKeyDown = currentKeyDownFlags | accumulatedHitstopFlags;
+        accumulatedHitstopFlags = InputFlags.None;
+        
+        sanitizedInput.flags |= mergedKeyDown;
+
+        PlayerState_Type currentState = stateMachine.GetCurrentState();
+        actionController.ProcessInput(sanitizedInput, mergedKeyDown, currentFrame, currentState);
+
+        bool isHoming = false;
+        if (currentState == PlayerState_Type.Attacking)
         {
-            accumulatedLogicFlags |= accumulatedHitstopFlags;
-            accumulatedHitstopFlags = InputFlags.None;
-        }
-
-        if (isLogicStep)
-        {
-            currentFrame++;
-            sanitizedInput.frame = currentFrame; 
-            sanitizedInput.flags |= accumulatedLogicFlags;
-            
-            PlayerState_Type currentState = stateMachine.GetCurrentState();
-            actionController.ProcessInput(sanitizedInput, accumulatedLogicFlags, currentFrame, currentState);
-
-            accumulatedLogicFlags = InputFlags.None;
-
-            bool isHoming = false;
-            if (currentState == PlayerState_Type.Attacking)
+            ActionDataSO currentAction = stateMachine.GetCurrentActionData();
+            bool hasValidFrameData = currentAction != null && currentAction.frameData != null;
+            if (hasValidFrameData)
             {
-                ActionDataSO currentAction = stateMachine.GetCurrentActionData();
-                bool hasValidFrameData = currentAction != null && currentAction.frameData != null;
-                if (hasValidFrameData)
-                {
-                    isHoming = currentAction.frameData.logicData.isHoming;
-                }
+                isHoming = currentAction.frameData.logicData.isHoming;
             }
-
-            physics.UpdateLookDirection(targetEntity, currentState, isHoming);
-            ProcessActionBuffer();
-            physics.ResetRootMotionFlag();
-            stateMachine.UpdateTick(sanitizedInput);
-            physics.ProcessPhysicsTick();
         }
+
+        physics.UpdateLookDirection(targetEntity, currentState, isHoming);
+        ProcessActionBuffer();
+        physics.ResetRootMotionFlag();
+        
+        stateMachine.UpdateTick(sanitizedInput);
+        physics.ProcessPhysicsTick();
     }
 
     private PlayerInput ApplyReleaseDebounce(PlayerInput rawInput)

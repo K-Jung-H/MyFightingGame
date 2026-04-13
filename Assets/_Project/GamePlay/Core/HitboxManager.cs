@@ -44,9 +44,9 @@ public static class HitboxManager
 
     private static void GetAxesFromDirection(FPVector3 dir, out FPAxisSet axisSet)
     {
-        FPVector3 upVector = FPVector3.FromVector3(Vector3.up);
+        FPVector3 upVector = new FPVector3(new FP64(0), new FP64(65536), new FP64(0));
         bool isZeroDir = dir.x.rawValue == 0 && dir.y.rawValue == 0 && dir.z.rawValue == 0;
-        FPVector3 forwardVector = isZeroDir ? FPVector3.FromVector3(Vector3.forward) : dir;
+        FPVector3 forwardVector = isZeroDir ? new FPVector3(new FP64(0), new FP64(0), new FP64(65536)) : dir;
         FPVector3 rightVector = FPVector3.Cross(upVector, forwardVector);
 
         axisSet = new FPAxisSet
@@ -84,7 +84,7 @@ public static class HitboxManager
             FP64.Min(maxA.z, maxB.z)
         );
 
-        FP64 half = FP64.FromFloat(0.5f);
+        FP64 half = new FP64(32768);
         return (minIntersection + maxIntersection) * half;
     }
 
@@ -151,7 +151,6 @@ public static class HitboxManager
                 if (isSeparated) return false;
             }
         }
-
         return true;
     }
 

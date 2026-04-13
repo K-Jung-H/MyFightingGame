@@ -84,7 +84,10 @@ public class OnlineModeLogic : IGameModeLogic
     private void DrawServerStatusPanel(float startX, float bottomY, float width)
     {
         string serverTitle = isShowServer ? "▼ Server Status" : "▲ Server Status";
-        if (GUI.Button(new Rect(startX, bottomY, width, 20), serverTitle)) isShowServer = !isShowServer;
+        if (GUI.Button(new Rect(startX, bottomY, width, 20), serverTitle)) 
+        {
+            isShowServer = !isShowServer;
+        }
 
         if (isShowServer)
         {

@@ -9,95 +9,13 @@ public struct ActionRequest
     public bool isCommandAction;
 }
 
-public class ActionResolver
-{
-    private PlayerController controller;
-    private CommandListSO commandList;
-    private ComboTreeSO comboTree;
-
-    public void Initialize(PlayerController playerController, CommandListSO cmds, ComboTreeSO combos)
-    {
-        controller = playerController;
-        commandList = cmds;
-        comboTree = combos;
-    }
-
-    public ActionRequest? EvaluateInput(ref DeterministicInputBuffer inputBuffer, InputFlags currentInput, InputFlags newlyPressedFlags, int currentFrame, PlayerState_Type currentState, List<InputFlags> currentComboSequence)
-    {
-        InputStateTracker tracker = controller.GetTracker();
-        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState, ref tracker);
-        
-        bool isCommandMatched = matchedCommand != null;
-        if (isCommandMatched)
-        {
-            inputBuffer.Clear();
-            return new ActionRequest 
-            { 
-                actionData = matchedCommand.actionData, 
-                targetState = matchedCommand.targetState,
-                comboNode = null,
-                isCommandAction = true 
-            };
-        }
-
-        InputFlags attackMask = InputFlags.LP | InputFlags.RP | InputFlags.LK | InputFlags.RK;
-        InputFlags newlyPressedAttack = newlyPressedFlags & attackMask;
-
-        bool isAttackPressed = newlyPressedAttack != InputFlags.None;
-        if (isAttackPressed)
-        {
-            InputFlags directionMask = InputFlags.Up | InputFlags.Down | InputFlags.Forward | InputFlags.Back;
-            InputFlags combinedInput = newlyPressedAttack | (currentInput & directionMask);
-
-            bool isAttacking = currentState == PlayerState_Type.Attacking;
-            bool isComboActive = currentComboSequence != null && currentComboSequence.Count > 0;
-
-            if (isAttacking && isComboActive)
-            {
-                List<InputFlags> testSequence = new List<InputFlags>(currentComboSequence);
-                testSequence.Add(combinedInput);
-                
-                ComboNode nextCombo = comboTree != null ? comboTree.GetNodeFromSequence(testSequence) : null;
-                bool isNextComboValid = nextCombo != null;
-                if (isNextComboValid)
-                {
-                    return new ActionRequest 
-                    { 
-                        actionData = nextCombo.actionData, 
-                        targetState = PlayerState_Type.Attacking,
-                        comboNode = nextCombo,
-                        isCommandAction = false 
-                    };
-                }
-                
-                return null;
-            }
-            
-            ComboNode firstCombo = comboTree != null ? comboTree.FindBestMatchNode(comboTree.startingAttacks, combinedInput) : null;
-            bool isFirstComboValid = firstCombo != null;
-            if (isFirstComboValid)
-            {
-                return new ActionRequest 
-                { 
-                    actionData = firstCombo.actionData, 
-                    targetState = PlayerState_Type.Attacking,
-                    comboNode = firstCombo,
-                    isCommandAction = false 
-                };
-            }
-        }
-
-        return null;
-    }
-}
-
 public struct BufferedAction
 {
     public ActionRequest request;
     public int enqueueFrame;
 }
 
-public class ActionBufferManager
+public class ActionBuffer
 {
     private BufferedAction? pendingAction;
 
@@ -147,55 +65,136 @@ public class ActionBufferManager
     public void SetPendingAction(BufferedAction? action) => pendingAction = action;
 }
 
-public class PlayerActionController
+public class ActionResolver
+{
+    private PlayerController controller;
+    private CommandListSO commandList;
+    private ComboTreeSO comboTree;
+
+    public void Initialize(PlayerController playerController, CommandListSO cmds, ComboTreeSO combos)
+    {
+        controller = playerController;
+        commandList = cmds;
+        comboTree = combos;
+    }
+
+    public ActionRequest? EvaluateInput(ref DeterministicInputBuffer inputBuffer, InputFlags currentInput, InputFlags newlyPressedFlags, int currentFrame, PlayerState_Type currentState, List<InputFlags> currentComboSequence)
+    {
+        InputStateTracker tracker = controller.GetTracker();
+        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState, ref tracker);
+        
+        bool isCommandMatched = matchedCommand != null;
+        if (isCommandMatched)
+        {
+            inputBuffer.Clear();
+            return new ActionRequest 
+            { 
+                actionData = matchedCommand.actionData, 
+                targetState = matchedCommand.targetState,
+                comboNode = null,
+                isCommandAction = true 
+            };
+        }
+
+        InputFlags attackMask = InputFlags.LP | InputFlags.RP | InputFlags.LK | InputFlags.RK;
+        InputFlags newlyPressedAttack = newlyPressedFlags & attackMask;
+        
+        bool hasAttackInput = newlyPressedAttack != InputFlags.None;
+        if (!hasAttackInput) return null;
+
+        ComboNode matchedCombo = EvaluateCombo(currentInput, currentComboSequence);
+        
+        bool isComboMatched = matchedCombo != null;
+        if (isComboMatched)
+        {
+            inputBuffer.Clear();
+            return new ActionRequest 
+            { 
+                actionData = matchedCombo.actionData, 
+                targetState = PlayerState_Type.Attacking,
+                comboNode = matchedCombo,
+                isCommandAction = false 
+            };
+        }
+
+        return null;
+    }
+
+    private ComboNode EvaluateCombo(InputFlags currentInput, List<InputFlags> currentComboSequence)
+    {
+        bool isTreeInvalid = comboTree == null;
+        if (isTreeInvalid) return null;
+
+        List<ComboNode> currentNodes = comboTree.startingAttacks;
+
+        foreach (var pastInput in currentComboSequence)
+        {
+            ComboNode match = comboTree.FindBestMatchNode(currentNodes, pastInput);
+            bool isMatchValid = match != null;
+            
+            if (isMatchValid)
+            {
+                currentNodes = match.nextAttacks;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        return comboTree.FindBestMatchNode(currentNodes, currentInput);
+    }
+}
+
+public class PlayerActionController : ISnapshotSync
 {
     private PlayerController controller;
     private DeterministicInputBuffer inputBuffer;
     private ActionResolver actionResolver;
-    private ActionBufferManager actionBuffer;
+    private ActionBuffer actionBuffer;
     private List<InputFlags> comboSequence;
     private int commandBufferWindow;
 
-    public void Initialize(PlayerController playerController, CommandListSO cmdList, ComboTreeSO comboTreeData, int bufferWindowFrames)
+    public void Initialize(PlayerController playerController, CommandListSO commandList, ComboTreeSO comboTree, int bufferWindow)
     {
         controller = playerController;
+        commandBufferWindow = bufferWindow;
         
         inputBuffer = new DeterministicInputBuffer();
         inputBuffer.Initialize();
 
-        comboSequence = new List<InputFlags>();
-        commandBufferWindow = bufferWindowFrames;
-
         actionResolver = new ActionResolver();
-        actionResolver.Initialize(controller, cmdList, comboTreeData);
+        actionResolver.Initialize(controller, commandList, comboTree);
 
-        actionBuffer = new ActionBufferManager();
+        actionBuffer = new ActionBuffer();
         actionBuffer.InitializeBuffer();
+        
+        comboSequence = new List<InputFlags>();
     }
 
     public unsafe void ExportState(ref PlayerSnapshot snapshot)
     {
-        snapshot.actionControllerState.deterministicInputBuffer = inputBuffer;
+        snapshot.actionControllerState.deterministicInputBuffer = this.inputBuffer;
 
-        int currentComboCount = comboSequence.Count;
-        for (int i = 0; i < currentComboCount; i++)
+        int count = Mathf.Min(comboSequence.Count, 10);
+        snapshot.actionControllerState.comboCount = count;
+        
+        for (int i = 0; i < count; i++)
         {
-            if (i >= 10) break;
             snapshot.actionControllerState.comboSequence[i] = (int)comboSequence[i];
         }
 
-        snapshot.actionControllerState.comboCount = currentComboCount;
         snapshot.actionControllerState.pendingAction = actionBuffer.GetPendingAction();
     }
 
     public unsafe void ImportState(PlayerSnapshot snapshot)
     {
-        inputBuffer = snapshot.actionControllerState.deterministicInputBuffer;
+        this.inputBuffer = snapshot.actionControllerState.deterministicInputBuffer;
 
         comboSequence.Clear();
-        int savedComboCount = snapshot.actionControllerState.comboCount;
+        int count = Mathf.Min(snapshot.actionControllerState.comboCount, 10);
         
-        for (int i = 0; i < savedComboCount; i++)
+        for (int i = 0; i < count; i++)
         {
             comboSequence.Add((InputFlags)snapshot.actionControllerState.comboSequence[i]);
         }
@@ -224,7 +223,6 @@ public class PlayerActionController
 
     public void ClearAllBuffers()
     {
-        inputBuffer.Clear();
         actionBuffer.ClearBuffer();
     }
 
@@ -238,8 +236,8 @@ public class PlayerActionController
         comboSequence.Clear();
     }
 
-    public void AddToComboSequence(InputFlags requiredInput)
+    public void AddToComboSequence(InputFlags input)
     {
-        comboSequence.Add(requiredInput);
+        comboSequence.Add(input);
     }
 }

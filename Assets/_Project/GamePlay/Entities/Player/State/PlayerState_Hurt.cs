@@ -147,9 +147,8 @@ public class GroundSmashState : HurtStateBase
         base.Enter();
 
         FP64 impactFallSpeed = physics.GetFPLastImpactFallSpeed();
-        FP64 thresholdFP = FP64.FromFloat(config.GetBounceVelocityThreshold());
         
-        isBouncing = impactFallSpeed.rawValue <= thresholdFP.rawValue;
+        isBouncing = impactFallSpeed.rawValue <= cachedBounceThreshold.rawValue;
 
         if (isBouncing)
         {
@@ -157,9 +156,8 @@ public class GroundSmashState : HurtStateBase
             FPVector3 currentVelocity = physics.GetFPVelocity();
             
             FP64 absImpactSpeed = FP64.Abs(impactFallSpeed);
-            FP64 bounceMultiplier = FP64.FromFloat(config.GetBounceVelocityMultiplier());
             
-            currentVelocity.y = absImpactSpeed * bounceMultiplier;
+            currentVelocity.y = absImpactSpeed * cachedBounceMultiplier;
             physics.SetFPVelocity(currentVelocity);
         }
         else

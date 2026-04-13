@@ -97,23 +97,8 @@ public class GameSimulationCore
 
         if (isHit)
         {
-            HitboxEvent originalEvent = new HitboxEvent
-            {
-                markerName = fpEvt.markerName,
-                activeStartFrame = fpEvt.activeStartFrame,
-                hitGroupID = fpEvt.hitGroupID,
-                attackHeight = fpEvt.attackHeight,
-                attackType = fpEvt.attackType,
-                targetHurtState = fpEvt.targetHurtState,
-                damage = fpEvt.damage,
-                hitstunFrames = fpEvt.hitstunFrames,
-                blockStunFrames = fpEvt.blockStunFrames,
-                localPushbackVector = fpEvt.localPushbackVector.ToVector3(),
-                isHardKnockdown = fpEvt.isHardKnockdown
-            };
-
             Vector3 hitPoint = fpHitPoint.ToVector3();
-            ProcessSuccessfulHit(attacker, defender, originalEvent, hitPoint, onHitSpark);
+            ProcessSuccessfulHit(attacker, defender, fpEvt, hitPoint, onHitSpark);
         }
     }
 
@@ -126,7 +111,7 @@ public class GameSimulationCore
         return isAttacking && hasValidData;
     }
 
-    private void ProcessSuccessfulHit(PlayerController attacker, PlayerController defender, HitboxEvent hitEvent, Vector3 hitPoint, Action<PlayerController, Vector3, EffectType> onHitSpark)
+    private void ProcessSuccessfulHit(PlayerController attacker, PlayerController defender, FPHitboxEvent hitEvent, Vector3 hitPoint, Action<PlayerController, Vector3, EffectType> onHitSpark)
     {
         bool isAlreadyHit = attacker.GetCombat().HasAlreadyHit(hitEvent.hitGroupID);
         if (isAlreadyHit) return;

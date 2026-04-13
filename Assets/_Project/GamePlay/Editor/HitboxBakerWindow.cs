@@ -157,17 +157,6 @@ public class HitboxBakerWindow : EditorWindow
         logic.cancelWindowStartFrame = EditorGUILayout.IntField("Cancel Window Start", logic.cancelWindowStartFrame);
         logic.isHoming = EditorGUILayout.Toggle("Is Homing Attack", logic.isHoming);
         logic.useRootMotion = EditorGUILayout.Toggle("Use Root Position", logic.useRootMotion);
-        
-        if (logic.useRootMotion)
-        {
-            EditorGUI.indentLevel++;
-            logic.useRootRotation = EditorGUILayout.Toggle("Use Root Rotation", logic.useRootRotation);
-            EditorGUI.indentLevel--;
-        }
-        else
-        {
-            logic.useRootRotation = false;
-        }
 
         if (EditorGUI.EndChangeCheck())
         {
@@ -735,9 +724,6 @@ public class HitboxBakerWindow : EditorWindow
 
         AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, 0f);
         Vector3 prevPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
-        Quaternion prevRot = Quaternion.Inverse(targetCharacter.transform.rotation) * targetRootBone.rotation;
-
-        bool applyRotation = targetActionData.frameData.logicData.useRootRotation;
 
         for (int frame = 0; frame <= totalFrames; frame++)
         {
@@ -750,11 +736,9 @@ public class HitboxBakerWindow : EditorWindow
             targetActionData.frameData.rootMotionPath[frame] = new RootMotionData
             {
                 deltaPosition = currPos - prevPos,
-                deltaRotation = applyRotation ? (Quaternion.Inverse(prevRot) * currRot) : Quaternion.identity
             };
 
             prevPos = currPos;
-            prevRot = currRot;
         }
     }
 

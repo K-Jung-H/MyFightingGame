@@ -13,6 +13,11 @@ public abstract class PlayerStateBase
     protected FP64 cachedRunSpeed;
     protected FP64 cachedSprintSpeed;
     protected FP64 cachedCrouchWalkSpeed;
+    
+    protected FP64 cachedSideStepSpeed;
+    protected FP64 cachedSideWalkSpeed;
+    protected FP64 cachedBounceThreshold;
+    protected FP64 cachedBounceMultiplier;
 
     public PlayerStateBase(PlayerStateMachine sm, PlayerConfigSO cfg)
     {
@@ -27,6 +32,11 @@ public abstract class PlayerStateBase
         cachedRunSpeed = FP64.FromFloat(config.runSpeed);
         cachedSprintSpeed = FP64.FromFloat(config.sprintSpeed);
         cachedCrouchWalkSpeed = FP64.FromFloat(config.crouchWalkSpeed);
+
+        cachedSideStepSpeed = FP64.FromFloat(config.sideStepSpeed);
+        cachedSideWalkSpeed = FP64.FromFloat(config.sideWalkSpeed);
+        cachedBounceThreshold = FP64.FromFloat(config.GetBounceVelocityThreshold());
+        cachedBounceMultiplier = FP64.FromFloat(config.GetBounceVelocityMultiplier());
     }
 
     public abstract PlayerState_Type GetStateType();
@@ -48,10 +58,12 @@ public abstract class PlayerStateBase
         bool isForwardPressed = (flags & InputFlags.Forward) != 0;
         bool isBackPressed = (flags & InputFlags.Back) != 0;
 
-        if (isForwardPressed) inputVector.z = inputVector.z + FP64.FromFloat(1f);
-        if (isBackPressed) inputVector.z = inputVector.z - FP64.FromFloat(1f);
+        FP64 oneFP = new FP64(65536);
 
-        FP64 depthMultiplier = controller.invertDepthAxis ? FP64.FromFloat(-1f) : FP64.FromFloat(1f);
+        if (isForwardPressed) inputVector.z = inputVector.z + oneFP;
+        if (isBackPressed) inputVector.z = inputVector.z - oneFP;
+
+        FP64 depthMultiplier = controller.invertDepthAxis ? new FP64(-65536) : oneFP;
 
         if (isUpPressed) inputVector.x = inputVector.x + depthMultiplier;
         if (isDownPressed) inputVector.x = inputVector.x - depthMultiplier;

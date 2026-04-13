@@ -19,7 +19,6 @@ public struct HitFeedbackData
 public struct RootMotionData
 {
     public Vector3 deltaPosition;
-    public Quaternion deltaRotation;
 }
 
 [System.Serializable]
@@ -37,6 +36,11 @@ public struct HurtInfo
     public HurtState_Type targetHurtState;
     public bool isHardKnockdown;
     public Attack_Height attackHeight;
+}
+
+public struct FPRootMotionData
+{
+    public FPVector3 deltaPosition;
 }
 
 public struct FPCollisionBox

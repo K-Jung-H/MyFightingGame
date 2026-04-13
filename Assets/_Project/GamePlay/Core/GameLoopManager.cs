@@ -111,7 +111,9 @@ public class GameLoopManager : MonoBehaviour
     private IGameModeLogic currentLogic;
     public bool isShowAllHUD = false;
 
-    #region Unity Lifecycle
+    private FP64 cachedClimaxSlowMoScale;
+    private readonly FP64 FP64_ONE = new FP64(65536);
+
     private void Awake()
     {
         if (MatchDataManager.P1CharacterData != null) playerOne.characterData = MatchDataManager.P1CharacterData;
@@ -191,9 +193,7 @@ public class GameLoopManager : MonoBehaviour
             Destroy(connectionState.currentP2PNetwork.gameObject);
         }
     }
-    #endregion
 
-    #region Public Getters & State Queries
     public int GetCurrentTick() => simState.currentTick;
     public RoundTimerManager GetRoundTimer() => roundTimer;
     public PlayerController GetPlayerOneController() => playerOne.controller;
@@ -213,7 +213,7 @@ public class GameLoopManager : MonoBehaviour
         FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
         FPVector3 diff = p2Pos - p1Pos;
         
-        FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+        FPVector3 upVector = new FPVector3(new FP64(0), FP64_ONE, new FP64(0));
         FPVector3 cameraRight = FPVector3.Cross(upVector, simState.sharedDepthAxis);
         FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
         
@@ -236,12 +236,12 @@ public class GameLoopManager : MonoBehaviour
     {
         return syncController.GetSyncState().isDesyncDetected;
     }
-    #endregion
 
-    #region Initialization & Match Setup
     public void InitializeMatch()
     {
         DetermineCameraFlipState();
+
+        cachedClimaxSlowMoScale = FP64.FromFloat(ruleConfig.climaxSlowMoScale);
 
         int timeLimit = RoomStateManager.Instance != null ? RoomStateManager.Instance.roomModel.roundTimeLimit : 99;
         int maxRds = RoomStateManager.Instance != null ? RoomStateManager.Instance.roomModel.maxRounds : 3;
@@ -258,7 +258,7 @@ public class GameLoopManager : MonoBehaviour
         }
 
         simState.isResimulating = false;
-        simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64.FromFloat(1f));
+        simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
 
         stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
         roundTimer = new RoundTimerManager();
@@ -359,13 +359,12 @@ public class GameLoopManager : MonoBehaviour
             simState.phaseDelayTicks = ruleConfig.preRoundDelayFrames;
         }
 
-        simState.simulationScale = FP64.FromFloat(1f);
-        simState.timeAccumulator = FP64.FromFloat(0f);
+        simState.simulationScale = FP64_ONE;
+        simState.timeAccumulator = new FP64(0);
         
         long recoveryTicksLong = (long)Mathf.Max(1, ruleConfig.climaxRecoveryFrames);
-        long oneRaw = FP64.FromFloat(1f).rawValue;
-        long slowMoRaw = FP64.FromFloat(ruleConfig.climaxSlowMoScale).rawValue;
-        climaxRecoveryStepFP = new FP64((oneRaw - slowMoRaw) / recoveryTicksLong);
+        long slowMoRaw = cachedClimaxSlowMoScale.rawValue;
+        climaxRecoveryStepFP = new FP64((FP64_ONE.rawValue - slowMoRaw) / recoveryTicksLong);
 
         scoreContext.currentRound++;
 
@@ -421,13 +420,11 @@ public class GameLoopManager : MonoBehaviour
             playerOne.controller.GetCombat().ClearRegisteredHitGroupIds(); 
             playerTwo.controller.GetCombat().ClearRegisteredHitGroupIds();
             
-            simState.timeAccumulator = FP64.FromFloat(0f);
-            simState.simulationScale = FP64.FromFloat(1f);
+            simState.timeAccumulator = new FP64(0);
+            simState.simulationScale = FP64_ONE;
         }
     }
-    #endregion
 
-    #region Network & P2P Handlers
     public void SetupP2PConnection(string peerIp)
     {
         GameObject p2pObj = new GameObject("P2PNetworkManager");
@@ -503,9 +500,7 @@ public class GameLoopManager : MonoBehaviour
             playingUI.UpdateRematchSync(isP1Ready, isP2Ready, simState.isCameraFlipped);
         }
     }
-    #endregion
 
-    #region Tick & Simulation Logic
     public void ProcessTick(PlayerInput p1, PlayerInput p2)
     {
         RunTick(p1, p2);
@@ -541,28 +536,27 @@ public class GameLoopManager : MonoBehaviour
         if (playerOne.controller != null && playerTwo.controller != null)
         {
             bool isClimax = roundReferee.CheckClimaxCondition(playerOne.controller, playerTwo.controller);
-            FP64 targetScale = FP64.FromFloat(1f);
             
             if (isClimax)
             {
-                simState.simulationScale = FP64.FromFloat(ruleConfig.climaxSlowMoScale);
+                simState.simulationScale = cachedClimaxSlowMoScale;
             }
-            else if (simState.simulationScale.rawValue < targetScale.rawValue)
+            else if (simState.simulationScale.rawValue < FP64_ONE.rawValue)
             {
                 simState.simulationScale += climaxRecoveryStepFP;
-                if (simState.simulationScale.rawValue > targetScale.rawValue)
+                if (simState.simulationScale.rawValue > FP64_ONE.rawValue)
                 {
-                    simState.simulationScale = targetScale;
+                    simState.simulationScale = FP64_ONE;
                 }
             }
 
             simState.timeAccumulator += simState.simulationScale;
             simState.isLogicStep = false;
 
-            while (simState.timeAccumulator.rawValue >= FP64.FromFloat(1f).rawValue)
+            while (simState.timeAccumulator.rawValue >= FP64_ONE.rawValue)
             {
                 simState.isLogicStep = true;
-                simState.timeAccumulator -= FP64.FromFloat(1f);
+                simState.timeAccumulator -= FP64_ONE;
             }
 
             simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref simState, HandleHitSpark);
@@ -687,9 +681,7 @@ public class GameLoopManager : MonoBehaviour
         playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
         playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Defeat, true);
     }
-    #endregion
 
-    #region Rollback & State Buffers
     private void SaveGameState(int tick)
     {
         int idx = tick % ROLLBACK_WINDOW;
@@ -739,9 +731,7 @@ public class GameLoopManager : MonoBehaviour
         simState.currentTick = actualRealTick;
         simState.isResimulating = false;
     }
-    #endregion
 
-    #region Visuals & Rendering
     private void DetermineCameraFlipState()
     {
         if (RoomStateManager.Instance != null)
@@ -761,7 +751,7 @@ public class GameLoopManager : MonoBehaviour
 
     private void SyncVisuals()
     {
-        float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64.FromFloat(1f).rawValue;
+        float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64_ONE.rawValue;
         
         if (VfxManager.Instance != null)
         {
@@ -788,9 +778,7 @@ public class GameLoopManager : MonoBehaviour
             ctx.renderer.PlayHitSpark(point, effect);
         }
     }
-    #endregion
 
-    #region Match End & UI
     public void HideMatchResultUI() 
     { 
         if (playingUI != null) playingUI.HideMatchResult(); 
@@ -819,5 +807,4 @@ public class GameLoopManager : MonoBehaviour
             ServerNetworkManager.Instance.SendRoundEndReport(winnerSlot, scoreContext.p1RoundWins, scoreContext.p2RoundWins);
         }
     }
-    #endregion
 }

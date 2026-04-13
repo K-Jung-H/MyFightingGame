@@ -11,6 +11,7 @@ public class AttackingState : PlayerStateBase
     public override void Enter()
     {
         currentActionData = stateMachine.GetCurrentActionData();
+        combat.ClearRegisteredHitGroupIds();
     }
 
     public override void UpdateTick(PlayerInput input)
@@ -22,15 +23,16 @@ public class AttackingState : PlayerStateBase
         int totalFrames = currentActionData.frameData.logicData.totalFrames;
 
         bool isRootMotionUsed = currentActionData.frameData.logicData.useRootMotion;
-        bool hasRootMotionData = currentActionData.frameData.rootMotionPath != null;
+        FPRootMotionData[] fpRootPath = currentActionData.GetCachedFPRootMotionPath();
+        bool hasRootMotionData = fpRootPath != null;
 
         if (isRootMotionUsed && hasRootMotionData)
         {
-            bool isFrameWithinBounds = currentFrame < currentActionData.frameData.rootMotionPath.Length;
+            bool isFrameWithinBounds = currentFrame < fpRootPath.Length;
             if (isFrameWithinBounds)
             {
-                RootMotionData rootData = currentActionData.frameData.rootMotionPath[currentFrame];
-                physics.ApplyRootMotion(rootData.deltaPosition, rootData.deltaRotation);
+                FPRootMotionData rootData = fpRootPath[currentFrame];
+                physics.ApplyRootMotion(rootData.deltaPosition);
             }
         }
 

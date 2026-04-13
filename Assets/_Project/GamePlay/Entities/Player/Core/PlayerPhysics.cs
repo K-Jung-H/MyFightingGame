@@ -109,11 +109,9 @@ public class PlayerPhysics : ISnapshotSync
         isRootMotionActiveThisFrame = false;
     }
 
-    public void ApplyRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
+    public void ApplyRootMotion(FPVector3 fpDeltaPos)
     {
-        FPVector3 fpDeltaPos = FPVector3.FromVector3(deltaPosition);
-
-        FPVector3 upVector = new FPVector3(new FP64(0), FP64.FromFloat(1f), new FP64(0));
+        FPVector3 upVector = new FPVector3(new FP64(0), new FP64(65536), new FP64(0));
         FPVector3 rightDirection = FPVector3.Cross(upVector, lookDirection);
         
         FPVector3 worldDeltaPos = (rightDirection * fpDeltaPos.x) + (upVector * fpDeltaPos.y) + (lookDirection * fpDeltaPos.z);
@@ -150,7 +148,6 @@ public class PlayerPhysics : ISnapshotSync
     public void SetDepthAxis(Vector3 axis) => depthAxis = FPVector3.FromVector3(axis);
     public void SetCurrentDirection(Vector3 dir) => currentDirection = FPVector3.FromVector3(dir);
     public void SetGlobalGravity(float gravity) => globalGravity = FP64.FromFloat(gravity);
-    public void ApplyPushback(Vector3 pushVector) => position = position + FPVector3.FromVector3(pushVector);
 
     public FPVector3 GetFPPosition() => position;
     public FPVector3 GetFPVelocity() => velocity;
