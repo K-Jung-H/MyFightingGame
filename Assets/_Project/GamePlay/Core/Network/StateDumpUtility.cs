@@ -28,7 +28,7 @@ public static class StateDumpUtility
         Debug.Log($"[StateDump] Snapshot appended to: {filePath}");
     }
 
-    private static void DumpPlayerSnapshot(StringBuilder sb, PlayerSnapshot p)
+    private static unsafe void DumpPlayerSnapshot(StringBuilder sb, PlayerSnapshot p)
     {
         sb.AppendLine($"Position: {FormatFPVector3(p.position)}");
         sb.AppendLine($"Velocity: {FormatFPVector3(p.velocity)}");
@@ -41,6 +41,7 @@ public static class StateDumpUtility
         sb.AppendLine($"LastImpactFallSpeed (Raw): {p.lastImpactFallSpeed.rawValue}");
         
         sb.AppendLine($"CachedCurrentState: {p.cachedCurrentState}");
+        sb.AppendLine($"PreviousStateType: {p.previousStateType}");
         sb.AppendLine($"StateFrameCounter: {p.stateFrameCounter}");
         sb.AppendLine($"CurrentActionID: {p.currentActionID}");
         sb.AppendLine($"IsCommandActionTriggered: {p.isCommandActionTriggered}");
@@ -56,6 +57,16 @@ public static class StateDumpUtility
         
         sb.AppendLine($"CurrentHealth: {p.currentHealth}");
         sb.AppendLine($"HitstopCounter: {p.hitstopCounter}");
+
+        sb.AppendLine($"ControllerFrame: {p.controllerFrame}");
+        sb.AppendLine($"PreviousRawFlags: {p.previousRawFlags}");
+        sb.AppendLine($"AccumulatedHitstopFlags: {p.accumulatedHitstopFlags}");
+        sb.AppendLine($"AccumulatedLogicFlags: {p.accumulatedLogicFlags}");
+
+        sb.AppendLine($"ActionController.ComboCount: {p.actionControllerState.comboCount}");
+        sb.AppendLine($"ActionController.InputBufferCount: {p.actionControllerState.deterministicInputBuffer.count}");
+        sb.AppendLine($"ActionController.InputBufferHead: {p.actionControllerState.deterministicInputBuffer.head}");
+        sb.AppendLine($"Combat.HitGroupCount: {p.combatState.hitGroupCount}");
     }
 
     private static string FormatFPVector3(FPVector3 v)

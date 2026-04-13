@@ -57,6 +57,14 @@ public class PlayerCombat
         }
     }
 
+    public void ResetCombatState()
+    {
+        ClearRegisteredHitGroupIds();
+        InitializeHealth();
+        hitstopCounter = 0;
+        currentHurtInfo = new HurtInfo();
+    }
+
     public void InitializeHealth()
     {
         maxHealth = config.GetMaxHealth();

@@ -48,6 +48,21 @@ public class PlayerController : ITargetable, ISnapshotSync
         stateMachine.Initialize(this, config);
     }
 
+    public void ResetForNewRound()
+    {
+        currentFrame = 0;
+        accumulatedHitstopFlags = InputFlags.None;
+        accumulatedLogicFlags = InputFlags.None;
+        previousRawFlags = InputFlags.None;
+        
+        inputTracker.Initialize();
+        actionController.ClearAllBuffers();
+
+        combat.ResetCombatState();
+        physics.ResetPhysicsState();
+        stateMachine.ResetStateMachine();
+    }
+
     public void ExportState(ref PlayerSnapshot snapshot)
     {
         physics.ExportState(ref snapshot);
@@ -76,14 +91,21 @@ public class PlayerController : ITargetable, ISnapshotSync
         accumulatedLogicFlags = snapshot.accumulatedLogicFlags;
     }
 
-public void UpdateTick(PlayerInput input, bool isLogicStep)
+    public void UpdateTick(PlayerInput input, bool isLogicStep)
     {
+        InputFlags currentRawKeyDown = input.flags & ~previousRawFlags;
+        accumulatedLogicFlags |= currentRawKeyDown;
+
+        InputFlags justReleasedFlags = previousRawFlags & ~input.flags;
+        InputFlags debouncedFlags = input.flags | justReleasedFlags;
+
+        previousRawFlags = input.flags;
+
         if (!isLogicStep) return;
 
-        PlayerInput sanitizedInput = ApplyReleaseDebounce(input);
+        inputTracker.UpdateTick(debouncedFlags | accumulatedLogicFlags);
         
-        inputTracker.UpdateTick(sanitizedInput.flags);
-        
+        PlayerInput sanitizedInput = input;
         sanitizedInput.flags = inputTracker.currentFlags;
         
         currentInput = sanitizedInput;
@@ -95,19 +117,25 @@ public void UpdateTick(PlayerInput input, bool isLogicStep)
         if (isHitstopActive)
         {
             accumulatedHitstopFlags |= currentKeyDownFlags;
+            accumulatedLogicFlags = InputFlags.None;
             return;
+        }
+
+        if (accumulatedHitstopFlags != InputFlags.None)
+        {
+            currentKeyDownFlags |= accumulatedHitstopFlags;
+            sanitizedInput.flags |= accumulatedHitstopFlags;
+            accumulatedHitstopFlags = InputFlags.None;
         }
 
         currentFrame++;
         sanitizedInput.frame = currentFrame; 
         
-        InputFlags mergedKeyDown = currentKeyDownFlags | accumulatedHitstopFlags;
-        accumulatedHitstopFlags = InputFlags.None;
-        
-        sanitizedInput.flags |= mergedKeyDown;
-
         PlayerState_Type currentState = stateMachine.GetCurrentState();
-        actionController.ProcessInput(sanitizedInput, mergedKeyDown, currentFrame, currentState);
+        
+        actionController.ProcessInput(sanitizedInput, currentKeyDownFlags, currentFrame, currentState);
+
+        accumulatedLogicFlags = InputFlags.None;
 
         bool isHoming = false;
         if (currentState == PlayerState_Type.Attacking)
@@ -123,22 +151,8 @@ public void UpdateTick(PlayerInput input, bool isLogicStep)
         physics.UpdateLookDirection(targetEntity, currentState, isHoming);
         ProcessActionBuffer();
         physics.ResetRootMotionFlag();
-        
         stateMachine.UpdateTick(sanitizedInput);
         physics.ProcessPhysicsTick();
-    }
-
-    private PlayerInput ApplyReleaseDebounce(PlayerInput rawInput)
-    {
-        InputFlags currentRawFlags = rawInput.flags;
-        InputFlags justReleasedFlags = previousRawFlags & ~currentRawFlags;
-
-        PlayerInput sanitizedInput = rawInput;
-        sanitizedInput.flags = currentRawFlags | justReleasedFlags;
-
-        previousRawFlags = currentRawFlags;
-
-        return sanitizedInput;
     }
 
     private void ProcessActionBuffer()

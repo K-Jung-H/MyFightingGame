@@ -361,6 +361,7 @@ public class GameLoopManager : MonoBehaviour
 
         simState.simulationScale = FP64_ONE;
         simState.timeAccumulator = new FP64(0);
+        simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
         
         long recoveryTicksLong = (long)Mathf.Max(1, ruleConfig.climaxRecoveryFrames);
         long slowMoRaw = cachedClimaxSlowMoScale.rawValue;
@@ -370,20 +371,11 @@ public class GameLoopManager : MonoBehaviour
 
         if (playerOne.controller != null && playerTwo.controller != null)
         {
-            playerOne.controller.GetCombat().InitializeHealth(); 
-            playerTwo.controller.GetCombat().InitializeHealth();
-            
             playerOne.controller.GetPhysics().SetPosition(ruleConfig.p1SpawnPos); 
             playerTwo.controller.GetPhysics().SetPosition(ruleConfig.p2SpawnPos);
-            
-            playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true); 
-            playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true);
-            
-            playerOne.controller.GetActionController().ClearAllBuffers(); 
-            playerTwo.controller.GetActionController().ClearAllBuffers();
-            
-            playerOne.controller.GetCombat().ClearRegisteredHitGroupIds(); 
-            playerTwo.controller.GetCombat().ClearRegisteredHitGroupIds();
+
+            playerOne.controller.ResetForNewRound();
+            playerTwo.controller.ResetForNewRound();
         }
 
         int timeLimit = RoomStateManager.Instance != null ? RoomStateManager.Instance.roomModel.roundTimeLimit : 99;
@@ -405,23 +397,15 @@ public class GameLoopManager : MonoBehaviour
     {
         if (playerOne.controller != null && playerTwo.controller != null)
         {
-            playerOne.controller.GetCombat().InitializeHealth(); 
-            playerTwo.controller.GetCombat().InitializeHealth();
-            
             playerOne.controller.GetPhysics().SetPosition(ruleConfig.p1SpawnPos); 
             playerTwo.controller.GetPhysics().SetPosition(ruleConfig.p2SpawnPos);
-            
-            playerOne.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true); 
-            playerTwo.controller.GetStateMachine().TransitionTo(PlayerState_Type.Idle, true);
-            
-            playerOne.controller.GetActionController().ClearAllBuffers(); 
-            playerTwo.controller.GetActionController().ClearAllBuffers();
-            
-            playerOne.controller.GetCombat().ClearRegisteredHitGroupIds(); 
-            playerTwo.controller.GetCombat().ClearRegisteredHitGroupIds();
+
+            playerOne.controller.ResetForNewRound();
+            playerTwo.controller.ResetForNewRound();
             
             simState.timeAccumulator = new FP64(0);
             simState.simulationScale = FP64_ONE;
+            simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
         }
     }
 

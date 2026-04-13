@@ -50,6 +50,20 @@ public class PlayerPhysics : ISnapshotSync
         cachedGravityScale = FP64.FromFloat(config.gravityScale);
     }
 
+    public void ResetPhysicsState()
+    {
+        velocity = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        
+        FPVector3 forwardDirection = new FPVector3(new FP64(0), new FP64(0), new FP64(65536));
+        depthAxis = forwardDirection;
+        currentDirection = forwardDirection;
+        lookDirection = forwardDirection;
+        
+        lastImpactFallSpeed = new FP64(0);
+        isGrounded = true;
+        isRootMotionActiveThisFrame = false;
+    }
+
     public void UpdateLookDirection(ITargetable targetEntity, PlayerState_Type currentState, bool isHoming = false)
     {
         bool isLookUpdateDisabled = targetEntity == null || (currentState == PlayerState_Type.Attacking && !isHoming);

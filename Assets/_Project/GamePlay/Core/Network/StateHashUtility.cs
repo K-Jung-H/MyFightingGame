@@ -16,14 +16,12 @@ public static class StateHashUtility
         hash = CombineHash(hash, (ulong)snapshot.currentPhase);
         hash = CombineHash(hash, (ulong)snapshot.phaseDelayTicks);
         hash = CombineHash(hash, (ulong)snapshot.simulationScale.rawValue);
-        hash = CombineHash(hash, (ulong)snapshot.phaseDelayTicks);
-        hash = CombineHash(hash, (ulong)snapshot.simulationScale.rawValue);
         hash = CombineHash(hash, (ulong)snapshot.timeAccumulator.rawValue);
 
         return hash;
     }
 
-    private static ulong ComputePlayerHash(PlayerSnapshot p)
+    private static unsafe ulong ComputePlayerHash(PlayerSnapshot p)
     {
         ulong hash = 14695981039346656037UL;
 
@@ -36,6 +34,7 @@ public static class StateHashUtility
         hash = CombineHash(hash, p.isGrounded ? 1UL : 0UL);
         hash = CombineHash(hash, p.isRootMotionActiveThisFrame ? 1UL : 0UL);
         hash = CombineHash(hash, (ulong)p.cachedCurrentState);
+        hash = CombineHash(hash, (ulong)p.previousStateType);
         hash = CombineHash(hash, (ulong)p.stateFrameCounter);
         hash = CombineHash(hash, (ulong)p.currentActionID);
         hash = CombineHash(hash, p.isCommandActionTriggered ? 1UL : 0UL);
@@ -51,6 +50,27 @@ public static class StateHashUtility
 
         hash = CombineHash(hash, (ulong)p.currentHealth);
         hash = CombineHash(hash, (ulong)p.hitstopCounter);
+        hash = CombineHash(hash, (ulong)p.lastImpactFallSpeed.rawValue);
+        
+        hash = CombineHash(hash, (ulong)p.controllerFrame);
+        hash = CombineHash(hash, (ulong)p.previousRawFlags);
+        hash = CombineHash(hash, (ulong)p.accumulatedHitstopFlags);
+        hash = CombineHash(hash, (ulong)p.accumulatedLogicFlags);
+
+        hash = CombineHash(hash, (ulong)p.actionControllerState.comboCount);
+        for (int i = 0; i < p.actionControllerState.comboCount; i++)
+        {
+            hash = CombineHash(hash, (ulong)p.actionControllerState.comboSequence[i]);
+        }
+
+        hash = CombineHash(hash, (ulong)p.actionControllerState.deterministicInputBuffer.count);
+        hash = CombineHash(hash, (ulong)p.actionControllerState.deterministicInputBuffer.head);
+
+        hash = CombineHash(hash, (ulong)p.combatState.hitGroupCount);
+        for (int i = 0; i < p.combatState.hitGroupCount; i++)
+        {
+            hash = CombineHash(hash, (ulong)p.combatState.registeredHitGroups[i]);
+        }
 
         return hash;
     }

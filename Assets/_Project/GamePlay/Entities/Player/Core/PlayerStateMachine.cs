@@ -147,6 +147,37 @@ public class PlayerStateMachine : ISnapshotSync
         };
     }
 
+    public void ResetStateMachine()
+    {
+        TransitionTo(PlayerState_Type.Idle, true);
+        
+        stateFrameCounter = 0;
+        previousStateType = (PlayerState_Type)(-1);
+        isCommandActionTriggered = false;
+        currentActionData = null;
+
+        WakeUpState wakeUpState = GetStateObject(PlayerState_Type.WakeUp) as WakeUpState;
+        if (wakeUpState != null) wakeUpState.SetWakeUpType((WakeUp_Type)0);
+
+        LayingDownState layState = GetStateObject(PlayerState_Type.LayingDown) as LayingDownState;
+        if (layState != null) layState.SetFromRoll(false);
+
+        SideStepState sideStep = GetStateObject(PlayerState_Type.SideStep) as SideStepState;
+        if (sideStep != null) sideStep.SetStepDirection(new FP64(0));
+
+        StandHitState standHit = GetStateObject(PlayerState_Type.StandHit) as StandHitState;
+        if (standHit != null) standHit.SetCurrentStunFrames(0);
+
+        CrouchHitState crouchHit = GetStateObject(PlayerState_Type.CrouchHit) as CrouchHitState;
+        if (crouchHit != null) crouchHit.SetCurrentStunFrames(0);
+
+        AirHitState airHit = GetStateObject(PlayerState_Type.AirHit) as AirHitState;
+        if (airHit != null) airHit.SetCurrentStunFrames(0);
+
+        GroundSmashState smashState = GetStateObject(PlayerState_Type.GroundSmash) as GroundSmashState;
+        if (smashState != null) smashState.SetIsBouncing(false);
+    }
+
     public void UpdateTick(PlayerInput input)
     {
         stateFrameCounter++;
