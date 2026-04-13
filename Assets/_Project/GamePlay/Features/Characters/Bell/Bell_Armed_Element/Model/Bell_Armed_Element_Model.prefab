@@ -1702,7 +1702,7 @@ Animator:
   m_GameObject: {fileID: 5483960116531080152}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: a113124e76e09e1448c2dad41c581179, type: 3}
-  m_Controller: {fileID: 9100000, guid: a5fffba9f11835f4b9c16d3232e6d2cc, type: 2}
+  m_Controller: {fileID: 9100000, guid: 2c086a9c33fd55846aae92e9dc728a1d, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1728,6 +1728,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRenderer
   characterAnimator: {fileID: 4346351702718307297}
   locomotionBlendTime: 0.1
+  actionBlendTime: 0.05
 --- !u!1 &5527547582570295179
 GameObject:
   m_ObjectHideFlags: 0

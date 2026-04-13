@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2939300ac5e51ae4aaa0494203a8c2d2, type: 3}
+  m_Name: Kick_Left_Low
+  m_EditorClassIdentifier: Assembly-CSharp::ActionDataSO
+  animationClip: {fileID: 7400000, guid: b89157ae667535c4480304ff481b791b, type: 3}
+  animationStateName: Kick_Left_Low
+  frameData:
+    logicData:
+      totalFrames: 36
+      startupFrames: 12
+      recoveryFrames: 19
+      cancelWindowStartFrame: 26
+      useRootMotion: 0
+      useRootRotation: 0
+      isHoming: 0
+    rootMotionPath: []
+    hitboxEvents:
+    - markerName: Hitbox_L_K
+      activeStartFrame: 12
+      boxPath:
+      - localPosition: {x: -0.08503709, y: 0.51695454, z: 0.75714177}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.07894937, y: 0.5360193, z: 0.90102696}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.23147959, y: 0.6030657, z: 0.9402277}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.19400352, y: 0.5767717, z: 0.94250494}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      - localPosition: {x: 0.11684835, y: 0.51186836, z: 0.9278774}
+        extents: {x: 0.25, y: 0.25, z: 0.25}
+      hitGroupID: 0
+      attackHeight: 2
+      attackType: 1
+      targetHurtState: 0
+      damage: 5
+      hitstunFrames: 20
+      blockStunFrames: 20
+      localPushbackVector: {x: 0, y: 0, z: 0}
+      isHardKnockdown: 0
+    hurtboxEvents:
+    - startFrame: 0
+      endFrame: 36
+      hurtboxType: 0
+    vfxEvents: []
