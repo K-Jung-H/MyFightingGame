@@ -17,6 +17,10 @@ public static class StateHashUtility
         hash = CombineHash(hash, (ulong)snapshot.phaseDelayTicks);
         hash = CombineHash(hash, (ulong)snapshot.simulationScale.rawValue);
         hash = CombineHash(hash, (ulong)snapshot.timeAccumulator.rawValue);
+        
+        hash = CombineHash(hash, (ulong)snapshot.scoreContext.p1RoundWins);
+        hash = CombineHash(hash, (ulong)snapshot.scoreContext.p2RoundWins);
+        hash = CombineHash(hash, (ulong)snapshot.scoreContext.currentRound);
 
         return hash;
     }

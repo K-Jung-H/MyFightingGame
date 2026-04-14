@@ -80,6 +80,7 @@ public struct GameStateSnapshot
     public int phaseDelayTicks;
     public FP64 simulationScale;
     public FP64 timeAccumulator;
+    public MatchScoreContext scoreContext;
 }
 
 
@@ -675,6 +676,7 @@ public class GameLoopManager : MonoBehaviour
         stateBuffer[idx].phaseDelayTicks = simState.phaseDelayTicks;
         stateBuffer[idx].simulationScale = simState.simulationScale; 
         stateBuffer[idx].timeAccumulator = simState.timeAccumulator;
+        stateBuffer[idx].scoreContext = scoreContext;
         
         roundTimer.ExportState(ref stateBuffer[idx]);
         
@@ -690,6 +692,7 @@ public class GameLoopManager : MonoBehaviour
         simState.phaseDelayTicks = stateBuffer[idx].phaseDelayTicks; 
         simState.simulationScale = stateBuffer[idx].simulationScale;
         simState.timeAccumulator = stateBuffer[idx].timeAccumulator;
+        scoreContext = stateBuffer[idx].scoreContext;
         
         roundTimer.ImportState(stateBuffer[idx]);
         
