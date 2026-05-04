@@ -8,6 +8,7 @@ public class CombatDebugVisualizer : MonoBehaviour
     [SerializeField] private bool isShowingHurtboxes = true;
     [SerializeField] private bool isShowingHitboxes = true;
     [SerializeField] private bool isShowingLookDirection = true;
+    [SerializeField] private bool isShowingStageBoundaries = true;
 
     private Material debugMaterial;
 
@@ -31,6 +32,8 @@ public class CombatDebugVisualizer : MonoBehaviour
 
         bool hasPlayerTwo = playerTwo != null;
         if (hasPlayerTwo) DrawGizmosForPlayer(playerTwo);
+
+        if (isShowingStageBoundaries) DrawGizmoStageBoundaries(gameLoopManager.GetStageBoundary());
     }
 
     private void OnRenderObject()
@@ -79,6 +82,52 @@ public class CombatDebugVisualizer : MonoBehaviour
         if (isShowingHurtboxes) DrawGLHurtboxes(controller);
         if (isShowingHitboxes) DrawGLHitboxes(controller);
     }
+
+    private void DrawGizmoStageBoundaries(StageBoundary boundary)
+    {
+        if (boundary.Planes == null) return;
+
+        foreach (var plane in boundary.Planes)
+        {
+            if (!plane.isActive) continue;
+
+            Vector3 normal = plane.Normal.ToVector3();
+            float dist = plane.Distance.ToFloat();
+            Vector3 centerBase = normal * dist;
+            
+            float h = 5f; 
+            float w = 20f;
+            Vector3 center = centerBase + Vector3.up * (h * 0.5f);
+            
+            Quaternion rotation = Quaternion.LookRotation(normal);
+            Vector3 right = rotation * Vector3.right * (w * 0.5f);
+            Vector3 up = Vector3.up * (h * 0.5f);
+
+            Vector3 p0 = center - right - up;
+            Vector3 p1 = center + right - up;
+            Vector3 p2 = center + right + up;
+            Vector3 p3 = center - right + up;
+
+            Color baseColor = plane.isBreakable ? new Color(1f, 0.5f, 0f) : Color.cyan;
+            Color faceColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0.1f);
+            Color wireColor = plane.isBreakable ? new Color(1f, 0.7f, 0.2f) : Color.cyan;
+
+            
+            Gizmos.color = faceColor;
+            Quaternion meshRotation = rotation * Quaternion.Euler(0, 180, 0);
+            Gizmos.DrawMesh(GetQuadMesh(), center, meshRotation, new Vector3(w, h, 1f));
+
+            Gizmos.color = wireColor;
+            Gizmos.DrawLine(p0, p1);
+            Gizmos.DrawLine(p1, p2);
+            Gizmos.DrawLine(p2, p3);
+            Gizmos.DrawLine(p3, p0);
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(center, normal * 2f);
+        }
+    }
+
 
     private void DrawGizmoLookDirection(PlayerController controller)
     {
@@ -269,5 +318,17 @@ public class CombatDebugVisualizer : MonoBehaviour
             case Hurtbox_Type.Invincible: return new Color(0.9f, 0.9f, 0.9f);
             default: return Color.gray;
         }
+    }
+
+    private static Mesh _quadMesh;
+    private static Mesh GetQuadMesh()
+    {
+        if (_quadMesh == null)
+        {
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            _quadMesh = quad.GetComponent<MeshFilter>().sharedMesh;
+            DestroyImmediate(quad);
+        }
+        return _quadMesh;
     }
 }

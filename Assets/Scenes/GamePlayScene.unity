@@ -231,7 +231,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04183c00f241045438e60929e25ff40d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLoopManager
-  ruleConfig: {fileID: 11400000, guid: e34b9794997ce164882de6d89e3e4d92, type: 2}
   playingUI: {fileID: 22342372}
   playerOne:
     characterData: {fileID: 11400000, guid: 914a4ffd064c33e47925cfabf435e814, type: 2}
@@ -263,6 +262,8 @@ MonoBehaviour:
       selectKey: 0
     instance: {fileID: 0}
     renderer: {fileID: 0}
+  ruleConfig: {fileID: 11400000, guid: e34b9794997ce164882de6d89e3e4d92, type: 2}
+  currentStageData: {fileID: 0}
   syncController:
     networkSettings:
       maxRollbackFrames: 7
@@ -320,6 +321,7 @@ MonoBehaviour:
   isShowingHurtboxes: 1
   isShowingHitboxes: 1
   isShowingLookDirection: 0
+  isShowingStageBoundaries: 1
 --- !u!114 &22342372
 MonoBehaviour:
   m_ObjectHideFlags: 0

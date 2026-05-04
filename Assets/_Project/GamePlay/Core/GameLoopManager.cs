@@ -87,10 +87,14 @@ public struct GameStateSnapshot
 public class GameLoopManager : MonoBehaviour
 {
     [Header("Core Dependencies")]
-    [SerializeField] private GameRuleConfigSO ruleConfig;    
     [SerializeField] private PlayingUI_Manager playingUI;
     [SerializeField] private PlayerSessionContext playerOne;
     [SerializeField] private PlayerSessionContext playerTwo;
+
+    [Header("Stage & Rule Data")]
+    [SerializeField] private GameRuleConfigSO ruleConfig;
+    [SerializeField] private GameStageDataSO currentStageData;
+
 
     [Header("Public States (For Logic Classes)")]
     public NetworkSyncController syncController = new NetworkSyncController();
@@ -110,6 +114,8 @@ public class GameLoopManager : MonoBehaviour
     private RoundTimerManager roundTimer;
     private RoundReferee roundReferee;
     private IGameModeLogic currentLogic;
+    private StageBoundary runtimeBoundary;
+
     public bool isShowAllHUD = false;
 
     private FP64 cachedClimaxSlowMoScale;
@@ -117,6 +123,8 @@ public class GameLoopManager : MonoBehaviour
 
     private void Awake()
     {
+
+
         if (MatchDataManager.P1CharacterData != null) playerOne.characterData = MatchDataManager.P1CharacterData;
         if (MatchDataManager.P2CharacterData != null) playerTwo.characterData = MatchDataManager.P2CharacterData;
 
@@ -128,6 +136,8 @@ public class GameLoopManager : MonoBehaviour
 
         simulationCore = new GameSimulationCore();
         simulationCore.Initialize(ruleConfig.playerCollisionMinDistance);
+
+        InitializeStageBoundary();
 
         if (ServerNetworkManager.Instance != null)
         {
@@ -197,6 +207,8 @@ public class GameLoopManager : MonoBehaviour
 
     public int GetCurrentTick() => simState.currentTick;
     public RoundTimerManager GetRoundTimer() => roundTimer;
+    public StageBoundary GetStageBoundary() => runtimeBoundary;
+
     public PlayerController GetPlayerOneController() => playerOne.controller;
     public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
@@ -237,6 +249,29 @@ public class GameLoopManager : MonoBehaviour
     {
         return syncController.GetSyncState().isDesyncDetected;
     }
+
+    private void InitializeStageBoundary()
+    {
+        if (currentStageData == null)
+        {
+            Debug.LogError("GameLoopManager: Stage Data가 할당되지 않았습니다.");
+            runtimeBoundary = new StageBoundary { Planes = new BoundaryPlane[0] };
+            return;
+        }
+
+        StageBoundary template = currentStageData.GetBoundary();
+
+        if (template.Planes != null)
+        {
+            runtimeBoundary = new StageBoundary
+            {
+                Planes = (BoundaryPlane[])template.Planes.Clone()
+            };
+        }
+        
+        Debug.Log($"스테이지 초기화 완료: {currentStageData.stageName} (벽 개수: {runtimeBoundary.TotalWallCount})");
+    }
+    
 
     public void InitializeMatch()
     {
