@@ -66,6 +66,7 @@ public struct SimulationState
     public FP64 simulationScale;
     public FP64 timeAccumulator;
     public bool isLogicStep;
+    public uint stageActiveWallBitmask;
 }
 
 public struct GameStateSnapshot
@@ -81,6 +82,7 @@ public struct GameStateSnapshot
     public FP64 simulationScale;
     public FP64 timeAccumulator;
     public MatchScoreContext scoreContext;
+    public uint stageActiveWallBitmask;
 }
 
 
@@ -114,7 +116,6 @@ public class GameLoopManager : MonoBehaviour
     private RoundTimerManager roundTimer;
     private RoundReferee roundReferee;
     private IGameModeLogic currentLogic;
-    private StageBoundary runtimeBoundary;
 
     public bool isShowAllHUD = false;
 
@@ -123,8 +124,6 @@ public class GameLoopManager : MonoBehaviour
 
     private void Awake()
     {
-
-
         if (MatchDataManager.P1CharacterData != null) playerOne.characterData = MatchDataManager.P1CharacterData;
         if (MatchDataManager.P2CharacterData != null) playerTwo.characterData = MatchDataManager.P2CharacterData;
 
@@ -133,11 +132,6 @@ public class GameLoopManager : MonoBehaviour
 
         roundReferee = new RoundReferee();
         roundReferee.Initialize(ruleConfig);
-
-        simulationCore = new GameSimulationCore();
-        simulationCore.Initialize(ruleConfig.playerCollisionMinDistance);
-
-        InitializeStageBoundary();
 
         if (ServerNetworkManager.Instance != null)
         {
@@ -207,8 +201,7 @@ public class GameLoopManager : MonoBehaviour
 
     public int GetCurrentTick() => simState.currentTick;
     public RoundTimerManager GetRoundTimer() => roundTimer;
-    public StageBoundary GetStageBoundary() => runtimeBoundary;
-
+    public StageBoundary GetStageBoundary() => simulationCore.GetRuntimeBoundary(simState.stageActiveWallBitmask);
     public PlayerController GetPlayerOneController() => playerOne.controller;
     public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
@@ -250,29 +243,6 @@ public class GameLoopManager : MonoBehaviour
         return syncController.GetSyncState().isDesyncDetected;
     }
 
-    private void InitializeStageBoundary()
-    {
-        if (currentStageData == null)
-        {
-            Debug.LogError("GameLoopManager: Stage Data가 할당되지 않았습니다.");
-            runtimeBoundary = new StageBoundary { Planes = new BoundaryPlane[0] };
-            return;
-        }
-
-        StageBoundary template = currentStageData.GetBoundary();
-
-        if (template.Planes != null)
-        {
-            runtimeBoundary = new StageBoundary
-            {
-                Planes = (BoundaryPlane[])template.Planes.Clone()
-            };
-        }
-        
-        Debug.Log($"스테이지 초기화 완료: {currentStageData.stageName} (벽 개수: {runtimeBoundary.TotalWallCount})");
-    }
-    
-
     public void InitializeMatch()
     {
         DetermineCameraFlipState();
@@ -288,16 +258,23 @@ public class GameLoopManager : MonoBehaviour
         scoreContext.requiredRoundWins = (maxRds / 2) + 1;
         scoreContext.currentRound = 1; 
 
+        roundTimer = new RoundTimerManager();
+
         if (playingUI != null)
         {
             playingUI.SetupWinCounter(scoreContext.requiredRoundWins);
         }
 
+        stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
+
+        StageBoundary initialBoundary = currentStageData != null ? currentStageData.GetBoundary() : new StageBoundary();
+
+        simulationCore = new GameSimulationCore();
+        simulationCore.Initialize(ruleConfig.playerCollisionMinDistance, initialBoundary);
+        simState.stageActiveWallBitmask = CreateInitialWallBitmask(initialBoundary);
+
         simState.isResimulating = false;
         simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
-
-        stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
-        roundTimer = new RoundTimerManager();
 
         if (playerOne.instance != null) Destroy(playerOne.instance);
         if (playerTwo.instance != null) Destroy(playerTwo.instance);
@@ -362,6 +339,22 @@ public class GameLoopManager : MonoBehaviour
         }
 
         ResetForNextRound();
+    }
+
+    private uint CreateInitialWallBitmask(StageBoundary boundary)
+    {
+        uint mask = 0;
+        if (boundary.Planes != null)
+        {
+            for (int i = 0; i < boundary.Planes.Length; i++)
+            {
+                if (boundary.Planes[i].isActive)
+                {
+                    mask |= (1u << i);
+                }
+            }
+        }
+        return mask;
     }
 
     private void SetupPlayer(PlayerSessionContext context, Vector3 spawnPos, bool invertDepth)
@@ -712,7 +705,8 @@ public class GameLoopManager : MonoBehaviour
         stateBuffer[idx].simulationScale = simState.simulationScale; 
         stateBuffer[idx].timeAccumulator = simState.timeAccumulator;
         stateBuffer[idx].scoreContext = scoreContext;
-        
+        stateBuffer[idx].stageActiveWallBitmask = simState.stageActiveWallBitmask;
+
         roundTimer.ExportState(ref stateBuffer[idx]);
         
         if (playerOne.controller != null) playerOne.controller.ExportState(ref stateBuffer[idx].p1Snapshot);
@@ -728,7 +722,8 @@ public class GameLoopManager : MonoBehaviour
         simState.simulationScale = stateBuffer[idx].simulationScale;
         simState.timeAccumulator = stateBuffer[idx].timeAccumulator;
         scoreContext = stateBuffer[idx].scoreContext;
-        
+        simState.stageActiveWallBitmask = stateBuffer[idx].stageActiveWallBitmask;
+
         roundTimer.ImportState(stateBuffer[idx]);
         
         if (playerOne.controller != null) playerOne.controller.ImportState(stateBuffer[idx].p1Snapshot);

@@ -55,6 +55,10 @@ public class CombatDebugVisualizer : MonoBehaviour
         bool hasPlayerTwo = playerTwo != null;
         if (hasPlayerTwo) DrawGLForPlayer(playerTwo);
 
+        if (isShowingStageBoundaries)  
+            DrawGLStageBoundaries(gameLoopManager.GetStageBoundary());
+        
+
         GL.PopMatrix();
     }
 
@@ -125,6 +129,61 @@ public class CombatDebugVisualizer : MonoBehaviour
 
             Gizmos.color = Color.yellow;
             Gizmos.DrawRay(center, normal * 2f);
+        }
+    }
+
+    private void DrawGLStageBoundaries(StageBoundary boundary)
+    {
+        if (boundary.Planes == null) return;
+
+        for (int i = 0; i < boundary.Planes.Length; i++)
+        {
+            var plane = boundary.Planes[i];
+            if (!plane.isActive) continue;
+
+            Vector3 normal = plane.Normal.ToVector3();
+            float dist = plane.Distance.ToFloat();
+            Vector3 centerBase = normal * dist;
+
+            // if (Time.frameCount % 60 == 0) 
+            // {
+            //     Debug.Log($"[Wall {i}] 활성화됨 - Normal: {normal}, Distance: {dist}");
+            // }
+            
+            float h = 5f; 
+            float w = 20f;
+            Vector3 center = centerBase + Vector3.up * (h * 0.5f);
+            
+            Quaternion rotation = Quaternion.LookRotation(normal);
+            Vector3 right = rotation * Vector3.right * (w * 0.5f);
+            Vector3 up = Vector3.up * (h * 0.5f);
+
+            Vector3 p0 = center - right - up;
+            Vector3 p1 = center + right - up;
+            Vector3 p2 = center + right + up;
+            Vector3 p3 = center - right + up;
+
+            Color baseColor = plane.isBreakable ? new Color(1f, 0.5f, 0f) : Color.cyan;
+            Color faceColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f);
+            Color wireColor = plane.isBreakable ? new Color(1f, 0.7f, 0.2f) : Color.cyan;
+
+            GL.Begin(GL.QUADS);
+            GL.Color(faceColor);
+            GL.Vertex(p0);
+            GL.Vertex(p1);
+            GL.Vertex(p2);
+            GL.Vertex(p3);
+            GL.End();
+
+            GL.Begin(GL.LINES);
+            GL.Color(wireColor);
+            GL.Vertex(p0); GL.Vertex(p1);
+            GL.Vertex(p1); GL.Vertex(p2);
+            GL.Vertex(p2); GL.Vertex(p3);
+            GL.Vertex(p3); GL.Vertex(p0);
+            GL.End();
+
+            DrawGLLine(center, center + normal * 2f, Color.yellow);
         }
     }
 

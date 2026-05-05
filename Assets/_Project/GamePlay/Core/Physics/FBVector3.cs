@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 
+[Serializable]
 public struct FPVector3
 {
     public FP64 x;

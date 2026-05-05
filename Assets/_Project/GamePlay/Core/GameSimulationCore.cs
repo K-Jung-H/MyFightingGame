@@ -5,11 +5,27 @@ public class GameSimulationCore
 {
     private FP64 fpCollisionMinDistance;
     private FP64 fpCollisionMinDistanceSqr;
+    private BoundaryPlane[] staticStageGeometry;
 
-    public void Initialize(float minCollisionDistance)
+    public void Initialize(float minCollisionDistance, StageBoundary initialBoundary)
     {
         fpCollisionMinDistance = FP64.FromFloat(minCollisionDistance);
         fpCollisionMinDistanceSqr = fpCollisionMinDistance * fpCollisionMinDistance;
+        
+        staticStageGeometry = initialBoundary.Planes;
+    }
+
+    public StageBoundary GetRuntimeBoundary(uint bitmask)
+    {
+        if (staticStageGeometry == null) return new StageBoundary();
+        
+        BoundaryPlane[] currentPlanes = new BoundaryPlane[staticStageGeometry.Length];
+        for (int i = 0; i < staticStageGeometry.Length; i++)
+        {
+            currentPlanes[i] = staticStageGeometry[i];
+            currentPlanes[i].isActive = (bitmask & (1u << i)) != 0; 
+        }
+        return new StageBoundary { Planes = currentPlanes };
     }
 
     public void SimulateFrame(PlayerController p1Controller, PlayerController p2Controller, PlayerInput p1Input, PlayerInput p2Input, ref SimulationState simState, Action<PlayerController, Vector3, EffectType> onHitSpark)
@@ -26,6 +42,9 @@ public class GameSimulationCore
 
             if (simState.isLogicStep)
             {
+                ResolveStageCollision(p1Controller, ref simState);
+                ResolveStageCollision(p2Controller, ref simState);
+
                 ResolveAttacks(p1Controller, p2Controller, onHitSpark);
                 ResolveAttacks(p2Controller, p1Controller, onHitSpark);
                 ResolvePlayerCollision(p1Controller, p2Controller);
@@ -73,6 +92,53 @@ public class GameSimulationCore
         p1.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
         p2.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
     }
+
+    private void ResolveStageCollision(PlayerController player, ref SimulationState simState)
+    {
+        if (staticStageGeometry == null) return;
+
+        PlayerPhysics physics = player.GetPhysics();
+        FPVector3 currentPos = physics.GetFPPosition();
+        FPVector3 currentVel = physics.GetFPVelocity();
+        FPVector3 totalPushback = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+
+        int maxIterations = 2;
+        for (int iter = 0; iter < maxIterations; iter++)
+        {
+            bool hasCollision = false;
+            for (int i = 0; i < staticStageGeometry.Length; i++)
+            {
+                bool isWallActive = (simState.stageActiveWallBitmask & (1u << i)) != 0;
+                if (!isWallActive) continue;
+
+                FPVector3 normal = staticStageGeometry[i].Normal;
+                FP64 distance = staticStageGeometry[i].Distance;
+
+                FPVector3 testPos = currentPos + totalPushback;
+                FP64 penetration = FPVector3.Dot(testPos, normal) - distance;
+
+                if (penetration.rawValue < 0)
+                {
+                    totalPushback = totalPushback - (normal * penetration);
+                    FP64 velDotNormal = FPVector3.Dot(currentVel, normal);
+                    if (velDotNormal.rawValue < 0)
+                    {
+                        currentVel = currentVel - (normal * velDotNormal);
+                    }
+                    hasCollision = true;
+                }
+            }
+            if (!hasCollision) break;
+        }
+
+        if (totalPushback.x.rawValue != 0 || totalPushback.y.rawValue != 0 || totalPushback.z.rawValue != 0)
+        {
+            physics.ApplyFPPushback(totalPushback);
+        }
+        physics.SetFPVelocity(currentVel);
+    }
+
+
 
     private void ResolveAttacks(PlayerController attacker, PlayerController defender, Action<PlayerController, Vector3, EffectType> onHitSpark)
     {

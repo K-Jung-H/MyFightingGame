@@ -1,5 +1,6 @@
 using System;
 
+[Serializable]
 public struct FP64
 {
     public const int fractionalBits = 16;

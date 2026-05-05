@@ -14,11 +14,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameStageDataSO
   stageName: Default
   boundaryPlanes:
-  - isActive: 1
+  - Normal:
+      x:
+        rawValue: 0
+      y:
+        rawValue: 0
+      z:
+        rawValue: -65536
+    Distance:
+      rawValue: -327680
+    isActive: 1
+    isBreakable: 1
+  - Normal:
+      x:
+        rawValue: -65536
+      y:
+        rawValue: 0
+      z:
+        rawValue: 0
+    Distance:
+      rawValue: -327680
+    isActive: 1
     isBreakable: 0
-  - isActive: 1
+  - Normal:
+      x:
+        rawValue: 0
+      y:
+        rawValue: 0
+      z:
+        rawValue: 65536
+    Distance:
+      rawValue: -327680
+    isActive: 1
     isBreakable: 0
-  - isActive: 1
-    isBreakable: 0
-  - isActive: 1
+  - Normal:
+      x:
+        rawValue: 65536
+      y:
+        rawValue: 0
+      z:
+        rawValue: 0
+    Distance:
+      rawValue: -327680
+    isActive: 1
     isBreakable: 0

@@ -263,7 +263,7 @@ MonoBehaviour:
     instance: {fileID: 0}
     renderer: {fileID: 0}
   ruleConfig: {fileID: 11400000, guid: e34b9794997ce164882de6d89e3e4d92, type: 2}
-  currentStageData: {fileID: 0}
+  currentStageData: {fileID: 11400000, guid: cbd0587a9166e084c988a210f051f90c, type: 2}
   syncController:
     networkSettings:
       maxRollbackFrames: 7
