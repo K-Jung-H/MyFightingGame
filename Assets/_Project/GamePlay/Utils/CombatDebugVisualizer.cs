@@ -49,17 +49,21 @@ public class CombatDebugVisualizer : MonoBehaviour
         debugMaterial.SetPass(0);
         GL.PushMatrix();
 
-        bool hasPlayerOne = playerOne != null;
-        if (hasPlayerOne) DrawGLForPlayer(playerOne);
+        try 
+        {    
+            bool hasPlayerOne = playerOne != null;
+            if (hasPlayerOne) DrawGLForPlayer(playerOne);
 
-        bool hasPlayerTwo = playerTwo != null;
-        if (hasPlayerTwo) DrawGLForPlayer(playerTwo);
+            bool hasPlayerTwo = playerTwo != null;
+            if (hasPlayerTwo) DrawGLForPlayer(playerTwo);
 
-        if (isShowingStageBoundaries)  
-            DrawGLStageBoundaries(gameLoopManager.GetStageBoundary());
-        
-
-        GL.PopMatrix();
+            if (isShowingStageBoundaries)  
+                DrawGLStageBoundaries(gameLoopManager.GetStageBoundary());
+        }
+        finally
+        {
+            GL.PopMatrix();
+        }
     }
 
     private void CreateDebugMaterial()
@@ -116,7 +120,6 @@ public class CombatDebugVisualizer : MonoBehaviour
             Color faceColor = new Color(baseColor.r, baseColor.g, baseColor.b, 0.1f);
             Color wireColor = plane.isBreakable ? new Color(1f, 0.7f, 0.2f) : Color.cyan;
 
-            
             Gizmos.color = faceColor;
             Quaternion meshRotation = rotation * Quaternion.Euler(0, 180, 0);
             Gizmos.DrawMesh(GetQuadMesh(), center, meshRotation, new Vector3(w, h, 1f));
@@ -144,11 +147,6 @@ public class CombatDebugVisualizer : MonoBehaviour
             Vector3 normal = plane.Normal.ToVector3();
             float dist = plane.Distance.ToFloat();
             Vector3 centerBase = normal * dist;
-
-            // if (Time.frameCount % 60 == 0) 
-            // {
-            //     Debug.Log($"[Wall {i}] 활성화됨 - Normal: {normal}, Distance: {dist}");
-            // }
             
             float h = 5f; 
             float w = 20f;
@@ -187,7 +185,6 @@ public class CombatDebugVisualizer : MonoBehaviour
         }
     }
 
-
     private void DrawGizmoLookDirection(PlayerController controller)
     {
         Gizmos.color = Color.yellow;
@@ -199,28 +196,28 @@ public class CombatDebugVisualizer : MonoBehaviour
         Hurtbox_Type currentType = controller.GetStateMachine().GetCurrentHurtboxType();
         PlayerConfigSO config = controller.GetConfig();
 
-        bool hasConfig = config != null;
-        if (!hasConfig) return;
+        if (config == null) return;
 
-        CollisionBox[] boxes = config.GetHurtboxBoxes(currentType);
-        bool hasBoxes = boxes != null && boxes.Length > 0;
-        if (!hasBoxes) return;
+        FPCollisionBox[] boxes = config.GetFPHurtboxBoxes(currentType);
+        if (boxes == null || boxes.Length == 0) return;
 
         Vector3 position = controller.GetPhysics().GetPosition();
         Vector3 lookDirection = controller.GetPhysics().GetLookDirection();
-        bool isLookDirectionValid = lookDirection != Vector3.zero;
-        Quaternion rotation = isLookDirectionValid ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
+        Quaternion rotation = (lookDirection != Vector3.zero) ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
 
         Gizmos.matrix = Matrix4x4.TRS(position, rotation, Vector3.one);
         Color hurtboxColor = GetHurtboxColor(currentType);
 
         foreach (var box in boxes)
         {
+            Vector3 localPos = box.localPosition.ToVector3();
+            Vector3 extents = box.extents.ToVector3();
+
             Gizmos.color = new Color(hurtboxColor.r, hurtboxColor.g, hurtboxColor.b, 0.4f);
-            Gizmos.DrawCube(box.localPosition, box.extents * 2f);
+            Gizmos.DrawCube(localPos, extents * 2f);
 
             Gizmos.color = hurtboxColor;
-            Gizmos.DrawWireCube(box.localPosition, box.extents * 2f);
+            Gizmos.DrawWireCube(localPos, extents * 2f);
         }
 
         Gizmos.matrix = Matrix4x4.identity;
@@ -229,35 +226,36 @@ public class CombatDebugVisualizer : MonoBehaviour
     private void DrawGizmoHitboxes(PlayerController controller)
     {
         PlayerStateMachine stateMachine = controller.GetStateMachine();
-        bool isAttacking = stateMachine.GetCurrentState() == PlayerState_Type.Attacking;
-        if (!isAttacking) return;
+        if (stateMachine.GetCurrentState() != PlayerState_Type.Attacking) return;
 
         ActionDataSO actionData = stateMachine.GetCurrentActionData();
-        bool isActionDataValid = actionData != null && actionData.frameData.hitboxEvents != null;
-        if (!isActionDataValid) return;
+        if (actionData == null) return;
+
+        FPHitboxEvent[] hitboxEvents = actionData.GetFPHitboxEvents();
+        if (hitboxEvents == null || hitboxEvents.Length == 0) return;
 
         int currentFrame = stateMachine.GetStateFrameCounter();
         Vector3 position = controller.GetPhysics().GetPosition();
         Vector3 lookDirection = controller.GetPhysics().GetLookDirection();
-        bool isLookDirectionValid = lookDirection != Vector3.zero;
-        Quaternion rotation = isLookDirectionValid ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
+        Quaternion rotation = (lookDirection != Vector3.zero) ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
 
         Gizmos.matrix = Matrix4x4.TRS(position, rotation, Vector3.one);
 
-        foreach (var hitEvent in actionData.frameData.hitboxEvents)
+        foreach (var hitEvent in hitboxEvents)
         {
             int pathIndex = currentFrame - hitEvent.activeStartFrame;
 
-            bool isPathIndexValid = pathIndex >= 0 && hitEvent.boxPath != null && pathIndex < hitEvent.boxPath.Length;
-            if (isPathIndexValid)
+            if (pathIndex >= 0 && hitEvent.boxPath != null && pathIndex < hitEvent.boxPath.Length)
             {
-                CollisionBox activeBox = hitEvent.boxPath[pathIndex];
+                FPCollisionBox activeBox = hitEvent.boxPath[pathIndex];
+                Vector3 localPos = activeBox.localPosition.ToVector3();
+                Vector3 extents = activeBox.extents.ToVector3();
 
                 Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
-                Gizmos.DrawCube(activeBox.localPosition, activeBox.extents * 2f);
+                Gizmos.DrawCube(localPos, extents * 2f);
 
                 Gizmos.color = Color.red;
-                Gizmos.DrawWireCube(activeBox.localPosition, activeBox.extents * 2f);
+                Gizmos.DrawWireCube(localPos, extents * 2f);
             }
         }
 
@@ -276,50 +274,50 @@ public class CombatDebugVisualizer : MonoBehaviour
         Hurtbox_Type currentType = controller.GetStateMachine().GetCurrentHurtboxType();
         PlayerConfigSO config = controller.GetConfig();
 
-        bool hasConfig = config != null;
-        if (!hasConfig) return;
+        if (config == null) return;
 
-        CollisionBox[] boxes = config.GetHurtboxBoxes(currentType);
-        bool hasBoxes = boxes != null && boxes.Length > 0;
-        if (!hasBoxes) return;
+        FPCollisionBox[] boxes = config.GetFPHurtboxBoxes(currentType);
+        if (boxes == null || boxes.Length == 0) return;
 
         Vector3 position = controller.GetPhysics().GetPosition();
         Vector3 lookDirection = controller.GetPhysics().GetLookDirection();
-        bool isLookDirectionValid = lookDirection != Vector3.zero;
-        Quaternion rotation = isLookDirectionValid ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
+        Quaternion rotation = (lookDirection != Vector3.zero) ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
         Color hurtboxColor = GetHurtboxColor(currentType);
 
         foreach (var box in boxes)
         {
-            DrawGLWireCube(position, rotation, box.localPosition, box.extents, hurtboxColor);
+            Vector3 localPos = box.localPosition.ToVector3();
+            Vector3 extents = box.extents.ToVector3();
+            DrawGLWireCube(position, rotation, localPos, extents, hurtboxColor);
         }
     }
 
     private void DrawGLHitboxes(PlayerController controller)
     {
         PlayerStateMachine stateMachine = controller.GetStateMachine();
-        bool isAttacking = stateMachine.GetCurrentState() == PlayerState_Type.Attacking;
-        if (!isAttacking) return;
+        if (stateMachine.GetCurrentState() != PlayerState_Type.Attacking) return;
 
         ActionDataSO actionData = stateMachine.GetCurrentActionData();
-        bool isActionDataValid = actionData != null && actionData.frameData.hitboxEvents != null;
-        if (!isActionDataValid) return;
+        if (actionData == null) return;
+
+        FPHitboxEvent[] hitboxEvents = actionData.GetFPHitboxEvents();
+        if (hitboxEvents == null || hitboxEvents.Length == 0) return;
 
         int currentFrame = stateMachine.GetStateFrameCounter();
         Vector3 position = controller.GetPhysics().GetPosition();
         Vector3 lookDirection = controller.GetPhysics().GetLookDirection();
-        bool isLookDirectionValid = lookDirection != Vector3.zero;
-        Quaternion rotation = isLookDirectionValid ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
+        Quaternion rotation = (lookDirection != Vector3.zero) ? Quaternion.LookRotation(lookDirection) : Quaternion.identity;
 
-        foreach (var hitEvent in actionData.frameData.hitboxEvents)
+        foreach (var hitEvent in hitboxEvents)
         {
             int pathIndex = currentFrame - hitEvent.activeStartFrame;
 
-            bool isPathIndexValid = pathIndex >= 0 && hitEvent.boxPath != null && pathIndex < hitEvent.boxPath.Length;
-            if (isPathIndexValid)
+            if (pathIndex >= 0 && hitEvent.boxPath != null && pathIndex < hitEvent.boxPath.Length)
             {
-                CollisionBox activeBox = hitEvent.boxPath[pathIndex];
-                DrawGLWireCube(position, rotation, activeBox.localPosition, activeBox.extents, Color.red);
+                FPCollisionBox activeBox = hitEvent.boxPath[pathIndex];
+                Vector3 localPos = activeBox.localPosition.ToVector3();
+                Vector3 extents = activeBox.extents.ToVector3();
+                DrawGLWireCube(position, rotation, localPos, extents, Color.red);
             }
         }
     }

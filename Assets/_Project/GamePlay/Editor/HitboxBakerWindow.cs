@@ -266,7 +266,8 @@ public class HitboxBakerWindow : EditorWindow
                 targetMarker.damage = ev.damage;
                 targetMarker.hitstunFrames = ev.hitstunFrames;
                 targetMarker.blockStunFrames = ev.blockStunFrames;
-                targetMarker.localPushbackVector = ev.localPushbackVector;
+                
+                targetMarker.localPushbackVector = ev.localPushbackVector.ToVector3();
                 targetMarker.isHardKnockdown = ev.isHardKnockdown;
                 
                 targetMarker.recordStartFrame = ev.activeStartFrame; 
@@ -274,7 +275,7 @@ public class HitboxBakerWindow : EditorWindow
 
                 if (ev.boxPath != null && ev.boxPath.Length > 0)
                 {
-                    targetMarker.boxExtents = ev.boxPath[0].extents;
+                    targetMarker.boxExtents = ev.boxPath[0].extents.ToVector3();
                 }
                 EditorUtility.SetDirty(targetMarker);
             }
@@ -689,7 +690,7 @@ public class HitboxBakerWindow : EditorWindow
 
         if (isEventActive)
         {
-            CollisionBox[] boxes = playerConfig.GetHurtboxBoxes(activeEvent.hurtboxType);
+            FPCollisionBox[] boxes = playerConfig.GetFPHurtboxBoxes(activeEvent.hurtboxType);
             if (boxes != null)
             {
                 Handles.matrix = targetCharacter.transform.localToWorldMatrix;
@@ -698,7 +699,7 @@ public class HitboxBakerWindow : EditorWindow
 
                 foreach (var box in boxes)
                 {
-                    Handles.DrawWireCube(box.localPosition, box.extents * 2f);
+                    Handles.DrawWireCube(box.localPosition.ToVector3(), box.extents.ToVector3() * 2f);
                 }
             }
         }
@@ -710,12 +711,13 @@ public class HitboxBakerWindow : EditorWindow
         
         if (!targetActionData.frameData.logicData.useRootMotion || targetRootBone == null)
         {
-            targetActionData.frameData.rootMotionPath = new RootMotionData[0];
+            targetActionData.frameData.rootMotionPath = new FPRootMotionData[0];
             return;
         }
 
         int totalFrames = targetActionData.frameData.logicData.totalFrames;
-        targetActionData.frameData.rootMotionPath = new RootMotionData[totalFrames + 1];
+        
+        targetActionData.frameData.rootMotionPath = new FPRootMotionData[totalFrames + 1];
 
         if (!AnimationMode.InAnimationMode())
         {
@@ -733,9 +735,9 @@ public class HitboxBakerWindow : EditorWindow
             Vector3 currPos = targetCharacter.transform.InverseTransformPoint(targetRootBone.position);
             Quaternion currRot = Quaternion.Inverse(targetCharacter.transform.rotation) * targetRootBone.rotation;
 
-            targetActionData.frameData.rootMotionPath[frame] = new RootMotionData
+            targetActionData.frameData.rootMotionPath[frame] = new FPRootMotionData
             {
-                deltaPosition = currPos - prevPos,
+                deltaPosition = FPVector3.FromVector3(currPos - prevPos)
             };
 
             prevPos = currPos;
@@ -748,7 +750,8 @@ public class HitboxBakerWindow : EditorWindow
 
         int totalFrames = targetActionData.frameData.logicData.totalFrames;
         HitboxMarker[] markers = targetCharacter.GetComponentsInChildren<HitboxMarker>();
-        List<HitboxEvent> bakedEvents = new List<HitboxEvent>();
+        
+        List<FPHitboxEvent> bakedEvents = new List<FPHitboxEvent>();
 
         if (!AnimationMode.InAnimationMode()) AnimationMode.StartAnimationMode();
 
@@ -775,7 +778,7 @@ public class HitboxBakerWindow : EditorWindow
             if (!marker.isIncludeInBake) continue;
             if (marker.recordStartFrame < 0 || marker.recordEndFrame >= totalFrames || marker.recordStartFrame > marker.recordEndFrame) continue;
 
-            HitboxEvent newEvent = new HitboxEvent
+            FPHitboxEvent newEvent = new FPHitboxEvent
             {
                 markerName = marker.gameObject.name,
                 activeStartFrame = marker.recordStartFrame,
@@ -786,22 +789,24 @@ public class HitboxBakerWindow : EditorWindow
                 damage = marker.damage,
                 hitstunFrames = marker.hitstunFrames,
                 blockStunFrames = marker.blockStunFrames,
-                localPushbackVector = marker.localPushbackVector,
+                localPushbackVector = FPVector3.FromVector3(marker.localPushbackVector),
                 isHardKnockdown = marker.isHardKnockdown
             };
 
             int pathLength = marker.recordEndFrame - marker.recordStartFrame + 1;
-            newEvent.boxPath = new CollisionBox[pathLength];
+            newEvent.boxPath = new FPCollisionBox[pathLength];
 
             for (int frame = marker.recordStartFrame; frame <= marker.recordEndFrame; frame++)
             {
                 float currentTime = frame * Time.fixedDeltaTime;
                 AnimationMode.SampleAnimationClip(targetCharacter, targetActionData.animationClip, currentTime);
 
-                CollisionBox box = new CollisionBox
+                Vector3 calcLocalPos = targetCharacter.transform.InverseTransformPoint(marker.transform.position) - accumulatedRootPos[frame];
+
+                FPCollisionBox box = new FPCollisionBox
                 {
-                    localPosition = targetCharacter.transform.InverseTransformPoint(marker.transform.position) - accumulatedRootPos[frame],
-                    extents = marker.boxExtents
+                    localPosition = FPVector3.FromVector3(calcLocalPos),
+                    extents = FPVector3.FromVector3(marker.boxExtents)
                 };
 
                 newEvent.boxPath[frame - marker.recordStartFrame] = box;
@@ -819,7 +824,7 @@ public class HitboxBakerWindow : EditorWindow
 
         int totalFrames = targetActionData.frameData.logicData.totalFrames;
         VfxMarker[] markers = targetCharacter.GetComponentsInChildren<VfxMarker>();
-        System.Collections.Generic.List<VfxEvent> bakedEvents = new System.Collections.Generic.List<VfxEvent>();
+        List<VfxEvent> bakedEvents = new List<VfxEvent>();
 
         foreach (var marker in markers)
         {

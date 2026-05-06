@@ -23,7 +23,7 @@ public class AttackingState : PlayerStateBase
         int totalFrames = currentActionData.frameData.logicData.totalFrames;
 
         bool isRootMotionUsed = currentActionData.frameData.logicData.useRootMotion;
-        FPRootMotionData[] fpRootPath = currentActionData.GetCachedFPRootMotionPath();
+        FPRootMotionData[] fpRootPath = currentActionData.GetFPRootMotionPath();
         bool hasRootMotionData = fpRootPath != null;
 
         if (isRootMotionUsed && hasRootMotionData)

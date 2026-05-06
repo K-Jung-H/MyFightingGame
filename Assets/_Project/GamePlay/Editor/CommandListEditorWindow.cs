@@ -286,7 +286,7 @@ public class CommandListEditorWindow : EditorWindow
 
             if (hasValidHitbox)
             {
-                HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
+                FPHitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
                 
                 box.Add(new Label("[Hitbox Summary]") { style = { unityFontStyleAndWeight = FontStyle.Bold, color = new Color(0.7f, 0.7f, 1f), marginTop = 5 } });
                 box.Add(new Label($"Attack Height: {firstHit.attackHeight}"));

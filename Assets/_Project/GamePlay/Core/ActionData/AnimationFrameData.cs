@@ -2,8 +2,8 @@
 public class AnimationFrameData
 {
     public ActionLogicData logicData;
-    public RootMotionData[] rootMotionPath;
-    public HitboxEvent[] hitboxEvents;
+    public FPRootMotionData[] rootMotionPath;
+    public FPHitboxEvent[] hitboxEvents;
     public HurtboxEvent[] hurtboxEvents;
     public VfxEvent[] vfxEvents;
 }

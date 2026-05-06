@@ -9,23 +9,6 @@ public struct HurtboxEvent
 }
 
 [System.Serializable]
-public struct HitboxEvent
-{
-    public string markerName; 
-    public int activeStartFrame;
-    public CollisionBox[] boxPath;
-    public int hitGroupID;
-    public Attack_Height attackHeight;
-    public Attack_Type attackType;
-    public HurtState_Type targetHurtState;
-    public int damage;
-    public int hitstunFrames;
-    public int blockStunFrames;
-    public Vector3 localPushbackVector;
-    public bool isHardKnockdown;
-}
-
-[System.Serializable]
 public struct VfxEvent
 {
     public string markerName; 

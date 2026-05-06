@@ -67,7 +67,7 @@ public class PlayerConfigSO : ScriptableObject
     public int GetAutoSprintFrames() => autoSprintFrames;
     public int GetStunningFrames() => stunningFrames;
 
-    public CollisionBox[] GetHurtboxBoxes(Hurtbox_Type type)
+    public FPCollisionBox[] GetHurtboxBoxes(Hurtbox_Type type)
     {
         if (defaultHurtboxes == null)
         {
@@ -93,15 +93,7 @@ public class PlayerConfigSO : ScriptableObject
             {
                 foreach (var preset in defaultHurtboxes)
                 {
-                    FPCollisionBox[] fpBoxes = new FPCollisionBox[preset.boxes.Length];
-                    for (int i = 0; i < preset.boxes.Length; i++)
-                    {
-                        FPCollisionBox box = new FPCollisionBox();
-                        box.localPosition = FPVector3.FromVector3(preset.boxes[i].localPosition);
-                        box.extents = FPVector3.FromVector3(preset.boxes[i].extents);
-                        fpBoxes[i] = box;
-                    }
-                    cachedFPHurtboxes[preset.type] = fpBoxes;
+                    cachedFPHurtboxes[preset.type] = preset.boxes; 
                 }
             }
         }
@@ -110,9 +102,10 @@ public class PlayerConfigSO : ScriptableObject
         {
             return result;
         }
+        
         return null;
     }
-
+    
     public int GetWakeUpFrames(WakeUp_Type type)
     {
         return type switch

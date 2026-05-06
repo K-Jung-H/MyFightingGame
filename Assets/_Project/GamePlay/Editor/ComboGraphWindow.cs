@@ -51,8 +51,7 @@ public class ComboGraphNode : Node
 
             if (hasValidHitbox)
             {
-                HitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
-                
+                FPHitboxEvent firstHit = actionData.frameData.hitboxEvents[0];
                 box.Add(new Label("[Hitbox Summary]") { style = { fontSize = 10, color = new Color(0.6f, 0.8f, 1f), unityFontStyleAndWeight = FontStyle.Bold, marginTop = 5 } });
                 box.Add(new Label($"Height: {firstHit.attackHeight}") { style = { fontSize = 10 } });
                 box.Add(new Label($"Dmg: {firstHit.damage} | Stun: {firstHit.hitstunFrames}/{firstHit.blockStunFrames}") { style = { fontSize = 10 } });

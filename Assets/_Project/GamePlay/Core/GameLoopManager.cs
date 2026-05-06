@@ -201,7 +201,13 @@ public class GameLoopManager : MonoBehaviour
 
     public int GetCurrentTick() => simState.currentTick;
     public RoundTimerManager GetRoundTimer() => roundTimer;
-    public StageBoundary GetStageBoundary() => simulationCore.GetRuntimeBoundary(simState.stageActiveWallBitmask);
+    public StageBoundary GetStageBoundary()
+    {
+        if (simulationCore == null) return new StageBoundary();
+        
+        return simulationCore.GetRuntimeBoundary(simState.stageActiveWallBitmask);
+    }
+    
     public PlayerController GetPlayerOneController() => playerOne.controller;
     public PlayerController GetPlayerTwoController() => playerTwo.controller;
 
@@ -270,7 +276,7 @@ public class GameLoopManager : MonoBehaviour
         StageBoundary initialBoundary = currentStageData != null ? currentStageData.GetBoundary() : new StageBoundary();
 
         simulationCore = new GameSimulationCore();
-        simulationCore.Initialize(ruleConfig.playerCollisionMinDistance, initialBoundary);
+        simulationCore.Initialize(initialBoundary);
         simState.stageActiveWallBitmask = CreateInitialWallBitmask(initialBoundary);
 
         simState.isResimulating = false;

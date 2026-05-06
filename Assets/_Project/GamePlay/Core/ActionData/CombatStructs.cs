@@ -1,13 +1,6 @@
 using UnityEngine;
 
 [System.Serializable]
-public struct CollisionBox
-{
-    public Vector3 localPosition;
-    public Vector3 extents;
-}
-
-[System.Serializable]
 public struct HitFeedbackData
 {
     public Attack_Type attackType;
@@ -15,18 +8,6 @@ public struct HitFeedbackData
     public float cameraShakeIntensity;
 }
 
-[System.Serializable]
-public struct RootMotionData
-{
-    public Vector3 deltaPosition;
-}
-
-[System.Serializable]
-public struct HurtboxPreset
-{
-    public Hurtbox_Type type;
-    public CollisionBox[] boxes;
-}
 
 public struct HurtInfo
 {
@@ -38,17 +19,28 @@ public struct HurtInfo
     public Attack_Height attackHeight;
 }
 
+[System.Serializable]
 public struct FPRootMotionData
 {
     public FPVector3 deltaPosition;
 }
 
+[System.Serializable]
 public struct FPCollisionBox
 {
     public FPVector3 localPosition;
     public FPVector3 extents;
 }
 
+
+[System.Serializable]
+public struct HurtboxPreset
+{
+    public Hurtbox_Type type;
+    public FPCollisionBox[] boxes;
+}
+
+[System.Serializable]
 public struct FPHitboxEvent
 {
     public string markerName;
