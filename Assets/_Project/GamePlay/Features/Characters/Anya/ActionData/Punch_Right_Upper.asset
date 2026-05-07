@@ -21,25 +21,96 @@ MonoBehaviour:
       recoveryFrames: 19
       cancelWindowStartFrame: 28
       useRootMotion: 0
-      useRootRotation: 0
       isHoming: 0
     rootMotionPath: []
     hitboxEvents:
     - markerName: Hitbox_R_P
       activeStartFrame: 13
       boxPath:
-      - localPosition: {x: -0.019784782, y: 0.86935204, z: 0.51105917}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.06413227, y: 0.9565216, z: 0.57932526}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.08384748, y: 1.0370435, z: 0.6236035}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.080498785, y: 1.1196812, z: 0.65100074}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.08893134, y: 1.2158432, z: 0.6435918}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.10977761, y: 1.3073782, z: 0.5847694}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition:
+          x:
+            rawValue: -1297
+          y:
+            rawValue: 56974
+          z:
+            rawValue: 33493
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -4203
+          y:
+            rawValue: 62687
+          z:
+            rawValue: 37967
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -5495
+          y:
+            rawValue: 67964
+          z:
+            rawValue: 40868
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -5276
+          y:
+            rawValue: 73379
+          z:
+            rawValue: 42664
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -5828
+          y:
+            rawValue: 79682
+          z:
+            rawValue: 42178
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -7194
+          y:
+            rawValue: 85680
+          z:
+            rawValue: 38323
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
       hitGroupID: 0
       attackHeight: 0
       attackType: 2
@@ -47,7 +118,13 @@ MonoBehaviour:
       damage: 10
       hitstunFrames: 20
       blockStunFrames: 5
-      localPushbackVector: {x: 0, y: 0.5, z: 0.05}
+      localPushbackVector:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 19661
+        z:
+          rawValue: 6554
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0

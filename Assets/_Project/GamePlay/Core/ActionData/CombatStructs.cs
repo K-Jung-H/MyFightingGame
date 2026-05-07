@@ -32,14 +32,6 @@ public struct FPCollisionBox
     public FPVector3 extents;
 }
 
-
-[System.Serializable]
-public struct HurtboxPreset
-{
-    public Hurtbox_Type type;
-    public FPCollisionBox[] boxes;
-}
-
 [System.Serializable]
 public struct FPHitboxEvent
 {
@@ -55,4 +47,18 @@ public struct FPHitboxEvent
     public int blockStunFrames;
     public FPVector3 localPushbackVector;
     public bool isHardKnockdown;
+}
+
+[System.Serializable]
+public struct InspectorBoxBounds
+{
+    public Vector3 localPosition;
+    public Vector3 extents;
+}
+
+[System.Serializable]
+public struct HurtboxPreset
+{
+    public Hurtbox_Type type;
+    public InspectorBoxBounds[] boxes;
 }

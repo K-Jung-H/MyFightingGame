@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+
 [CreateAssetMenu(fileName = "PlayerConfig", menuName = "ScriptableObjects/PlayerConfig")]
 public class PlayerConfigSO : ScriptableObject
 {
@@ -58,6 +59,11 @@ public class PlayerConfigSO : ScriptableObject
     [System.NonSerialized]
     private Dictionary<Hurtbox_Type, FPCollisionBox[]> cachedFPHurtboxes;
 
+    private void OnValidate()
+    {
+        cachedFPHurtboxes = null;
+    }
+
     public float GetBounceVelocityThreshold() => bounceVelocityThreshold;
     public float GetBounceVelocityMultiplier() => bounceVelocityMultiplier;
     public int GetGroundSmashBounceFrames() => groundSmashBounceFrames;
@@ -67,33 +73,26 @@ public class PlayerConfigSO : ScriptableObject
     public int GetAutoSprintFrames() => autoSprintFrames;
     public int GetStunningFrames() => stunningFrames;
 
-    public FPCollisionBox[] GetHurtboxBoxes(Hurtbox_Type type)
-    {
-        if (defaultHurtboxes == null)
-        {
-            return null;
-        }
-
-        foreach (var preset in defaultHurtboxes)
-        {
-            if (preset.type == type)
-            {
-                return preset.boxes;
-            }
-        }
-        return null;
-    }
-
     public FPCollisionBox[] GetFPHurtboxBoxes(Hurtbox_Type type)
     {
         if (cachedFPHurtboxes == null)
         {
             cachedFPHurtboxes = new Dictionary<Hurtbox_Type, FPCollisionBox[]>();
+            
             if (defaultHurtboxes != null)
             {
                 foreach (var preset in defaultHurtboxes)
                 {
-                    cachedFPHurtboxes[preset.type] = preset.boxes; 
+                    FPCollisionBox[] fpBoxes = new FPCollisionBox[preset.boxes.Length];
+                    for (int i = 0; i < preset.boxes.Length; i++)
+                    {
+                        fpBoxes[i] = new FPCollisionBox
+                        {
+                            localPosition = FPVector3.FromVector3(preset.boxes[i].localPosition),
+                            extents = FPVector3.FromVector3(preset.boxes[i].extents)
+                        };
+                    }
+                    cachedFPHurtboxes[preset.type] = fpBoxes; 
                 }
             }
         }

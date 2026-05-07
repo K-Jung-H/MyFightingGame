@@ -21,25 +21,96 @@ MonoBehaviour:
       recoveryFrames: 0
       cancelWindowStartFrame: 47
       useRootMotion: 0
-      useRootRotation: 0
       isHoming: 0
     rootMotionPath: []
     hitboxEvents:
     - markerName: Hitbox_L_P
       activeStartFrame: 40
       boxPath:
-      - localPosition: {x: 0.078120515, y: 1.4460149, z: -0.03596293}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.08075654, y: 1.4214513, z: 0.18940361}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.046138212, y: 1.2828441, z: 0.4737389}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.0039674863, y: 0.86337763, z: 0.6418489}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.040252313, y: 0.5772923, z: 0.51530194}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.027535126, y: 0.4090267, z: 0.36386615}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition:
+          x:
+            rawValue: 5120
+          y:
+            rawValue: 94766
+          z:
+            rawValue: -2357
+        extents:
+          x:
+            rawValue: 9830
+          y:
+            rawValue: 9830
+          z:
+            rawValue: 9830
+      - localPosition:
+          x:
+            rawValue: 5292
+          y:
+            rawValue: 93156
+          z:
+            rawValue: 12413
+        extents:
+          x:
+            rawValue: 9830
+          y:
+            rawValue: 9830
+          z:
+            rawValue: 9830
+      - localPosition:
+          x:
+            rawValue: 3024
+          y:
+            rawValue: 84072
+          z:
+            rawValue: 31047
+        extents:
+          x:
+            rawValue: 9830
+          y:
+            rawValue: 9830
+          z:
+            rawValue: 9830
+      - localPosition:
+          x:
+            rawValue: -260
+          y:
+            rawValue: 56582
+          z:
+            rawValue: 42064
+        extents:
+          x:
+            rawValue: 9830
+          y:
+            rawValue: 9830
+          z:
+            rawValue: 9830
+      - localPosition:
+          x:
+            rawValue: 2638
+          y:
+            rawValue: 37833
+          z:
+            rawValue: 33771
+        extents:
+          x:
+            rawValue: 9830
+          y:
+            rawValue: 9830
+          z:
+            rawValue: 9830
+      - localPosition:
+          x:
+            rawValue: 1805
+          y:
+            rawValue: 26806
+          z:
+            rawValue: 23846
+        extents:
+          x:
+            rawValue: 9830
+          y:
+            rawValue: 9830
+          z:
+            rawValue: 9830
       hitGroupID: 0
       attackHeight: 1
       attackType: 3
@@ -47,7 +118,13 @@ MonoBehaviour:
       damage: 20
       hitstunFrames: 20
       blockStunFrames: 20
-      localPushbackVector: {x: 0, y: -0.1, z: 0.05}
+      localPushbackVector:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 6554
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0
