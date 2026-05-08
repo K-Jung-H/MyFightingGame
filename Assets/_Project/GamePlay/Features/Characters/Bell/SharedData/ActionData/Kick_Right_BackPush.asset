@@ -21,41 +21,208 @@ MonoBehaviour:
       recoveryFrames: 3
       cancelWindowStartFrame: 42
       useRootMotion: 0
-      useRootRotation: 0
       isHoming: 0
     rootMotionPath: []
     hitboxEvents:
     - markerName: Hitbox_R_K
       activeStartFrame: 27
       boxPath:
-      - localPosition: {x: 0.055856563, y: 0.43152612, z: 0.6189406}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.053172596, y: 0.654619, z: 0.8052087}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.020922236, y: 0.77660406, z: 0.8621874}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.015834026, y: 0.89462614, z: 0.88722223}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.014764093, y: 0.8978448, z: 0.88712436}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.013690762, y: 0.9010692, z: 0.8870212}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.014191121, y: 0.8995066, z: 0.88698435}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.014690705, y: 0.8979442, z: 0.88694704}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.014981732, y: 0.89781237, z: 0.88694084}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.015271679, y: 0.8976813, z: 0.8869349}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.015747882, y: 0.8937828, z: 0.88730854}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.016223684, y: 0.88988376, z: 0.8876669}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.000098876655, y: 0.86965066, z: 0.88159853}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: 0.016437493, y: 0.8487702, z: 0.8736598}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition:
+          x:
+            rawValue: 2538
+          y:
+            rawValue: 27967
+          z:
+            rawValue: 40767
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: 3240
+          y:
+            rawValue: 41972
+          z:
+            rawValue: 53459
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: 1731
+          y:
+            rawValue: 49843
+          z:
+            rawValue: 57515
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -107
+          y:
+            rawValue: 57683
+          z:
+            rawValue: 59523
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -36
+          y:
+            rawValue: 57901
+          z:
+            rawValue: 59521
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: 35
+          y:
+            rawValue: 58118
+          z:
+            rawValue: 59519
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: 1
+          y:
+            rawValue: 58012
+          z:
+            rawValue: 59517
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -32
+          y:
+            rawValue: 57905
+          z:
+            rawValue: 59515
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -50
+          y:
+            rawValue: 57896
+          z:
+            rawValue: 59514
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -68
+          y:
+            rawValue: 57887
+          z:
+            rawValue: 59514
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -103
+          y:
+            rawValue: 57631
+          z:
+            rawValue: 59527
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -137
+          y:
+            rawValue: 57375
+          z:
+            rawValue: 59539
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: 834
+          y:
+            rawValue: 55998
+          z:
+            rawValue: 59060
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: 1826
+          y:
+            rawValue: 54592
+          z:
+            rawValue: 58459
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
       hitGroupID: 0
       attackHeight: 1
       attackType: 2
@@ -63,10 +230,19 @@ MonoBehaviour:
       damage: 5
       hitstunFrames: 20
       blockStunFrames: 20
-      localPushbackVector: {x: 0, y: 0, z: 0.05}
+      localPushbackVector:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 0
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0
-      endFrame: 44
+      endFrame: 24
       hurtboxType: 0
+    - startFrame: 24
+      endFrame: 44
+      hurtboxType: 1
     vfxEvents: []

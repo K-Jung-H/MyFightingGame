@@ -40,6 +40,14 @@ MonoBehaviour:
     boxes:
     - localPosition: {x: 0, y: 0.5, z: 0}
       extents: {x: 0.25, y: 0.5, z: 0.25}
+  - type: 2
+    boxes:
+    - localPosition: {x: 0, y: 0.25, z: 0.1}
+      extents: {x: 0.25, y: 0.25, z: 0.75}
+  - type: 3
+    boxes:
+    - localPosition: {x: 0, y: 0.25, z: 0.1}
+      extents: {x: 0.25, y: 0.5, z: 0.75}
   commandBufferWindow: 15
   tapWindowFrames: 15
   autoSprintFrames: 60

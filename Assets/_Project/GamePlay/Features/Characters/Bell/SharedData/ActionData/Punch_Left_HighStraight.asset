@@ -21,21 +21,68 @@ MonoBehaviour:
       recoveryFrames: 5
       cancelWindowStartFrame: 9
       useRootMotion: 0
-      useRootRotation: 0
       isHoming: 0
     rootMotionPath: []
     hitboxEvents:
     - markerName: Hitbox_L_P
       activeStartFrame: 3
       boxPath:
-      - localPosition: {x: -0.019135578, y: 1.2272594, z: 0.4568753}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.021338116, y: 1.1956666, z: 0.6001668}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.052270513, y: 1.2027918, z: 0.64539224}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
-      - localPosition: {x: -0.07185829, y: 1.141608, z: 0.6420877}
-        extents: {x: 0.1, y: 0.1, z: 0.1}
+      - localPosition:
+          x:
+            rawValue: -9942
+          y:
+            rawValue: 86765
+          z:
+            rawValue: 30726
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -4968
+          y:
+            rawValue: 89846
+          z:
+            rawValue: 38425
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -352
+          y:
+            rawValue: 89559
+          z:
+            rawValue: 40365
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
+      - localPosition:
+          x:
+            rawValue: -6026
+          y:
+            rawValue: 87039
+          z:
+            rawValue: 41475
+        extents:
+          x:
+            rawValue: 6554
+          y:
+            rawValue: 6554
+          z:
+            rawValue: 6554
       hitGroupID: 0
       attackHeight: 0
       attackType: 1
@@ -43,7 +90,13 @@ MonoBehaviour:
       damage: 5
       hitstunFrames: 5
       blockStunFrames: 5
-      localPushbackVector: {x: 0, y: 0, z: 0}
+      localPushbackVector:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 0
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0

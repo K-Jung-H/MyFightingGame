@@ -198,9 +198,6 @@ MonoBehaviour:
       isHardKnockdown: 0
     hurtboxEvents:
     - startFrame: 0
-      endFrame: 13
-      hurtboxType: 1
-    - startFrame: 13
       endFrame: 17
       hurtboxType: 0
     - startFrame: 17
