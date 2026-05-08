@@ -60,7 +60,7 @@ public class StateAnimationMapSO : ScriptableObject
     {
         switch (state)
         {
-            case PlayerState_Type.AirHit: return airHit;
+            case PlayerState_Type.Knockback_Air: return airHit;
             case PlayerState_Type.Stunning: return stunning;
             case PlayerState_Type.GroundSmash: return groundSmash;
             case PlayerState_Type.WakeUp: return wakeUp;
@@ -94,7 +94,7 @@ public class StateAnimationMapSO : ScriptableObject
     {
         switch (previousState)
         {
-            case PlayerState_Type.AirHit:
+            case PlayerState_Type.Knockback_Air:
                 return deadAirHit != null ? deadAirHit : deadDefault;
             case PlayerState_Type.StandHit:
                 return deadStandHit != null ? deadStandHit : deadDefault;

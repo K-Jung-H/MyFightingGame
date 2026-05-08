@@ -21,7 +21,7 @@ public enum PlayerState_Type
 
     StandHit = 1 << 11,
     CrouchHit = 1 << 12,
-    AirHit = 1 << 13,
+    Knockback_Air = 1 << 13,
     Stunning = 1 << 14,
 
     LayingDown = 1 << 15,
@@ -31,6 +31,7 @@ public enum PlayerState_Type
     
     Win = 1 << 18,
     Defeat = 1 << 19,
+    WallBounce = 1 << 20
 }
 
 public enum WakeUp_Type

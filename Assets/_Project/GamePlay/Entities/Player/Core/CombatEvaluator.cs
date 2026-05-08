@@ -35,7 +35,7 @@ public class CombatEvaluator
         {
             if (hitEvent.targetHurtState == HurtState_Type.AirHit)
             {
-                result.targetState = PlayerState_Type.AirHit;
+                result.targetState = PlayerState_Type.Knockback_Air;
             }
             else if (hitEvent.targetHurtState == HurtState_Type.StunHit)
             {

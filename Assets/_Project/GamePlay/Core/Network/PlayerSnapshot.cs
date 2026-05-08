@@ -43,7 +43,8 @@ public unsafe struct PlayerSnapshot
     public FP64 sideStepDirection;
     public int currentStunFrames;
     public bool isGroundBouncing;
-
+    public int currentWallBounceCount;
+    
     public int currentHealth;
     public int hitstopCounter;
 

@@ -5,6 +5,7 @@ public class PlayerCombat
 {
     private PlayerConfigSO config;
     private int hitstopCounter;
+    private int currentWallBounceCount;
     private HurtInfo currentHurtInfo;
     private List<int> registeredHitGroupIds;
     private CombatEvaluator evaluator;
@@ -28,8 +29,8 @@ public class PlayerCombat
     {
         snapshot.currentHealth = this.currentHealth;
         snapshot.hitstopCounter = this.hitstopCounter;
+        snapshot.currentWallBounceCount = this.currentWallBounceCount;
         snapshot.currentHurtInfo = this.currentHurtInfo;
-
         int count = Mathf.Min(registeredHitGroupIds.Count, 10);
         for (int i = 0; i < count; i++)
         {
@@ -47,6 +48,7 @@ public class PlayerCombat
         }
 
         this.hitstopCounter = snapshot.hitstopCounter;
+        this.currentWallBounceCount = snapshot.currentWallBounceCount;
         this.currentHurtInfo = snapshot.currentHurtInfo;
 
         registeredHitGroupIds.Clear();
@@ -161,7 +163,7 @@ public class PlayerCombat
             finalPushback = CalculateWorldPushbackFP(attacker.GetPhysics().GetFPLookDirection(), hurtData.pushbackVector);
         }
 
-        bool isAlreadyInAirHit = currentStateType == PlayerState_Type.AirHit ||
+        bool isAlreadyInAirHit = currentStateType == PlayerState_Type.Knockback_Air ||
                                  currentStateType == PlayerState_Type.GroundSmash ||
                                  currentStateType == PlayerState_Type.LayingDown ||
                                  currentStateType == PlayerState_Type.WakeUp;
@@ -178,7 +180,7 @@ public class PlayerCombat
 
         if (isAlreadyInAirHit)
         {
-            nextState = PlayerState_Type.AirHit;
+            nextState = PlayerState_Type.Knockback_Air;
         }
 
         actionController.ClearComboSequence();
@@ -197,6 +199,10 @@ public class PlayerCombat
         
         return forwardPush + upPush + rightPush;
     }
+
+    public int GetCurrentWallBounceCount() => currentWallBounceCount;
+    public void IncrementWallBounceCount() => currentWallBounceCount++;
+    public void ResetWallBounceCount() => currentWallBounceCount = 0;
 
     public HurtInfo GetCurrentHurtInfo() => currentHurtInfo;
     public int GetCurrentHealth() => currentHealth;

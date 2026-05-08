@@ -102,11 +102,11 @@ public class StunningState : HurtStateBase
     protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.LayingDown;
 }
 
-public class AirHitState : HurtStateBase
+public class Knockback_AirState : HurtStateBase
 {
-    public AirHitState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+    public Knockback_AirState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
 
-    public override PlayerState_Type GetStateType() => PlayerState_Type.AirHit;
+    public override PlayerState_Type GetStateType() => PlayerState_Type.Knockback_Air;
 
     public override void UpdateTick(PlayerInput input)
     {
@@ -129,6 +129,54 @@ public class AirHitState : HurtStateBase
     }
 
     protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.None;
+}
+
+public class WallBounceState : HurtStateBase
+{
+    private const int MIN_WALL_BOUNCE_FRAMES = 15;
+
+    public WallBounceState(PlayerStateMachine sm, PlayerConfigSO cfg) : base(sm, cfg) { }
+
+    public override PlayerState_Type GetStateType() => PlayerState_Type.WallBounce;
+
+    public override void Enter()
+    {
+        base.Enter();
+
+        if (currentStunFrames < MIN_WALL_BOUNCE_FRAMES)
+        {
+            currentStunFrames = MIN_WALL_BOUNCE_FRAMES;
+        }
+    }
+
+    public override void UpdateTick(PlayerInput input)
+    {
+        if (combat.ProcessHitstopTick()) return;
+
+        bool isFallingAndGrounded = physics.GetIsGrounded() && physics.GetFPVelocity().y.rawValue <= 0;
+        if (isFallingAndGrounded)
+        {
+            bool isLethal = combat.GetCurrentHealth() <= 0;
+            if (isLethal)
+            {
+                stateMachine.TransitionTo(PlayerState_Type.Dead, true);
+            }
+            else
+            {
+                stateMachine.TransitionTo(PlayerState_Type.GroundSmash);
+            }
+            return;
+        }
+
+        currentStunFrames--;
+
+        if (currentStunFrames <= 0)
+        {
+            stateMachine.TransitionTo(GetRecoveryState(), true);
+        }
+    }
+
+    protected override PlayerState_Type GetRecoveryState() => PlayerState_Type.Knockback_Air;
 }
 
 public class GroundSmashState : HurtStateBase
@@ -172,7 +220,7 @@ public class GroundSmashState : HurtStateBase
 
     protected override PlayerState_Type GetRecoveryState() 
     {
-        if (isBouncing) return PlayerState_Type.AirHit;
+        if (isBouncing) return PlayerState_Type.Knockback_Air;
         
         bool isLethal = combat.GetCurrentHealth() <= 0;
         return isLethal ? PlayerState_Type.Dead : PlayerState_Type.LayingDown;

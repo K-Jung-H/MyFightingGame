@@ -1,3 +1,4 @@
+using System.Data;
 using UnityEngine;
 
 public enum RoundPhase
@@ -276,7 +277,7 @@ public class GameLoopManager : MonoBehaviour
         StageBoundary initialBoundary = currentStageData != null ? currentStageData.GetBoundary() : new StageBoundary();
 
         simulationCore = new GameSimulationCore();
-        simulationCore.Initialize(initialBoundary);
+        simulationCore.Initialize(initialBoundary, ruleConfig);
         simState.stageActiveWallBitmask = CreateInitialWallBitmask(initialBoundary);
 
         simState.isResimulating = false;

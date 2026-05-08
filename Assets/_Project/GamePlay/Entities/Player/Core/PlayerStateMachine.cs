@@ -135,7 +135,7 @@ public class PlayerStateMachine : ISnapshotSync
             { PlayerState_Type.StandBlock, new StandBlockState(this, config) },
             { PlayerState_Type.CrouchBlock, new CrouchBlockState(this, config) },
 
-            { PlayerState_Type.AirHit, new AirHitState(this, config) },
+            { PlayerState_Type.Knockback_Air, new Knockback_AirState(this, config) },
             { PlayerState_Type.Stunning, new StunningState(this, config) },
             { PlayerState_Type.GroundSmash, new GroundSmashState(this, config) },
             { PlayerState_Type.LayingDown, new LayingDownState(this, config) },
@@ -171,7 +171,7 @@ public class PlayerStateMachine : ISnapshotSync
         CrouchHitState crouchHit = GetStateObject(PlayerState_Type.CrouchHit) as CrouchHitState;
         if (crouchHit != null) crouchHit.SetCurrentStunFrames(0);
 
-        AirHitState airHit = GetStateObject(PlayerState_Type.AirHit) as AirHitState;
+        Knockback_AirState airHit = GetStateObject(PlayerState_Type.Knockback_Air) as Knockback_AirState;
         if (airHit != null) airHit.SetCurrentStunFrames(0);
 
         GroundSmashState smashState = GetStateObject(PlayerState_Type.GroundSmash) as GroundSmashState;
@@ -239,7 +239,7 @@ public class PlayerStateMachine : ISnapshotSync
 
     public bool CanTransitionToAttack()
     {
-        bool isHit = cachedCurrentState == PlayerState_Type.StandHit || cachedCurrentState == PlayerState_Type.AirHit;
+        bool isHit = cachedCurrentState == PlayerState_Type.StandHit || cachedCurrentState == PlayerState_Type.Knockback_Air;
         bool isDown = cachedCurrentState == PlayerState_Type.LayingDown || cachedCurrentState == PlayerState_Type.WakeUp || cachedCurrentState == PlayerState_Type.GroundSmash;
         bool isStunned = cachedCurrentState == PlayerState_Type.Stunning;
         bool isMatchEnd = cachedCurrentState == PlayerState_Type.Dead || cachedCurrentState == PlayerState_Type.Defeat || cachedCurrentState == PlayerState_Type.Win;
@@ -316,7 +316,7 @@ public class PlayerStateMachine : ISnapshotSync
             case PlayerState_Type.Dead:
                 return Hurtbox_Type.Laying;
 
-            case PlayerState_Type.AirHit:
+            case PlayerState_Type.Knockback_Air:
             case PlayerState_Type.WakeUp:
                 return Hurtbox_Type.Airborne;
 
