@@ -136,6 +136,7 @@ public class PlayerStateMachine : ISnapshotSync
             { PlayerState_Type.CrouchBlock, new CrouchBlockState(this, config) },
 
             { PlayerState_Type.Knockback_Air, new Knockback_AirState(this, config) },
+            { PlayerState_Type.WallBounce, new WallBounceState(this, config) },
             { PlayerState_Type.Stunning, new StunningState(this, config) },
             { PlayerState_Type.GroundSmash, new GroundSmashState(this, config) },
             { PlayerState_Type.LayingDown, new LayingDownState(this, config) },
@@ -212,6 +213,8 @@ public class PlayerStateMachine : ISnapshotSync
         if (isNotAttacking)
         {
             controller.GetCombat().ClearRegisteredHitGroupIds();
+            controller.GetActionController().ClearComboSequence();
+            controller.GetCombat().ResetWallBounceCount();
         }
 
         currentStateObject.Enter();
@@ -239,7 +242,7 @@ public class PlayerStateMachine : ISnapshotSync
 
     public bool CanTransitionToAttack()
     {
-        bool isHit = cachedCurrentState == PlayerState_Type.StandHit || cachedCurrentState == PlayerState_Type.Knockback_Air;
+        bool isHit = cachedCurrentState == PlayerState_Type.StandHit || cachedCurrentState == PlayerState_Type.Knockback_Air || cachedCurrentState == PlayerState_Type.WallBounce;
         bool isDown = cachedCurrentState == PlayerState_Type.LayingDown || cachedCurrentState == PlayerState_Type.WakeUp || cachedCurrentState == PlayerState_Type.GroundSmash;
         bool isStunned = cachedCurrentState == PlayerState_Type.Stunning;
         bool isMatchEnd = cachedCurrentState == PlayerState_Type.Dead || cachedCurrentState == PlayerState_Type.Defeat || cachedCurrentState == PlayerState_Type.Win;
@@ -263,11 +266,9 @@ public class PlayerStateMachine : ISnapshotSync
         if (hasValidActionData && isCommandActionTriggered)
         {
             actionHash = GetAnimationHash(currentActionData.animationStateName);
+            return true;
         }
-
-        bool isTriggered = isCommandActionTriggered;
-        isCommandActionTriggered = false;
-        return isTriggered;
+        return false;
     }
 
     public int GetAnimationHash(string stateName)
@@ -317,6 +318,7 @@ public class PlayerStateMachine : ISnapshotSync
                 return Hurtbox_Type.Laying;
 
             case PlayerState_Type.Knockback_Air:
+            case PlayerState_Type.WallBounce:
             case PlayerState_Type.WakeUp:
                 return Hurtbox_Type.Airborne;
 

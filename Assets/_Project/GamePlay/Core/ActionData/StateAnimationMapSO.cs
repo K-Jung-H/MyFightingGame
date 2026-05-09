@@ -13,7 +13,8 @@ public class StateAnimationMapSO : ScriptableObject
     public AnimationClip crouchBlock;
     
     [Header("Fall States")]
-    public AnimationClip airHit;
+    public AnimationClip knockbackAir;
+    public AnimationClip wallBounce;
     public AnimationClip stunning;
     public AnimationClip groundSmash;
     public AnimationClip wakeUp;
@@ -60,7 +61,8 @@ public class StateAnimationMapSO : ScriptableObject
     {
         switch (state)
         {
-            case PlayerState_Type.Knockback_Air: return airHit;
+            case PlayerState_Type.Knockback_Air: return knockbackAir;
+            case PlayerState_Type.WallBounce: return wallBounce;
             case PlayerState_Type.Stunning: return stunning;
             case PlayerState_Type.GroundSmash: return groundSmash;
             case PlayerState_Type.WakeUp: return wakeUp;
@@ -95,6 +97,8 @@ public class StateAnimationMapSO : ScriptableObject
         switch (previousState)
         {
             case PlayerState_Type.Knockback_Air:
+                return deadAirHit != null ? deadAirHit : deadDefault;
+            case PlayerState_Type.WallBounce:
                 return deadAirHit != null ? deadAirHit : deadDefault;
             case PlayerState_Type.StandHit:
                 return deadStandHit != null ? deadStandHit : deadDefault;

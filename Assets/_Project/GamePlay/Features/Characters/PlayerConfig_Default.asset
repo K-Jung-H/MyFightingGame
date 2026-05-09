@@ -27,7 +27,7 @@ MonoBehaviour:
   wakeUpRollRightFrames: 70
   wakeUpAttackFrames: 30
   gravityScale: 1
-  bounceVelocityThreshold: -0.3
+  bounceVelocityThreshold: -10
   bounceVelocityMultiplier: 0.5
   groundSmashBounceFrames: 10
   groundSmashLayFrames: 15

@@ -14,8 +14,8 @@ public class GameRuleConfigSO : ScriptableObject
     public float climaxActivationDistance = 2.0f;
 
     public int maxWallBouncesPerCombo = 2;
-    public float wallBounceYBoost = 10.0f; 
-    public float minBounceXZSpeed = 2.0f;
+    public float wallBounceYBoost = 0.2f; 
+    public float minBounceXZSpeed = 0.05f;
     public FP64 FP_WallBounceYBoost => FP64.FromFloat(wallBounceYBoost);
     public FP64 FP_MinBounceXZSpeed => FP64.FromFloat(minBounceXZSpeed);
 }

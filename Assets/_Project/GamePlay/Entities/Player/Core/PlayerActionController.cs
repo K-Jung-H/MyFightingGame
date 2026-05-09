@@ -80,8 +80,7 @@ public class ActionResolver
 
     public ActionRequest? EvaluateInput(ref DeterministicInputBuffer inputBuffer, InputFlags currentInput, InputFlags newlyPressedFlags, int currentFrame, PlayerState_Type currentState, List<InputFlags> currentComboSequence)
     {
-        InputStateTracker tracker = controller.GetTracker();
-        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState, ref tracker);
+        CommandDefinition matchedCommand = inputBuffer.CheckCommands(commandList, currentFrame, currentState);
         
         bool isCommandMatched = matchedCommand != null;
         if (isCommandMatched)

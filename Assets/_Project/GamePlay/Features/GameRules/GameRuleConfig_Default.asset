@@ -12,13 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f26930e0ce0b364980ce053ebaed633, type: 3}
   m_Name: GameRuleConfig_Default
   m_EditorClassIdentifier: Assembly-CSharp::GameRuleConfigSO
-  playerCollisionMinDistance: 0.5
   globalGravity: 0.02
   p1SpawnPos: {x: -2, y: 0, z: 0}
   p2SpawnPos: {x: 2, y: 0, z: 0}
-  preRoundDelaySeconds: 3
-  postRoundDelaySeconds: 3
+  preRoundDelayFrames: 180
+  postRoundDelayFrames: 180
   climaxSlowMoScale: 0.1
   climaxHealthRatio: 0.15
-  climaxRecoverySeconds: 1
+  climaxRecoveryFrames: 60
   climaxActivationDistance: 2
+  maxWallBouncesPerCombo: 2
+  wallBounceYBoost: 0.3
+  minBounceXZSpeed: 0.001

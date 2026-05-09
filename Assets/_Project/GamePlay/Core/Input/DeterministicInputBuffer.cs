@@ -6,6 +6,7 @@ public unsafe struct DeterministicInputBuffer
 
     public fixed int frames[bufferSize];
     public fixed int rawFlags[bufferSize];
+    public fixed int holdFrames[bufferSize];
 
     public int head;
     public int count;
@@ -27,6 +28,7 @@ public unsafe struct DeterministicInputBuffer
             if (isSameAsPrevious)
             {
                 frames[head] = input.frame;
+                holdFrames[head]++;
                 return;
             }
         }
@@ -34,6 +36,7 @@ public unsafe struct DeterministicInputBuffer
         head = (head - 1 + bufferSize) % bufferSize;
         frames[head] = input.frame;
         rawFlags[head] = (int)input.flags;
+        holdFrames[head] = 1;
 
         bool isBufferNotFull = count < bufferSize;
         if (isBufferNotFull)
@@ -56,71 +59,42 @@ public unsafe struct DeterministicInputBuffer
         return input;
     }
 
-    public CommandDefinition CheckCommands(CommandListSO commandList, int currentFrame, PlayerState_Type currentState, ref InputStateTracker tracker)
+    public CommandDefinition CheckCommands(CommandListSO commandList, int currentFrame, PlayerState_Type currentState)
     {
-        bool isListInvalid = commandList == null || commandList.commands == null;
-        if (isListInvalid) return null;
+        if (commandList == null || count == 0) return null;
 
-        int commandCount = commandList.commands.Count;
-        
-        for (int i = 0; i < commandCount; i++)
+        for (int i = 0; i < commandList.commands.Count; i++)
         {
             CommandDefinition command = commandList.commands[i];
-            
-            bool hasStateRestriction = command.validStates != 0;
-            bool isStateValid = (command.validStates & currentState) != 0;
+            if (command == null || command.sequence == null || command.sequence.Count == 0) continue;
 
-            if (hasStateRestriction && !isStateValid) continue;
+            bool canExecute = (command.validStates & currentState) != 0;
+            if (!canExecute) continue;
 
-            bool isSequenceMatched = CheckSequence(command, currentFrame, ref tracker);
-            if (isSequenceMatched) return command;
+            if (IsMatch(command, currentFrame))
+            {
+                return command;
+            }
         }
         return null;
     }
 
-    private bool CheckSequence(CommandDefinition command, int currentFrame, ref InputStateTracker tracker)
+    private bool IsMatch(CommandDefinition command, int currentFrame)
     {
-        bool isSequenceInvalid = command.sequence == null || command.sequence.Count == 0 || count == 0;
-        if (isSequenceInvalid) return false;
-
         int stepIndex = command.sequence.Count - 1;
+        int currentIndex = head;
+        int checkedCount = 0;
         int frameLimit = currentFrame - command.timeWindowFrames;
 
-        PlayerInput latestInput = GetInputAt(head);
-        bool isLatestMatched = CheckStepMatch(command.sequence[stepIndex], ref tracker, latestInput.flags);
-        if (!isLatestMatched) return false;
-
-        stepIndex--;
-
-        int currentIndex = (head + 1) % bufferSize;
-        int checkedCount = 1;
-
-        while (checkedCount < count)
+        while (stepIndex >= 0 && checkedCount < count)
         {
-            if (stepIndex < 0) break;
-
             CommandStep currentStep = command.sequence[stepIndex];
-
-            bool isHoldStep = currentStep.executeType == InputExecuteType.Hold;
-            if (isHoldStep)
-            {
-                bool isHoldConditionMet = tracker.GetHoldDuration(currentStep.requiredFlags) >= currentStep.requiredHoldFrames;
-                if (isHoldConditionMet)
-                {
-                    stepIndex--;
-                }
-                else
-                {
-                    return false;
-                }
-                continue;
-            }
-
+            
             PlayerInput buffered = GetInputAt(currentIndex);
             bool isTooOld = buffered.frame < frameLimit;
             if (isTooOld) break;
 
-            bool isCurrentStepMatched = CheckStepMatch(currentStep, ref tracker, buffered.flags);
+            bool isCurrentStepMatched = CheckStepMatch(currentStep, buffered.flags, currentIndex);
             if (isCurrentStepMatched)
             {
                 stepIndex--;
@@ -133,7 +107,7 @@ public unsafe struct DeterministicInputBuffer
         while (stepIndex >= 0 && command.sequence[stepIndex].executeType == InputExecuteType.Hold)
         {
             CommandStep remainingHoldStep = command.sequence[stepIndex];
-            bool isHoldMet = tracker.GetHoldDuration(remainingHoldStep.requiredFlags) >= remainingHoldStep.requiredHoldFrames;
+            bool isHoldMet = GetHoldDurationFromBuffer(remainingHoldStep.requiredFlags, head) >= remainingHoldStep.requiredHoldFrames;
 
             if (isHoldMet)
             {
@@ -148,10 +122,10 @@ public unsafe struct DeterministicInputBuffer
         return stepIndex < 0;
     }
 
-    private bool CheckStepMatch(CommandStep step, ref InputStateTracker tracker, InputFlags flags)
+    private bool CheckStepMatch(CommandStep step, InputFlags flags, int bufferIndex)
     {
         bool isHoldType = step.executeType == InputExecuteType.Hold;
-        if (isHoldType) return tracker.GetHoldDuration(step.requiredFlags) >= step.requiredHoldFrames;
+        if (isHoldType) return GetHoldDurationFromBuffer(step.requiredFlags, bufferIndex) >= step.requiredHoldFrames;
 
         if (step.isExactMatchRequired) return flags == step.requiredFlags;
 
@@ -159,5 +133,28 @@ public unsafe struct DeterministicInputBuffer
         if (isNoneRequired) return flags == InputFlags.None;
 
         return (flags & step.requiredFlags) == step.requiredFlags;
+    }
+
+    private int GetHoldDurationFromBuffer(InputFlags requiredFlags, int startBufferIndex)
+    {
+        int totalHoldFrames = 0;
+        int offsetFromHead = (startBufferIndex - head + bufferSize) % bufferSize;
+        int remainingElements = count - offsetFromHead;
+
+        for (int i = 0; i < remainingElements; i++)
+        {
+            int historyIndex = (startBufferIndex + i) % bufferSize;
+            int flagsAtFrame = rawFlags[historyIndex];
+
+            if ((flagsAtFrame & (int)requiredFlags) == (int)requiredFlags)
+            {
+                totalHoldFrames += holdFrames[historyIndex];
+            }
+            else
+            {
+                break;
+            }
+        }
+        return totalHoldFrames;
     }
 }

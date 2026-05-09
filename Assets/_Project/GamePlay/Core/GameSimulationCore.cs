@@ -147,8 +147,8 @@ public class GameSimulationCore
                         FP64 doubleDotXZ = dotXZ + dotXZ; 
                         FPVector3 reflectionXZ = v_xz - (n_xz * doubleDotXZ);
 
-                        reflectionXZ.x = new FP64(reflectionXZ.x.rawValue / 2);
-                        reflectionXZ.z = new FP64(reflectionXZ.z.rawValue / 2);
+                        reflectionXZ.x = new FP64((reflectionXZ.x.rawValue * 3) / 4);
+                        reflectionXZ.z = new FP64((reflectionXZ.z.rawValue * 3) / 4);
 
                         if (reflectionXZ.Magnitude().rawValue < cachedMinBounceXZSpeed.rawValue)
                         {

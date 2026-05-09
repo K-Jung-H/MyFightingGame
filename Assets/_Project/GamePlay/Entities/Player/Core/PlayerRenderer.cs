@@ -113,6 +113,7 @@ public class PlayerRenderer : MonoBehaviour
                                  currentState == PlayerState_Type.StandBlock ||
                                  currentState == PlayerState_Type.CrouchBlock ||
                                  currentState == PlayerState_Type.Knockback_Air ||
+                                 currentState == PlayerState_Type.WallBounce ||
                                  currentState == PlayerState_Type.Stunning ||
                                  currentState == PlayerState_Type.GroundSmash ||
                                  currentState == PlayerState_Type.LayingDown ||
@@ -239,6 +240,7 @@ public class PlayerRenderer : MonoBehaviour
                                 previousState == PlayerState_Type.StandBlock ||
                                 previousState == PlayerState_Type.CrouchBlock ||
                                 previousState == PlayerState_Type.Knockback_Air || 
+                                previousState == PlayerState_Type.WallBounce ||
                                 previousState == PlayerState_Type.Stunning || 
                                 previousState == PlayerState_Type.GroundSmash ||
                                 previousState == PlayerState_Type.LayingDown ||

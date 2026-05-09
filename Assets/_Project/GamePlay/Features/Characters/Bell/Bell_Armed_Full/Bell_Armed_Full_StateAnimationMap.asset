@@ -19,7 +19,8 @@ MonoBehaviour:
   standBlockHigh: {fileID: -203655887218126122, guid: 0330544f6df426f4baab8f8adf01071b, type: 3}
   standBlockMid: {fileID: -203655887218126122, guid: 9bc13eea443dd89469557922aca9a200, type: 3}
   crouchBlock: {fileID: -203655887218126122, guid: 01385d252c3eb14468a4386504e42ad5, type: 3}
-  airHit: {fileID: -6894513051456882905, guid: d5a328ab938234e469428eb760a32843, type: 3}
+  knockbackAir: {fileID: -6894513051456882905, guid: d5a328ab938234e469428eb760a32843, type: 3}
+  wallBounce: {fileID: -203655887218126122, guid: 68f29d48ffd9c084aacfe5353249998f, type: 3}
   stunning: {fileID: -203655887218126122, guid: 073349fe1684326458408986f3d3ab94, type: 3}
   groundSmash: {fileID: -203655887218126122, guid: d5a328ab938234e469428eb760a32843, type: 3}
   wakeUp: {fileID: -203655887218126122, guid: 88d38d3bf06863d429085ea51452e868, type: 3}

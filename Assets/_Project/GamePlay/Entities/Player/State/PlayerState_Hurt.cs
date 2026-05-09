@@ -142,7 +142,6 @@ public class WallBounceState : HurtStateBase
     public override void Enter()
     {
         base.Enter();
-
         if (currentStunFrames < MIN_WALL_BOUNCE_FRAMES)
         {
             currentStunFrames = MIN_WALL_BOUNCE_FRAMES;
