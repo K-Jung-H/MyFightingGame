@@ -33,7 +33,7 @@ public class GameStageBoundaryWindow : EditorWindow
 
         if (targetSO != null)
         {
-            EditorGUILayout.HelpBox($"Current SO contains {targetSO.GetBoundary().TotalWallCount} planes.", MessageType.Info);
+            EditorGUILayout.HelpBox($"Current SO contains {targetSO.boundary.TotalWallCount} planes.", MessageType.Info);
         }
     }
 
@@ -41,7 +41,7 @@ public class GameStageBoundaryWindow : EditorWindow
     {
         if (!showVisualization || targetSO == null) return;
 
-        StageBoundary boundary = targetSO.GetBoundary();
+        StageBoundary boundary = targetSO.boundary;
         if (boundary.Planes == null) return;
 
         foreach (var plane in boundary.Planes)
@@ -99,7 +99,7 @@ public class GameStageBoundaryWindow : EditorWindow
         }
 
         Undo.RecordObject(targetSO, "Bake Stage Boundary");
-        targetSO.SetBoundaryPlanes(bakedPlanes);
+        targetSO.boundary.Planes = bakedPlanes;
         EditorUtility.SetDirty(targetSO);
         AssetDatabase.SaveAssets();
         Debug.Log($"Bake Successful: {markers.Length} planes saved to {targetSO.name}.");

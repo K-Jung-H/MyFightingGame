@@ -97,6 +97,7 @@ public class GameLoopManager : MonoBehaviour
     [Header("Stage & Rule Data")]
     [SerializeField] private GameRuleConfigSO ruleConfig;
     [SerializeField] private GameStageDataSO currentStageData;
+    private GameObject spawnedStageVisual;
 
 
     [Header("Public States (For Logic Classes)")]
@@ -252,6 +253,8 @@ public class GameLoopManager : MonoBehaviour
 
     public void InitializeMatch()
     {
+        stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
+
         DetermineCameraFlipState();
 
         cachedClimaxSlowMoScale = FP64.FromFloat(ruleConfig.climaxSlowMoScale);
@@ -272,9 +275,24 @@ public class GameLoopManager : MonoBehaviour
             playingUI.SetupWinCounter(scoreContext.requiredRoundWins);
         }
 
-        stateBuffer = new GameStateSnapshot[ROLLBACK_WINDOW];
 
-        StageBoundary initialBoundary = currentStageData != null ? currentStageData.GetBoundary() : new StageBoundary();
+        StageBoundary initialBoundary = currentStageData != null ? currentStageData.boundary : new StageBoundary();
+
+        if (spawnedStageVisual != null) 
+        {
+            Destroy(spawnedStageVisual);
+        }
+
+        if (currentStageData != null && currentStageData.visualPrefab != null)
+        {
+            spawnedStageVisual = Instantiate(currentStageData.visualPrefab, Vector3.zero, Quaternion.identity);
+            
+            Collider[] colliders = spawnedStageVisual.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Destroy(colliders[i]);
+            }
+        }
 
         simulationCore = new GameSimulationCore();
         simulationCore.Initialize(initialBoundary, ruleConfig);

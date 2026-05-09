@@ -3,20 +3,14 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewStageData", menuName = "ScriptableObjects/StageData")]
 public class GameStageDataSO : ScriptableObject
 {
+    [Header("General Info")]
     public string stageName;
+    public Sprite thumbnail; 
 
-    [SerializeField] 
-    private BoundaryPlane[] boundaryPlanes;
+    [Header("Simulation Data (Physics)")]
+    public StageBoundary boundary;
+    
 
-    public StageBoundary GetBoundary()
-    {
-        return new StageBoundary { Planes = boundaryPlanes };
-    }
-
-#if UNITY_EDITOR
-    public void SetBoundaryPlanes(BoundaryPlane[] planes)
-    {
-        boundaryPlanes = planes;
-    }
-#endif
+    [Header("Visual Data (View)")]
+    public GameObject visualPrefab; 
 }
