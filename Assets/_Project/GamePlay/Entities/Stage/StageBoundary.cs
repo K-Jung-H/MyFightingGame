@@ -8,6 +8,7 @@ public struct BoundaryPlane
     public bool isActive;
     public bool isBreakable;
     public int durability;
+    public float explosionForce;
 }
 
 [Serializable]

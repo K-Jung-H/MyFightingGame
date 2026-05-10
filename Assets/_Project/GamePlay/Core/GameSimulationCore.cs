@@ -3,15 +3,17 @@ using System;
 
 public class GameSimulationCore
 {
-    private BoundaryPlane[] staticStageGeometry;
+    private BoundaryPlane[] stageBoundaryPlanes;
 
     private int cachedMaxWallBounces;
     private FP64 cachedWallBounceYBoost;
     private FP64 cachedMinBounceXZSpeed;
 
+    public Action<int, FPVector3, float> HandleWallBreak;
+
     public void Initialize(StageBoundary initialBoundary, GameRuleConfigSO gameRule)
     {
-        staticStageGeometry = initialBoundary.Planes;
+        stageBoundaryPlanes = initialBoundary.Planes;
 
         if (gameRule != null)
         {
@@ -23,12 +25,12 @@ public class GameSimulationCore
 
     public StageBoundary GetRuntimeBoundary(uint bitmask)
     {
-        if (staticStageGeometry == null) return new StageBoundary();
+        if (stageBoundaryPlanes == null) return new StageBoundary();
         
-        BoundaryPlane[] currentPlanes = new BoundaryPlane[staticStageGeometry.Length];
-        for (int i = 0; i < staticStageGeometry.Length; i++)
+        BoundaryPlane[] currentPlanes = new BoundaryPlane[stageBoundaryPlanes.Length];
+        for (int i = 0; i < stageBoundaryPlanes.Length; i++)
         {
-            currentPlanes[i] = staticStageGeometry[i];
+            currentPlanes[i] = stageBoundaryPlanes[i];
             currentPlanes[i].isActive = (bitmask & (1u << i)) != 0; 
         }
         return new StageBoundary { Planes = currentPlanes };
@@ -99,9 +101,9 @@ public class GameSimulationCore
         p2.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
     }
 
-    private bool ResolveStageCollision(PlayerController player, ref SimulationState simState)
+        private bool ResolveStageCollision(PlayerController player, ref SimulationState simState)
     {
-        if (staticStageGeometry == null) return false;
+        if (stageBoundaryPlanes == null) return false;
 
         PlayerPhysics physics = player.GetPhysics();
         FPVector3 currentPos = physics.GetFPPosition();
@@ -114,62 +116,21 @@ public class GameSimulationCore
         for (int iter = 0; iter < 2; iter++)
         {
             bool hasCollision = false;
-            for (int i = 0; i < staticStageGeometry.Length; i++)
+            for (int i = 0; i < stageBoundaryPlanes.Length; i++)
             {
                 if ((simState.stageActiveWallBitmask & (1u << i)) == 0) continue;
 
-                FPVector3 normal = staticStageGeometry[i].Normal;
-                FP64 distance = staticStageGeometry[i].Distance;
+                BoundaryPlane plane = stageBoundaryPlanes[i];
                 FPVector3 testPos = currentPos + totalPushback;
-                
-                FP64 centerDistanceToWall = FPVector3.Dot(testPos, normal) - distance;
 
-                FPVector3 wallDirection = new FPVector3(new FP64(-normal.x.rawValue), new FP64(-normal.y.rawValue), new FP64(-normal.z.rawValue));
-                FP64 dynamicRadius = GetDynamicPushBoundary(player, wallDirection);
+                if (!TryGetWallPenetration(player, plane, testPos, out FP64 penetration)) 
+                    continue;
 
-                if (centerDistanceToWall.rawValue < dynamicRadius.rawValue)
+                bool isWallBroken = ProcessWallDestruction(i, plane, ref simState, ref currentVel);
+
+                if (!isWallBroken)
                 {
-                    FP64 penetration = centerDistanceToWall - dynamicRadius;
-                    totalPushback = totalPushback - (normal * penetration);
-                    
-                    FP64 velDotNormal = FPVector3.Dot(currentVel, normal);
-
-                    bool isKnockbackAir = player.GetStateMachine().GetCurrentState() == PlayerState_Type.Knockback_Air;
-                    bool isMovingTowardsWall = velDotNormal.rawValue < 0;
-                    bool canBounce = player.GetCombat().GetCurrentWallBounceCount() < cachedMaxWallBounces;
-
-                    if (!wallBounceTriggeredThisFrame && isKnockbackAir && isMovingTowardsWall && canBounce)
-                    {
-                        FPVector3 v_xz = new FPVector3(currentVel.x, new FP64(0), currentVel.z);
-                        FPVector3 n_xz = new FPVector3(normal.x, new FP64(0), normal.z);
-                        
-                        FP64 dotXZ = FPVector3.Dot(v_xz, n_xz);
-                        FP64 doubleDotXZ = dotXZ + dotXZ; 
-                        FPVector3 reflectionXZ = v_xz - (n_xz * doubleDotXZ);
-
-                        reflectionXZ.x = new FP64((reflectionXZ.x.rawValue * 3) / 4);
-                        reflectionXZ.z = new FP64((reflectionXZ.z.rawValue * 3) / 4);
-
-                        if (reflectionXZ.Magnitude().rawValue < cachedMinBounceXZSpeed.rawValue)
-                        {
-                            reflectionXZ.x = new FP64(0);
-                            reflectionXZ.z = new FP64(0);
-                        }
-
-                        currentVel.x = reflectionXZ.x;
-                        currentVel.z = reflectionXZ.z;
-                        currentVel.y = cachedWallBounceYBoost; 
-
-                        player.GetStateMachine().TransitionTo(PlayerState_Type.WallBounce, true);
-                        player.GetCombat().IncrementWallBounceCount();
-                        
-                        wallBounceTriggeredThisFrame = true;
-                    }
-                    else if (isMovingTowardsWall && !wallBounceTriggeredThisFrame)
-                    {
-                        currentVel = currentVel - (normal * velDotNormal);
-                    }
-                    
+                    ResolveWallPhysics(player, plane, penetration, ref totalPushback, ref currentVel, ref wallBounceTriggeredThisFrame);
                     hasCollision = true;
                     isCornered = true;
                 }
@@ -177,10 +138,97 @@ public class GameSimulationCore
             if (!hasCollision) break;
         }
 
-        if (totalPushback.x.rawValue != 0 || totalPushback.y.rawValue != 0 || totalPushback.z.rawValue != 0) physics.ApplyFPPushback(totalPushback);
+        if (totalPushback.x.rawValue != 0 || totalPushback.y.rawValue != 0 || totalPushback.z.rawValue != 0) 
+        {
+            physics.ApplyFPPushback(totalPushback);
+        }
+            
         physics.SetFPVelocity(currentVel);
 
         return isCornered;
+    }
+
+    private bool TryGetWallPenetration(PlayerController player, BoundaryPlane plane, FPVector3 testPos, out FP64 penetration)
+    {
+        penetration = new FP64(0);
+        FP64 centerDistanceToWall = FPVector3.Dot(testPos, plane.Normal) - plane.Distance;
+        
+        FPVector3 wallDirection = new FPVector3(new FP64(-plane.Normal.x.rawValue), new FP64(-plane.Normal.y.rawValue), new FP64(-plane.Normal.z.rawValue));
+        FP64 dynamicRadius = GetDynamicPushBoundary(player, wallDirection);
+
+        if (centerDistanceToWall.rawValue < dynamicRadius.rawValue)
+        {
+            penetration = centerDistanceToWall - dynamicRadius;
+            return true;
+        }
+        
+        return false;
+    }
+
+    private bool ProcessWallDestruction(int wallIndex, BoundaryPlane plane, ref SimulationState simState, ref FPVector3 currentVel)
+    {
+        if (!plane.isBreakable) return false;
+
+        unsafe
+        {
+            simState.wallDurabilities[wallIndex] -= 1;
+
+            if (simState.wallDurabilities[wallIndex] <= 0)
+            {
+                simState.stageActiveWallBitmask &= ~(1u << wallIndex);
+                HandleWallBreak?.Invoke(wallIndex, plane.Normal, plane.explosionForce);
+
+                currentVel.x = new FP64(currentVel.x.rawValue / 2);
+                currentVel.y = new FP64(currentVel.y.rawValue / 2);
+                currentVel.z = new FP64(currentVel.z.rawValue / 2);
+
+                return true; 
+            }
+        }
+        return false;
+    }
+
+    private void ResolveWallPhysics(PlayerController player, BoundaryPlane plane, FP64 penetration, ref FPVector3 totalPushback, ref FPVector3 currentVel, ref bool wallBounceTriggeredThisFrame)
+    {
+        totalPushback = totalPushback - (plane.Normal * penetration);
+        
+        FP64 velDotNormal = FPVector3.Dot(currentVel, plane.Normal);
+
+        bool isKnockbackAir = player.GetStateMachine().GetCurrentState() == PlayerState_Type.Knockback_Air;
+        bool isMovingTowardsWall = velDotNormal.rawValue < 0;
+        bool canBounce = player.GetCombat().GetCurrentWallBounceCount() < cachedMaxWallBounces;
+
+        if (!wallBounceTriggeredThisFrame && isKnockbackAir && isMovingTowardsWall && canBounce)
+        {
+            FPVector3 v_xz = new FPVector3(currentVel.x, new FP64(0), currentVel.z);
+            FPVector3 n_xz = new FPVector3(plane.Normal.x, new FP64(0), plane.Normal.z);
+            
+            FP64 dotXZ = FPVector3.Dot(v_xz, n_xz);
+            FP64 doubleDotXZ = dotXZ + dotXZ; 
+            FPVector3 reflectionXZ = v_xz - (n_xz * doubleDotXZ);
+
+            reflectionXZ.x = new FP64((reflectionXZ.x.rawValue * 3) / 4);
+            reflectionXZ.z = new FP64((reflectionXZ.z.rawValue * 3) / 4);
+
+            if (reflectionXZ.Magnitude().rawValue < cachedMinBounceXZSpeed.rawValue)
+            {
+                reflectionXZ.x = new FP64(0);
+                reflectionXZ.z = new FP64(0);
+            }
+
+            currentVel.x = reflectionXZ.x;
+            currentVel.z = reflectionXZ.z;
+            currentVel.y = cachedWallBounceYBoost; 
+
+            player.GetStateMachine().TransitionTo(PlayerState_Type.WallBounce, true);
+            player.GetCombat().IncrementWallBounceCount();
+            
+            wallBounceTriggeredThisFrame = true;
+        }
+        else if (isMovingTowardsWall && !wallBounceTriggeredThisFrame)
+        {
+            currentVel = currentVel - (plane.Normal * velDotNormal);
+        }
     }
 
     private void ResolveAttacks(PlayerController attacker, PlayerController defender, Action<PlayerController, Vector3, EffectType> onHitSpark)

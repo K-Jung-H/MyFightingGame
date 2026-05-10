@@ -55,7 +55,7 @@ public struct NetworkSyncState
     public int lastHashedTick;
 }
 
-public struct SimulationState
+public unsafe struct SimulationState
 {
     public int currentTick;
     public bool isSimulationRunning;
@@ -68,9 +68,10 @@ public struct SimulationState
     public FP64 timeAccumulator;
     public bool isLogicStep;
     public uint stageActiveWallBitmask;
+    public fixed int wallDurabilities[32];
 }
 
-public struct GameStateSnapshot
+public unsafe struct GameStateSnapshot
 {
     public int tick;
     public PlayerSnapshot p1Snapshot;
@@ -84,6 +85,7 @@ public struct GameStateSnapshot
     public FP64 timeAccumulator;
     public MatchScoreContext scoreContext;
     public uint stageActiveWallBitmask;
+    public fixed int wallDurabilities[32];
 }
 
 
@@ -97,6 +99,7 @@ public class GameLoopManager : MonoBehaviour
     [Header("Stage & Rule Data")]
     [SerializeField] private GameRuleConfigSO ruleConfig;
     [SerializeField] private GameStageDataSO currentStageData;
+    private StageWallAnimationController visualWallController;
     private GameObject spawnedStageVisual;
 
 
@@ -199,6 +202,11 @@ public class GameLoopManager : MonoBehaviour
         {
             Destroy(connectionState.currentP2PNetwork.gameObject);
         }
+
+        if (simulationCore != null)
+        {
+            simulationCore.HandleWallBreak -= OnWallBroken;
+        }
     }
 
     public int GetCurrentTick() => simState.currentTick;
@@ -232,6 +240,18 @@ public class GameLoopManager : MonoBehaviour
         FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
         
         return dotProduct.rawValue > 0;
+    }
+
+    private void OnWallBroken(int wallIndex, FPVector3 normal, float explosionForce)
+    {
+        if (visualWallController == null) return;
+
+        visualWallController.SetWallVisualActive(wallIndex, false);
+
+        if (!simState.isResimulating)
+        {
+            visualWallController.ActivateDebrisWithForce(wallIndex, normal.ToVector3(), explosionForce);
+        }
     }
 
     public bool GetIsHardStalling()
@@ -275,7 +295,6 @@ public class GameLoopManager : MonoBehaviour
             playingUI.SetupWinCounter(scoreContext.requiredRoundWins);
         }
 
-
         StageBoundary initialBoundary = currentStageData != null ? currentStageData.boundary : new StageBoundary();
 
         if (spawnedStageVisual != null) 
@@ -286,11 +305,30 @@ public class GameLoopManager : MonoBehaviour
         if (currentStageData != null && currentStageData.visualPrefab != null)
         {
             spawnedStageVisual = Instantiate(currentStageData.visualPrefab, Vector3.zero, Quaternion.identity);
+            
+            visualWallController = spawnedStageVisual.GetComponent<StageWallAnimationController>();
+            if (visualWallController != null)
+            {
+                visualWallController.PreWarmDebris();
+            }
         }
 
         simulationCore = new GameSimulationCore();
         simulationCore.Initialize(initialBoundary, ruleConfig);
+        simulationCore.HandleWallBreak += OnWallBroken;
+
         simState.stageActiveWallBitmask = CreateInitialWallBitmask(initialBoundary);
+        
+        unsafe
+        {
+            for (int i = 0; i < initialBoundary.Planes.Length; i++)
+            {
+                if (initialBoundary.Planes[i].isBreakable)
+                    simState.wallDurabilities[i] = initialBoundary.Planes[i].durability;
+                else
+                    simState.wallDurabilities[i] = 0;
+            }
+        }
 
         simState.isResimulating = false;
         simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
@@ -726,6 +764,14 @@ public class GameLoopManager : MonoBehaviour
         stateBuffer[idx].scoreContext = scoreContext;
         stateBuffer[idx].stageActiveWallBitmask = simState.stageActiveWallBitmask;
 
+        unsafe
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                stateBuffer[idx].wallDurabilities[i] = simState.wallDurabilities[i];
+            }
+        }
+
         roundTimer.ExportState(ref stateBuffer[idx]);
         
         if (playerOne.controller != null) playerOne.controller.ExportState(ref stateBuffer[idx].p1Snapshot);
@@ -742,6 +788,14 @@ public class GameLoopManager : MonoBehaviour
         simState.timeAccumulator = stateBuffer[idx].timeAccumulator;
         scoreContext = stateBuffer[idx].scoreContext;
         simState.stageActiveWallBitmask = stateBuffer[idx].stageActiveWallBitmask;
+
+        unsafe
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                simState.wallDurabilities[i] = stateBuffer[idx].wallDurabilities[i];
+            }
+        }
 
         roundTimer.ImportState(stateBuffer[idx]);
         
@@ -789,6 +843,15 @@ public class GameLoopManager : MonoBehaviour
     {
         float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64_ONE.rawValue;
         
+        if (visualWallController != null && currentStageData != null)
+        {
+            for (int i = 0; i < currentStageData.boundary.Planes.Length; i++)
+            {
+                bool isWallActive = (simState.stageActiveWallBitmask & (1u << i)) != 0;
+                visualWallController.SetWallVisualActive(i, isWallActive);
+            }
+        }
+
         if (VfxManager.Instance != null)
         {
             VfxManager.Instance.SetGlobalScale(currentVisualScale);

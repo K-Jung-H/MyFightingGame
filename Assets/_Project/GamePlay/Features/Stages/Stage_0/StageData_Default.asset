@@ -27,7 +27,8 @@ MonoBehaviour:
         rawValue: -983040
       isActive: 1
       isBreakable: 1
-      durability: 0
+      durability: 1
+      explosionForce: 0.1
     - Normal:
         x:
           rawValue: -65536
@@ -38,8 +39,9 @@ MonoBehaviour:
       Distance:
         rawValue: -983040
       isActive: 1
-      isBreakable: 0
-      durability: 0
+      isBreakable: 1
+      durability: 1
+      explosionForce: 0.1
     - Normal:
         x:
           rawValue: 0
@@ -50,8 +52,9 @@ MonoBehaviour:
       Distance:
         rawValue: -983040
       isActive: 1
-      isBreakable: 0
-      durability: 0
+      isBreakable: 1
+      durability: 1
+      explosionForce: 0.1
     - Normal:
         x:
           rawValue: 65536
@@ -62,6 +65,59 @@ MonoBehaviour:
       Distance:
         rawValue: -983040
       isActive: 1
+      isBreakable: 1
+      durability: 1
+      explosionForce: 0.1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: -65536
+      Distance:
+        rawValue: -1966080
+      isActive: 1
       isBreakable: 0
-      durability: 0
-  visualPrefab: {fileID: 742664008326864912, guid: f2484a10c73715347bd53ed89e2eaff4, type: 3}
+      durability: 1
+      explosionForce: 0.1
+    - Normal:
+        x:
+          rawValue: -65536
+        y:
+          rawValue: 0
+        z:
+          rawValue: 0
+      Distance:
+        rawValue: -1966080
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 0.1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 65536
+      Distance:
+        rawValue: -1966080
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 0.1
+    - Normal:
+        x:
+          rawValue: 65536
+        y:
+          rawValue: 0
+        z:
+          rawValue: 0
+      Distance:
+        rawValue: -1966080
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 0.1
+  visualPrefab: {fileID: 5473091644003375446, guid: f2484a10c73715347bd53ed89e2eaff4, type: 3}
