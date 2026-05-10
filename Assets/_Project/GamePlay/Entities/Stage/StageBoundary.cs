@@ -7,6 +7,7 @@ public struct BoundaryPlane
     public FP64 Distance;
     public bool isActive;
     public bool isBreakable;
+    public int durability;
 }
 
 [Serializable]

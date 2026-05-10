@@ -27,6 +27,7 @@ MonoBehaviour:
         rawValue: -983040
       isActive: 1
       isBreakable: 1
+      durability: 0
     - Normal:
         x:
           rawValue: -65536
@@ -38,6 +39,7 @@ MonoBehaviour:
         rawValue: -983040
       isActive: 1
       isBreakable: 0
+      durability: 0
     - Normal:
         x:
           rawValue: 0
@@ -49,6 +51,7 @@ MonoBehaviour:
         rawValue: -983040
       isActive: 1
       isBreakable: 0
+      durability: 0
     - Normal:
         x:
           rawValue: 65536
@@ -60,4 +63,5 @@ MonoBehaviour:
         rawValue: -983040
       isActive: 1
       isBreakable: 0
-  visualPrefab: {fileID: 2144764359584937367, guid: 591ed630aa52b0b4da6a36f937e0d7ea, type: 3}
+      durability: 0
+  visualPrefab: {fileID: 742664008326864912, guid: f2484a10c73715347bd53ed89e2eaff4, type: 3}

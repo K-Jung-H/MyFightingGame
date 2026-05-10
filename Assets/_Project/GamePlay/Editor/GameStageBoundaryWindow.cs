@@ -1,31 +1,38 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 public class GameStageBoundaryWindow : EditorWindow
 {
+    // 보존할 컴포넌트 타입 컨테이너
+    private static readonly List<Type> WhitelistedComponents = new List<Type>
+    {
+        typeof(Transform),
+        typeof(MeshFilter),
+        typeof(MeshRenderer),
+        typeof(ParticleSystem),
+        typeof(ParticleSystemRenderer),
+        typeof(Light)
+    };
+
     private GameStageDataSO targetSO;
-    private GameObject sceneRoot;
-    private bool showVisualization = true;
+    private GameObject sourceObject;
 
     [MenuItem("Tools/Stage Boundary Baker")]
     public static void Open() => GetWindow<GameStageBoundaryWindow>("Stage Baker");
 
-    private void OnEnable() => SceneView.duringSceneGui += OnSceneGUI;
-    private void OnDisable() => SceneView.duringSceneGui -= OnSceneGUI;
-
     private void OnGUI()
     {
-        GUILayout.Label("Stage Boundary Tool", EditorStyles.boldLabel);
+        GUILayout.Label("Stage Data Baker & Visual Stripper", EditorStyles.boldLabel);
         
         targetSO = (GameStageDataSO)EditorGUILayout.ObjectField("Target Data SO", targetSO, typeof(GameStageDataSO), false);
-        sceneRoot = (GameObject)EditorGUILayout.ObjectField("Scene Root Object", sceneRoot, typeof(GameObject), true);
+        sourceObject = (GameObject)EditorGUILayout.ObjectField("Source Object (Scene or Prefab)", sourceObject, typeof(GameObject), true);
         
-        showVisualization = EditorGUILayout.Toggle("Show Visualization", showVisualization);
-
-        GUILayout.Space(10);
-        GUI.enabled = targetSO != null && sceneRoot != null;
-        if (GUILayout.Button("Bake From Scene", GUILayout.Height(30)))
+        GUILayout.Space(15);
+        GUI.enabled = targetSO != null && sourceObject != null;
+        if (GUILayout.Button("Bake Stage Data & Generate Visual Prefab", GUILayout.Height(40)))
         {
             Bake();
         }
@@ -33,56 +40,20 @@ public class GameStageBoundaryWindow : EditorWindow
 
         if (targetSO != null)
         {
-            EditorGUILayout.HelpBox($"Current SO contains {targetSO.boundary.TotalWallCount} planes.", MessageType.Info);
+            GUILayout.Space(10);
+            EditorGUILayout.HelpBox(
+                $"Wall Count: {targetSO.boundary.TotalWallCount}\n" +
+                $"Visual Prefab: {(targetSO.visualPrefab != null ? targetSO.visualPrefab.name : "None")}", 
+                MessageType.Info);
         }
-    }
-
-    private void OnSceneGUI(SceneView sceneView)
-    {
-        if (!showVisualization || targetSO == null) return;
-
-        StageBoundary boundary = targetSO.boundary;
-        if (boundary.Planes == null) return;
-
-        foreach (var plane in boundary.Planes)
-        {
-            if (!plane.isActive) continue;
-            DrawPlaneVisualization(plane);
-        }
-    }
-
-    private void DrawPlaneVisualization(BoundaryPlane plane)
-    {
-        Vector3 normal = plane.Normal.ToVector3();
-        float dist = plane.Distance.ToFloat();
-        float h = 5f; 
-        float w = 20f;
-        Vector3 center = normal * dist + Vector3.up * (h * 0.5f);
-        Quaternion rot = Quaternion.LookRotation(normal);
-
-        Color planeColorBase = plane.isBreakable ? new Color(1f, 0.5f, 0f) : Color.cyan;
-        Color wireColorBase = plane.isBreakable ? new Color(1f, 0.7f, 0.2f) : Color.cyan;
-
-        Color faceColor = new Color(planeColorBase.r, planeColorBase.g, planeColorBase.b, 0.1f);
-        Color wireColor = wireColorBase;
-
-        Handles.color = faceColor;
-        Handles.DrawSolidRectangleWithOutline(new Vector3[] { 
-            center + rot * new Vector3(-(w*0.5f), -(h*0.5f), 0),
-            center + rot * new Vector3((w*0.5f), -(h*0.5f), 0),
-            center + rot * new Vector3((w*0.5f), (h*0.5f), 0),
-            center + rot * new Vector3(-(w*0.5f), (h*0.5f), 0)
-        }, faceColor, wireColor);
-        
-        Handles.color = Color.yellow;
-        Handles.DrawLine(center, center + normal * 2f);
     }
 
     private void Bake()
     {
-        BoundaryWallMarker[] markers = sceneRoot.GetComponentsInChildren<BoundaryWallMarker>();
+        // 1. 원본에서 마커 데이터 추출
+        BoundaryWallMarker[] markers = sourceObject.GetComponentsInChildren<BoundaryWallMarker>(true);
         BoundaryPlane[] bakedPlanes = new BoundaryPlane[markers.Length];
-        Vector3 origin = sceneRoot.transform.position;
+        Vector3 origin = sourceObject.transform.position;
 
         for (int i = 0; i < markers.Length; i++)
         {
@@ -94,14 +65,56 @@ public class GameStageBoundaryWindow : EditorWindow
                 Normal = FPVector3.FromVector3(normal),
                 Distance = FP64.FromFloat(distance),
                 isActive = markers[i].isActive,
-                isBreakable = markers[i].isBreakable
+                isBreakable = markers[i].isBreakable,
+                durability = markers[i].durability
             };
         }
 
-        Undo.RecordObject(targetSO, "Bake Stage Boundary");
-        targetSO.boundary.Planes = bakedPlanes;
+        // 2. 시각 전용 프리팹 생성을 위한 메모리상 복제
+        GameObject duplicate = Instantiate(sourceObject);
+        duplicate.name = sourceObject.name + "_VisualOnly";
+
+        // 3. 화이트리스트 기반 컴포넌트 스트리핑
+        Component[] allComponents = duplicate.GetComponentsInChildren<Component>(true);
+        for (int i = allComponents.Length - 1; i >= 0; i--) 
+        {
+            Component comp = allComponents[i];
+            if (comp == null) continue;
+
+            bool isWhitelisted = false;
+            foreach (Type t in WhitelistedComponents)
+            {
+                if (t.IsAssignableFrom(comp.GetType()))
+                {
+                    isWhitelisted = true;
+                    break;
+                }
+            }
+
+            if (!isWhitelisted)
+            {
+                DestroyImmediate(comp);
+            }
+        }
+
+        // 4. 저장 경로 설정 (타겟 SO와 같은 폴더)
+        string soPath = AssetDatabase.GetAssetPath(targetSO);
+        string directory = Path.GetDirectoryName(soPath);
+        string finalPath = Path.Combine(directory, duplicate.name + ".prefab").Replace("\\", "/");
+
+        // 5. 프리팹 에셋으로 저장 및 복제본 파괴
+        GameObject savedPrefab = PrefabUtility.SaveAsPrefabAsset(duplicate, finalPath);
+        DestroyImmediate(duplicate);
+
+        // 6. 타겟 SO에 데이터 저장
+        Undo.RecordObject(targetSO, "Bake Stage Data");
+        
+        targetSO.boundary = new StageBoundary { Planes = bakedPlanes };
+        targetSO.visualPrefab = savedPrefab;
+        
         EditorUtility.SetDirty(targetSO);
         AssetDatabase.SaveAssets();
-        Debug.Log($"Bake Successful: {markers.Length} planes saved to {targetSO.name}.");
+
+        Debug.Log($"[Stage Baker] {markers.Length}개의 벽 데이터를 저장하고, 순수 시각용 프리팹을 성공적으로 생성했습니다: {finalPath}");
     }
 }

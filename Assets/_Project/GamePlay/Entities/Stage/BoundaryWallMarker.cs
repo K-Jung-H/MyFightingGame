@@ -5,6 +5,7 @@ public class BoundaryWallMarker : MonoBehaviour
 {
     public bool isActive = true;
     public bool isBreakable = false;
+    public int durability = 0;
     public float visualWidth = 20f;
     public float visualHeight = 5f;
 

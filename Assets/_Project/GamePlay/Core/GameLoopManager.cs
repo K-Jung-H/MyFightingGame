@@ -286,12 +286,6 @@ public class GameLoopManager : MonoBehaviour
         if (currentStageData != null && currentStageData.visualPrefab != null)
         {
             spawnedStageVisual = Instantiate(currentStageData.visualPrefab, Vector3.zero, Quaternion.identity);
-            
-            Collider[] colliders = spawnedStageVisual.GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                Destroy(colliders[i]);
-            }
         }
 
         simulationCore = new GameSimulationCore();
