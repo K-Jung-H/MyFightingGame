@@ -5,6 +5,8 @@ public class DebrisGroup
 {
     public GameObject rootObject; 
     public Rigidbody[] pieces;
+    public Vector3[] initialPositions; 
+    public Quaternion[] initialRotations;
 }
 
 public class StageWallAnimationController : MonoBehaviour
@@ -12,11 +14,18 @@ public class StageWallAnimationController : MonoBehaviour
     public GameObject[] wallObjects;
     private DebrisGroup[] preSpawnedDebris;
 
-    public void PreWarmDebris()
+public void PreWarmDebris()
     {
         if (wallObjects == null) return;
         
         preSpawnedDebris = new DebrisGroup[wallObjects.Length];
+
+        int debrisLayer = LayerMask.NameToLayer("VisualDebris");
+        if (debrisLayer == -1)
+        {
+            Debug.LogWarning("[StageWallAnimationController] 'VisualDebris' 레이어가 없습니다. Default(0) 레이어를 사용합니다.");
+            debrisLayer = 0;
+        }
 
         for (int i = 0; i < wallObjects.Length; i++)
         {
@@ -32,7 +41,6 @@ public class StageWallAnimationController : MonoBehaviour
             foreach (MeshRenderer renderer in renderers)
             {
                 GameObject piece = renderer.gameObject;
-                
                 piece.transform.SetParent(cloneRoot.transform, true);
 
                 if (piece.GetComponent<Collider>() == null)
@@ -46,7 +54,7 @@ public class StageWallAnimationController : MonoBehaviour
                     rb = piece.AddComponent<Rigidbody>();
                 }
 
-                piece.layer = LayerMask.NameToLayer("VisualDebris"); 
+                piece.layer = debrisLayer; 
                 
                 rbs.Add(rb);
             }
@@ -54,8 +62,16 @@ public class StageWallAnimationController : MonoBehaviour
             preSpawnedDebris[i] = new DebrisGroup 
             {
                 rootObject = cloneRoot,
-                pieces = rbs.ToArray()
+                pieces = rbs.ToArray(),
+                initialPositions = new Vector3[rbs.Count],
+                initialRotations = new Quaternion[rbs.Count]
             };
+
+            for (int j = 0; j < rbs.Count; j++)
+            {
+                preSpawnedDebris[i].initialPositions[j] = rbs[j].transform.localPosition;
+                preSpawnedDebris[i].initialRotations[j] = rbs[j].transform.localRotation;
+            }
         }
     }
 
@@ -91,6 +107,28 @@ public class StageWallAnimationController : MonoBehaviour
             
             rb.AddForce(finalDirection * explosionForce, ForceMode.Impulse);
             rb.AddTorque(Random.insideUnitSphere * (explosionForce * 0.5f), ForceMode.Impulse);
+        }
+    }
+
+    public void ResetAllDebris()
+    {
+        if (preSpawnedDebris == null) return;
+
+        for (int i = 0; i < preSpawnedDebris.Length; i++)
+        {
+            DebrisGroup group = preSpawnedDebris[i];
+            if (group == null || group.rootObject == null) continue;
+
+            group.rootObject.SetActive(false);
+
+            for (int j = 0; j < group.pieces.Length; j++)
+            {
+                Rigidbody rb = group.pieces[j];
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.transform.localPosition = group.initialPositions[j];
+                rb.transform.localRotation = group.initialRotations[j];
+            }
         }
     }
 }

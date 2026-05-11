@@ -433,6 +433,11 @@ public class GameLoopManager : MonoBehaviour
     private void ResetForNextRound()
     {
         simState.currentTick = 0;
+
+        if (visualWallController != null)
+        {
+            visualWallController.ResetAllDebris();
+        }
         
         if (GameFlowManager.Instance.currentBattleType == BattleType.Training)
         {
