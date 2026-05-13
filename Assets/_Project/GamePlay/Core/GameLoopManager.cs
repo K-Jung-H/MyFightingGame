@@ -280,7 +280,7 @@ public class GameLoopManager : MonoBehaviour
 
         DetermineCameraFlipState();
 
-        cachedClimaxSlowMoScale = FP64.FromFloat(ruleConfig.climaxSlowMoScale);
+        cachedClimaxSlowMoScale = ruleConfig.FP_ClimaxSlowMoScale;
 
         int timeLimit = RoomStateManager.Instance != null ? RoomStateManager.Instance.roomModel.roundTimeLimit : 99;
         int maxRds = RoomStateManager.Instance != null ? RoomStateManager.Instance.roomModel.maxRounds : 3;

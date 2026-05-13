@@ -124,28 +124,31 @@ public class NetworkSyncController
     public void VerifySyncState()
     {
         syncState.currentPingMs = currentP2PNetwork.GetCurrentPingMs();
-
         List<int> verifiedTicks = new List<int>();
 
-        foreach (var kvp in localHashBuffer)
+        List<int> sortedTicks = new List<int>(localHashBuffer.Keys);
+        sortedTicks.Sort();
+
+        foreach (int t in sortedTicks)
         {
-            bool hasRemoteHash = currentP2PNetwork.TryGetRemoteHash(kvp.Key, out ulong remoteHash);
+            ulong localHash = localHashBuffer[t];
+            bool hasRemoteHash = currentP2PNetwork.TryGetRemoteHash(t, out ulong remoteHash);
 
             if (hasRemoteHash)
             {
-                bool isHashMismatch = kvp.Value != remoteHash;
+                bool isHashMismatch = localHash != remoteHash;
 
                 if (isHashMismatch)
                 {
                     syncState.consecutiveDesyncCount++;
-                    GameStateSnapshot snapshot = stateBuffer[kvp.Key % rollbackWindow];
+                    GameStateSnapshot snapshot = stateBuffer[t % rollbackWindow];
                     string roleLabel = localPlayerSlot == 0 ? "P1" : "P2";
                     HashTraceUtility.TraceAndDumpHash(roleLabel, snapshot);
 
                     bool isAbortThresholdReached = syncState.consecutiveDesyncCount >= networkSettings.desyncAbortThreshold;
                     if (isAbortThresholdReached)
                     {
-                        TriggerDesyncError(kvp.Key, kvp.Value, remoteHash);
+                        TriggerDesyncError(t, localHash, remoteHash);
                         return;
                     }
                 }
@@ -155,7 +158,7 @@ public class NetworkSyncController
                     syncState.isDesyncDetected = false;
                 }
 
-                verifiedTicks.Add(kvp.Key);
+                verifiedTicks.Add(t);
             }
         }
 
@@ -311,6 +314,11 @@ public class NetworkSyncController
                 currentP2PNetwork.SendSyncHash(t, hash);
                 syncState.lastHashedTick = t;
             }
+        }
+
+        if (maxHashTick > syncState.lastHashedTick + 1)
+        {
+            syncState.lastHashedTick = maxHashTick - 1;
         }
     }
 

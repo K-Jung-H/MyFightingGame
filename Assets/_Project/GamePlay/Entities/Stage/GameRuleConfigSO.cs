@@ -9,6 +9,8 @@ public class GameRuleConfigSO : ScriptableObject
     public int preRoundDelayFrames = 180;
     public int postRoundDelayFrames = 180;
     public float climaxSlowMoScale = 0.1f;
+    public FP64 FP_ClimaxSlowMoScale => FP64.FromFloat(climaxSlowMoScale);
+
     public float climaxHealthRatio = 0.15f;
     public int climaxRecoveryFrames = 60;
     public float climaxActivationDistance = 2.0f;

@@ -37,25 +37,4 @@ public static class PacketManager
 
         return currentFlags;
     }
-
-    public static byte[] EncodeInput(PlayerInput playerInput)
-    {
-        byte[] packetBytes = new byte[5];
-        byte[] frameBytes = BitConverter.GetBytes(playerInput.frame);
-        
-        Buffer.BlockCopy(frameBytes, 0, packetBytes, 0, 4);
-        packetBytes[4] = (byte)playerInput.flags;
-        
-        return packetBytes;
-    }
-
-    public static PlayerInput DecodeInput(byte[] packetBytes)
-    {
-        PlayerInput decodedInput = new PlayerInput();
-        
-        decodedInput.frame = BitConverter.ToInt32(packetBytes, 0);
-        decodedInput.flags = (InputFlags)packetBytes[4];
-        
-        return decodedInput;
-    }
 }
