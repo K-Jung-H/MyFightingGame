@@ -53,7 +53,7 @@ public struct FPKinematicBody
         if (isHitGround)
         {
             currentPosition.y = groundYPosition;
-            currentVelocity.y = new FP64(0);
+            currentVelocity.y = FP64.Zero;
             isGrounded = true;
         }
     }

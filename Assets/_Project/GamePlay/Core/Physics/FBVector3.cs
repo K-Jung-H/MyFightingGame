@@ -39,7 +39,7 @@ public struct FPVector3
         
         if (mag.rawValue == 0)
         {
-            return new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+            return new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
         }
 
         return new FPVector3(x / mag, y / mag, z / mag);

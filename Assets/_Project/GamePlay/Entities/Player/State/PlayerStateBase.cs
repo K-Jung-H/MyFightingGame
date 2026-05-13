@@ -51,25 +51,23 @@ public abstract class PlayerStateBase
 
     public FPVector3 GetFPRawInputVector(InputFlags flags)
     {
-        FPVector3 inputVector = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        FPVector3 inputVector = new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
 
         bool isUpPressed = (flags & InputFlags.Up) != 0;
         bool isDownPressed = (flags & InputFlags.Down) != 0;
         bool isForwardPressed = (flags & InputFlags.Forward) != 0;
         bool isBackPressed = (flags & InputFlags.Back) != 0;
 
-        FP64 oneFP = new FP64(65536);
+        if (isForwardPressed) inputVector.z = inputVector.z + FP64.One;
+        if (isBackPressed) inputVector.z = inputVector.z - FP64.One;
 
-        if (isForwardPressed) inputVector.z = inputVector.z + oneFP;
-        if (isBackPressed) inputVector.z = inputVector.z - oneFP;
-
-        FP64 depthMultiplier = controller.invertDepthAxis ? new FP64(-65536) : oneFP;
+        FP64 depthMultiplier = controller.invertDepthAxis ? -FP64.One : FP64.One;
 
         if (isUpPressed) inputVector.x = inputVector.x + depthMultiplier;
         if (isDownPressed) inputVector.x = inputVector.x - depthMultiplier;
 
         bool isMagnitudeZero = inputVector.x.rawValue == 0 && inputVector.z.rawValue == 0;
-        if (isMagnitudeZero) return new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        if (isMagnitudeZero) return new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
 
         return inputVector.Normalized();
     }
@@ -100,7 +98,7 @@ public abstract class PlayerStateBase
         bool hasMovement = inputDir.x.rawValue != 0 || inputDir.z.rawValue != 0;
         if (hasMovement)
         {
-            FPVector3 currentDir = new FPVector3(moveVelocity.x, new FP64(0), moveVelocity.z).Normalized();
+            FPVector3 currentDir = new FPVector3(moveVelocity.x, FP64.Zero, moveVelocity.z).Normalized();
             physics.SetFPCurrentDirection(currentDir);
         }
     }
@@ -118,7 +116,7 @@ public abstract class PlayerStateBase
         bool hasZMovement = inputDir.z.rawValue != 0;
         if (hasZMovement)
         {
-            FPVector3 flatVelocity = new FPVector3(moveVelocity.x, new FP64(0), moveVelocity.z);
+            FPVector3 flatVelocity = new FPVector3(moveVelocity.x, FP64.Zero, moveVelocity.z);
             physics.SetFPCurrentDirection(flatVelocity.Normalized());
         }
     }

@@ -118,7 +118,7 @@ public class PlayerCombat
         if (currentState == PlayerState_Type.Crouching)
         {
             FPVector3 horizontalVelocity = defender.GetPhysics().GetFPVelocity();
-            horizontalVelocity.y = new FP64(0);
+            horizontalVelocity.y = FP64.Zero;
             FP64 sqrMag = (horizontalVelocity.x * horizontalVelocity.x) + (horizontalVelocity.z * horizontalVelocity.z);
             isMoving = sqrMag.rawValue > 0;
         }
@@ -155,7 +155,7 @@ public class PlayerCombat
         HurtInfo hurtData = result.hurtInfo;
         currentHurtInfo = hurtData;
         
-        FPVector3 finalPushback = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        FPVector3 finalPushback = new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
         bool isBlocked = result.targetState == PlayerState_Type.StandBlock || result.targetState == PlayerState_Type.CrouchBlock;
         
         if (!isBlocked)
@@ -190,7 +190,7 @@ public class PlayerCombat
 
     private FPVector3 CalculateWorldPushbackFP(FPVector3 lookDirection, FPVector3 localPushback)
     {
-        FPVector3 upVector = new FPVector3(new FP64(0), new FP64(65536), new FP64(0));
+        FPVector3 upVector = new FPVector3(FP64.Zero, FP64.One, FP64.Zero);
         FPVector3 rightDirection = FPVector3.Cross(upVector, lookDirection);
         
         FPVector3 forwardPush = lookDirection * localPushback.z;

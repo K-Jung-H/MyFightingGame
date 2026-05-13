@@ -94,7 +94,7 @@ public class StunningState : HurtStateBase
         if (isFromStand)
         {
             FPVector3 horizontalPushback = currentHurtInfo.pushbackVector;
-            horizontalPushback.y = new FP64(0);
+            horizontalPushback.y = FP64.Zero;
             physics.ApplyFPPushback(horizontalPushback);
         }
     }
@@ -211,8 +211,8 @@ public class GroundSmashState : HurtStateBase
         {
             currentStunFrames = config.GetGroundSmashLayFrames();
             FPVector3 currentVelocity = physics.GetFPVelocity();
-            currentVelocity.x = new FP64(0);
-            currentVelocity.z = new FP64(0);
+            currentVelocity.x = FP64.Zero;
+            currentVelocity.z = FP64.Zero;
             physics.SetFPVelocity(currentVelocity);
         }
     }
@@ -238,8 +238,8 @@ public class LayingDownState : HurtStateBase
     {
         base.Enter();
         FPVector3 currentVelocity = physics.GetFPVelocity();
-        currentVelocity.x = new FP64(0);
-        currentVelocity.z = new FP64(0);
+        currentVelocity.x = FP64.Zero;
+        currentVelocity.z = FP64.Zero;
         physics.SetFPVelocity(currentVelocity);
     }
 
@@ -323,8 +323,8 @@ public class WakeUpState : HurtStateBase
         currentStunFrames = config.GetWakeUpFrames(scheduledWakeUpType);
 
         FPVector3 currentVelocity = physics.GetFPVelocity();
-        currentVelocity.x = new FP64(0);
-        currentVelocity.z = new FP64(0);
+        currentVelocity.x = FP64.Zero;
+        currentVelocity.z = FP64.Zero;
         physics.SetFPVelocity(currentVelocity);
     }
 

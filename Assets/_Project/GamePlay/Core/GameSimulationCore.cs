@@ -37,7 +37,7 @@ public class GameSimulationCore
         return new StageBoundary { Planes = currentPlanes };
     }
 
-    public void SimulateFrame(PlayerController p1Controller, PlayerController p2Controller, PlayerInput p1Input, PlayerInput p2Input, ref SimulationState simState, Action<PlayerController, Vector3, EffectType> onHitSpark)
+    public void SimulateFrame(PlayerController p1Controller, PlayerController p2Controller, PlayerInput p1Input, PlayerInput p2Input, ref SimulationState simState, Action<PlayerController, FPVector3, EffectType> onHitSpark)
     {
         if (p1Controller != null && p2Controller != null)
         {
@@ -68,7 +68,7 @@ public class GameSimulationCore
         FPVector3 p2LogicalPos = p2.GetFPPosition();
 
         FPVector3 diffPos = p2LogicalPos - p1LogicalPos;
-        diffPos.y = new FP64(0);
+        diffPos.y = FP64.Zero;
 
         FP64 distSqr = (diffPos.x * diffPos.x) + (diffPos.z * diffPos.z);
         
@@ -83,8 +83,8 @@ public class GameSimulationCore
 
         diffPos = diffPos.Normalized();
 
-        FPVector3 normal1 = new FPVector3(new FP64(-diffPos.z.rawValue), new FP64(0), new FP64(diffPos.x.rawValue));
-        FPVector3 normal2 = new FPVector3(new FP64(diffPos.z.rawValue), new FP64(0), new FP64(-diffPos.x.rawValue));
+        FPVector3 normal1 = new FPVector3(new FP64(-diffPos.z.rawValue), FP64.Zero, new FP64(diffPos.x.rawValue));
+        FPVector3 normal2 = new FPVector3(new FP64(diffPos.z.rawValue), FP64.Zero, new FP64(-diffPos.x.rawValue));
 
         FP64 dot1 = FPVector3.Dot(normal1, sharedDepthAxis);
         FP64 dot2 = FPVector3.Dot(normal2, sharedDepthAxis);
@@ -111,7 +111,7 @@ public class GameSimulationCore
         FPVector3 p2Pos = p2.GetFPPosition();
 
         FPVector3 diff = p1Pos - p2Pos;
-        diff.y = new FP64(0); 
+        diff.y = FP64.Zero; 
 
         FP64 distSqr = (diff.x * diff.x) + (diff.z * diff.z);
         FP64 maxDistSqr = cachedMaxPlayerDistance * cachedMaxPlayerDistance;
@@ -121,11 +121,11 @@ public class GameSimulationCore
             FP64 distance = FP64.Sqrt(distSqr);
             FP64 excessDistance = distance - cachedMaxPlayerDistance; 
 
-            FPVector3 dirToP1 = new FPVector3(diff.x / distance, new FP64(0), diff.z / distance);
+            FPVector3 dirToP1 = new FPVector3(diff.x / distance, FP64.Zero, diff.z / distance);
             FP64 halfExcess = new FP64(excessDistance.rawValue / 2);
 
-            FPVector3 p1Pushback = new FPVector3(-dirToP1.x * halfExcess, new FP64(0), -dirToP1.z * halfExcess);
-            FPVector3 p2Pushback = new FPVector3(dirToP1.x * halfExcess, new FP64(0), dirToP1.z * halfExcess);
+            FPVector3 p1Pushback = new FPVector3(-dirToP1.x * halfExcess, FP64.Zero, -dirToP1.z * halfExcess);
+            FPVector3 p2Pushback = new FPVector3(dirToP1.x * halfExcess, FP64.Zero, dirToP1.z * halfExcess);
 
             p1.GetPhysics().ApplyFPPushback(p1Pushback);
             p2.GetPhysics().ApplyFPPushback(p2Pushback);
@@ -139,7 +139,7 @@ public class GameSimulationCore
         PlayerPhysics physics = player.GetPhysics();
         FPVector3 currentPos = physics.GetFPPosition();
         FPVector3 currentVel = physics.GetFPVelocity();
-        FPVector3 totalPushback = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        FPVector3 totalPushback = new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
 
         bool isCornered = false;
         bool wallBounceTriggeredThisFrame = false; 
@@ -201,7 +201,7 @@ public class GameSimulationCore
 
     private bool TryGetWallPenetration(PlayerController player, BoundaryPlane plane, FPVector3 testPos, out FP64 penetration)
     {
-        penetration = new FP64(0);
+        penetration = FP64.Zero;
         FP64 centerDistanceToWall = FPVector3.Dot(testPos, plane.Normal) - plane.Distance;
         
         FPVector3 wallDirection = new FPVector3(new FP64(-plane.Normal.x.rawValue), new FP64(-plane.Normal.y.rawValue), new FP64(-plane.Normal.z.rawValue));
@@ -241,8 +241,8 @@ public class GameSimulationCore
 
     private void ApplyWallBounce(PlayerController player, BoundaryPlane plane, ref FPVector3 currentVel)
     {
-        FPVector3 v_xz = new FPVector3(currentVel.x, new FP64(0), currentVel.z);
-        FPVector3 n_xz = new FPVector3(plane.Normal.x, new FP64(0), plane.Normal.z);
+        FPVector3 v_xz = new FPVector3(currentVel.x, FP64.Zero, currentVel.z);
+        FPVector3 n_xz = new FPVector3(plane.Normal.x, FP64.Zero, plane.Normal.z);
         
         FP64 dotXZ = FPVector3.Dot(v_xz, n_xz);
         FP64 doubleDotXZ = dotXZ + dotXZ; 
@@ -253,8 +253,8 @@ public class GameSimulationCore
 
         if (reflectionXZ.Magnitude().rawValue < cachedMinBounceXZSpeed.rawValue)
         {
-            reflectionXZ.x = new FP64(0);
-            reflectionXZ.z = new FP64(0);
+            reflectionXZ.x = FP64.Zero;
+            reflectionXZ.z = FP64.Zero;
         }
 
         currentVel.x = reflectionXZ.x;
@@ -265,7 +265,7 @@ public class GameSimulationCore
         player.GetCombat().IncrementWallBounceCount();
     }
 
-    private void ResolveAttacks(PlayerController attacker, PlayerController defender, Action<PlayerController, Vector3, EffectType> onHitSpark)
+    private void ResolveAttacks(PlayerController attacker, PlayerController defender, Action<PlayerController, FPVector3, EffectType> onHitSpark)
     {
         if (!IsValidAttackAttempt(attacker, out ActionDataSO attackerAction)) return;
 
@@ -288,8 +288,7 @@ public class GameSimulationCore
 
         if (isHit)
         {
-            Vector3 hitPoint = fpHitPoint.ToVector3();
-            ProcessSuccessfulHit(attacker, defender, fpEvt, hitPoint, onHitSpark);
+            ProcessSuccessfulHit(attacker, defender, fpEvt, fpHitPoint, onHitSpark);
         }
     }
 
@@ -302,7 +301,7 @@ public class GameSimulationCore
         return isAttacking && hasValidData;
     }
 
-    private void ProcessSuccessfulHit(PlayerController attacker, PlayerController defender, FPHitboxEvent hitEvent, Vector3 hitPoint, Action<PlayerController, Vector3, EffectType> onHitSpark)
+    private void ProcessSuccessfulHit(PlayerController attacker, PlayerController defender, FPHitboxEvent hitEvent, FPVector3 hitPoint, Action<PlayerController, FPVector3, EffectType> onHitSpark)
     {
         bool isAlreadyHit = attacker.GetCombat().HasAlreadyHit(hitEvent.hitGroupID);
         if (isAlreadyHit) return;
@@ -334,15 +333,15 @@ public class GameSimulationCore
         FPVector3 p2Pos = playerTwo.GetFPPosition();
 
         FPVector3 diff = p1Pos - p2Pos;
-        diff.y = new FP64(0);
+        diff.y = FP64.Zero;
         
         FP64 distanceSqr = (diff.x * diff.x) + (diff.z * diff.z);
         if (distanceSqr.rawValue == 0) return;
 
         FP64 distance = FP64.Sqrt(distanceSqr);
         
-        FPVector3 dirToP2 = new FPVector3(new FP64(-diff.x.rawValue) / distance, new FP64(0), new FP64(-diff.z.rawValue) / distance);
-        FPVector3 dirToP1 = new FPVector3(diff.x / distance, new FP64(0), diff.z / distance);
+        FPVector3 dirToP2 = new FPVector3(new FP64(-diff.x.rawValue) / distance, FP64.Zero, new FP64(-diff.z.rawValue) / distance);
+        FPVector3 dirToP1 = new FPVector3(diff.x / distance, FP64.Zero, diff.z / distance);
 
         FP64 p1Radius = GetDynamicPushBoundary(playerOne, dirToP2);
         FP64 p2Radius = GetDynamicPushBoundary(playerTwo, dirToP1);
@@ -359,13 +358,13 @@ public class GameSimulationCore
 
             if (isP1Cornered && !isP2Cornered)
             {
-                w1 = new FP64(0);
-                w2 = new FP64(65536);
+                w1 = FP64.Zero;
+                w2 = FP64.One;
             }
             else if (isP2Cornered && !isP1Cornered)
             {
-                w1 = new FP64(65536);
-                w2 = new FP64(0);
+                w1 = FP64.One;
+                w2 = FP64.Zero;
             }
 
             FP64 totalWeight = w1 + w2;
@@ -373,9 +372,9 @@ public class GameSimulationCore
             long epsilonRaw = 6;
             if (totalWeight.rawValue <= epsilonRaw)
             {
-                w1 = new FP64(32768);
-                w2 = new FP64(32768);
-                totalWeight = new FP64(65536);
+                w1 = FP64.Half;
+                w2 = FP64.Half;
+                totalWeight = FP64.One;
             }
 
             FP64 p1Ratio = w1 / totalWeight;
@@ -383,7 +382,7 @@ public class GameSimulationCore
 
             playerOne.GetPhysics().ApplyFPPushback(pushDir * (totalPushDist * p1Ratio));
             
-            FPVector3 negativePushDir = new FPVector3(new FP64(-pushDir.x.rawValue), new FP64(0), new FP64(-pushDir.z.rawValue));
+            FPVector3 negativePushDir = new FPVector3(new FP64(-pushDir.x.rawValue), FP64.Zero, new FP64(-pushDir.z.rawValue));
             playerTwo.GetPhysics().ApplyFPPushback(negativePushDir * (totalPushDist * p2Ratio));
         }
     }
@@ -394,12 +393,11 @@ public class GameSimulationCore
         bool isRunning = state == PlayerState_Type.Running;
         bool isWalking = state == PlayerState_Type.Walking;
 
-        long oneFP = 65536;
-
-        if (isSprinting) return new FP64(0);
-        if (isRunning) return new FP64(oneFP / 5);
-        if (isWalking) return new FP64(oneFP / 2);
-        return new FP64(oneFP);
+        if (isSprinting) return FP64.Zero;
+        if (isRunning) return new FP64(FP64.One.rawValue / 5);
+        if (isWalking) return FP64.Half;
+        
+        return FP64.One;
     }
 
     private FP64 GetDynamicPushBoundary(PlayerController player, FPVector3 directionNormal)
@@ -407,10 +405,10 @@ public class GameSimulationCore
         Hurtbox_Type currentType = player.GetStateMachine().GetCurrentHurtboxType();
         FPCollisionBox[] boxes = player.GetConfig().GetFPHurtboxBoxes(currentType);
 
-        if (boxes == null || boxes.Length == 0) return new FP64(32768); 
+        if (boxes == null || boxes.Length == 0) return FP64.Half; 
 
         FPVector3 lookDir = player.GetFPLookDirection();
-        FP64 maxBoundary = new FP64(0);
+        FP64 maxBoundary = FP64.Zero;
 
         for (int i = 0; i < boxes.Length; i++)
         {
@@ -438,7 +436,7 @@ public class GameSimulationCore
             }
         }
         
-        if (maxBoundary.rawValue < 0) maxBoundary = new FP64(0);
+        if (maxBoundary.rawValue < 0) maxBoundary = FP64.Zero;
         return maxBoundary;
     }
 }

@@ -58,7 +58,7 @@ public class CombatEvaluator
         {
             damage = isBlocked ? 0 : hitEvent.damage,
             hurtStunFrames = isBlocked ? actualBlockStun : actualHitStun,
-            pushbackVector = isBlocked ? new FPVector3(new FP64(0), new FP64(0), new FP64(0)) : hitEvent.localPushbackVector,
+            pushbackVector = isBlocked ? new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero) : hitEvent.localPushbackVector,
             targetHurtState = isBlocked ? HurtState_Type.Hit : hitEvent.targetHurtState,
             isHardKnockdown = isBlocked ? false : hitEvent.isHardKnockdown,
             attackHeight = hitEvent.attackHeight

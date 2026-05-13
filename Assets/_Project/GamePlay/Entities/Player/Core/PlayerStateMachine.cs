@@ -164,7 +164,7 @@ public class PlayerStateMachine : ISnapshotSync
         if (layState != null) layState.SetFromRoll(false);
 
         SideStepState sideStep = GetStateObject(PlayerState_Type.SideStep) as SideStepState;
-        if (sideStep != null) sideStep.SetStepDirection(new FP64(0));
+        if (sideStep != null) sideStep.SetStepDirection(FP64.Zero);
 
         StandHitState standHit = GetStateObject(PlayerState_Type.StandHit) as StandHitState;
         if (standHit != null) standHit.SetCurrentStunFrames(0);

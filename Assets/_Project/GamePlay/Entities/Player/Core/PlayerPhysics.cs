@@ -41,25 +41,25 @@ public class PlayerPhysics : ISnapshotSync
     public void Initialize(Vector3 startPosition, PlayerConfigSO playerConfig)
     {
         position = FPVector3.FromVector3(startPosition);
-        velocity = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        velocity = new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
         depthAxis = FPVector3.FromVector3(Vector3.forward);
         currentDirection = FPVector3.FromVector3(Vector3.forward);
         lookDirection = FPVector3.FromVector3(Vector3.forward);
         config = playerConfig;
-        lastImpactFallSpeed = new FP64(0);
+        lastImpactFallSpeed = FP64.Zero;
         cachedGravityScale = FP64.FromFloat(config.gravityScale);
     }
 
     public void ResetPhysicsState()
     {
-        velocity = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        velocity = new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
         
-        FPVector3 forwardDirection = new FPVector3(new FP64(0), new FP64(0), new FP64(65536));
+        FPVector3 forwardDirection = new FPVector3(FP64.Zero, FP64.Zero, FP64.One);
         depthAxis = forwardDirection;
         currentDirection = forwardDirection;
         lookDirection = forwardDirection;
         
-        lastImpactFallSpeed = new FP64(0);
+        lastImpactFallSpeed = FP64.Zero;
         isGrounded = true;
         isRootMotionActiveThisFrame = false;
     }
@@ -82,7 +82,7 @@ public class PlayerPhysics : ISnapshotSync
         }
 
         FPVector3 diff = targetPos - position;
-        diff.y = new FP64(0);
+        diff.y = FP64.Zero;
 
         bool isTargetValid = (diff.x.rawValue != 0) || (diff.z.rawValue != 0);
         if (isTargetValid)
@@ -95,8 +95,8 @@ public class PlayerPhysics : ISnapshotSync
     {
         FP64 deceleration = globalGravity * cachedGravityScale;
 
-        velocity.x = MoveTowards(velocity.x, new FP64(0), deceleration);
-        velocity.z = MoveTowards(velocity.z, new FP64(0), deceleration);
+        velocity.x = MoveTowards(velocity.x, FP64.Zero, deceleration);
+        velocity.z = MoveTowards(velocity.z, FP64.Zero, deceleration);
 
         if (!isRootMotionActiveThisFrame)
         {
@@ -112,9 +112,9 @@ public class PlayerPhysics : ISnapshotSync
             if (isFalling)
             {
                 lastImpactFallSpeed = velocity.y;
-                velocity.y = new FP64(0);
+                velocity.y = FP64.Zero;
             }
-            position.y = new FP64(0);
+            position.y = FP64.Zero;
         }
     }
 
@@ -125,14 +125,14 @@ public class PlayerPhysics : ISnapshotSync
 
     public void ApplyRootMotion(FPVector3 fpDeltaPos)
     {
-        FPVector3 upVector = new FPVector3(new FP64(0), new FP64(65536), new FP64(0));
+        FPVector3 upVector = new FPVector3(FP64.Zero, FP64.One, FP64.Zero);
         FPVector3 rightDirection = FPVector3.Cross(upVector, lookDirection);
         
         FPVector3 worldDeltaPos = (rightDirection * fpDeltaPos.x) + (upVector * fpDeltaPos.y) + (lookDirection * fpDeltaPos.z);
         
         position = position + worldDeltaPos;
         isRootMotionActiveThisFrame = true;
-        velocity.y = new FP64(0);
+        velocity.y = FP64.Zero;
     }
 
     private FP64 MoveTowards(FP64 current, FP64 target, FP64 maxDelta)

@@ -8,7 +8,7 @@ public static class HitboxManager
         out FPHitboxEvent successfulHit, out FPVector3 hitPoint)
     {
         successfulHit = default;
-        hitPoint = new FPVector3(new FP64(0), new FP64(0), new FP64(0));
+        hitPoint = new FPVector3(FP64.Zero, FP64.Zero, FP64.Zero);
 
         GetAxesFromDirection(attackerDir, out FPAxisSet axesA);
         GetAxesFromDirection(defenderDir, out FPAxisSet axesB);
@@ -44,9 +44,9 @@ public static class HitboxManager
 
     private static void GetAxesFromDirection(FPVector3 dir, out FPAxisSet axisSet)
     {
-        FPVector3 upVector = new FPVector3(new FP64(0), new FP64(65536), new FP64(0));
+        FPVector3 upVector = new FPVector3(FP64.Zero, FP64.One, FP64.Zero);
         bool isZeroDir = dir.x.rawValue == 0 && dir.y.rawValue == 0 && dir.z.rawValue == 0;
-        FPVector3 forwardVector = isZeroDir ? new FPVector3(new FP64(0), new FP64(0), new FP64(65536)) : dir;
+        FPVector3 forwardVector = isZeroDir ? new FPVector3(FP64.Zero, FP64.Zero, FP64.One) : dir;
         FPVector3 rightVector = FPVector3.Cross(upVector, forwardVector);
 
         axisSet = new FPAxisSet
@@ -84,8 +84,8 @@ public static class HitboxManager
             FP64.Min(maxA.z, maxB.z)
         );
 
-        FP64 half = new FP64(32768);
-        return (minIntersection + maxIntersection) * half;
+
+        return (minIntersection + maxIntersection) * FP64.Half;
     }
 
     private static bool TryGetActiveAttackBox(FPHitboxEvent hitboxEvent, int currentActionFrame, out FPCollisionBox activeBox)

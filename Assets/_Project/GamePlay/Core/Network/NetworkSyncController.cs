@@ -10,6 +10,19 @@ public struct RollbackNetworkSettings
     public int desyncAbortThreshold;
 }
 
+// [추가] 큐에 저장할 원격 해시 데이터 구조체
+public struct RemoteHashData
+{
+    public int tick;
+    public ulong hash;
+
+    public RemoteHashData(int tick, ulong hash)
+    {
+        this.tick = tick;
+        this.hash = hash;
+    }
+}
+
 [System.Serializable]
 public class NetworkSyncController
 {
@@ -24,6 +37,8 @@ public class NetworkSyncController
     private InputFlags[] p2InputBuffer;
     private Dictionary<int, ulong> localHashBuffer;
     
+    private Queue<RemoteHashData> remoteHashQueue;
+    
     private int localPlayerSlot;
     private int rollbackWindow;
     private int syncVerifyInterval;
@@ -31,9 +46,6 @@ public class NetworkSyncController
     private Action<int, int> onResimulateRequired;
     private Action onDesyncAborted;
 
-    /*
-     * 네트워크 동기화 컨트롤러의 참조와 콜백을 설정하고 내부 버퍼를 초기화합니다.
-     */
     public void Initialize(P2PNetworkManager p2pNetwork, LocalInputProvider provider, GameStateSnapshot[] states, int slot, int window, int verifyInterval, Action<int, int> resimulateCallback, Action abortCallback)
     {
         currentP2PNetwork = p2pNetwork;
@@ -49,6 +61,7 @@ public class NetworkSyncController
         p1InputBuffer = new InputFlags[rollbackWindow];
         p2InputBuffer = new InputFlags[rollbackWindow];
         localHashBuffer = new Dictionary<int, ulong>();
+        remoteHashQueue = new Queue<RemoteHashData>(); 
 
         syncState.latestConfirmedTick = 0;
         syncState.currentPingMs = 0;
@@ -67,18 +80,13 @@ public class NetworkSyncController
         syncState.isSoftStalling = false;
         
         localHashBuffer.Clear();
+        remoteHashQueue.Clear(); 
         System.Array.Clear(p1InputBuffer, 0, p1InputBuffer.Length);
         System.Array.Clear(p2InputBuffer, 0, p2InputBuffer.Length);
     }
 
-    public RollbackNetworkSettings GetSettings()
-    {
-        return networkSettings;
-    }
+    public RollbackNetworkSettings GetSettings() { return networkSettings; }
 
-    /*
-     * 온라인 시뮬레이션의 단일 틱 처리를 수행하고 틱 진행 가능 여부를 반환합니다.
-     */
     public bool TryProcessNetworkTick(int currentTick, bool isFacingRight, bool isCameraFlipped, out PlayerInput p1Input, out PlayerInput p2Input)
     {
         p1Input = new PlayerInput();
@@ -116,39 +124,40 @@ public class NetworkSyncController
         return true;
     }
 
+    public void EnqueueRemoteHash(int tick, ulong hash)
+    {
+        remoteHashQueue.Enqueue(new RemoteHashData(tick, hash));
+    }
 
-
-    /*
-     * 해시 버퍼를 순회하여 디싱크 여부를 검증합니다.
-     */
     public void VerifySyncState()
     {
         syncState.currentPingMs = currentP2PNetwork.GetCurrentPingMs();
-        List<int> verifiedTicks = new List<int>();
 
-        List<int> sortedTicks = new List<int>(localHashBuffer.Keys);
-        sortedTicks.Sort();
-
-        foreach (int t in sortedTicks)
+        while (remoteHashQueue.Count > 0)
         {
-            ulong localHash = localHashBuffer[t];
-            bool hasRemoteHash = currentP2PNetwork.TryGetRemoteHash(t, out ulong remoteHash);
+            RemoteHashData targetHash = remoteHashQueue.Peek();
 
-            if (hasRemoteHash)
+            if (targetHash.tick >= syncState.latestConfirmedTick)
             {
-                bool isHashMismatch = localHash != remoteHash;
+                break;
+            }
+
+            remoteHashQueue.Dequeue();
+
+            if (localHashBuffer.TryGetValue(targetHash.tick, out ulong localHash))
+            {
+                bool isHashMismatch = localHash != targetHash.hash;
 
                 if (isHashMismatch)
                 {
                     syncState.consecutiveDesyncCount++;
-                    GameStateSnapshot snapshot = stateBuffer[t % rollbackWindow];
+                    GameStateSnapshot snapshot = stateBuffer[targetHash.tick % rollbackWindow];
                     string roleLabel = localPlayerSlot == 0 ? "P1" : "P2";
                     HashTraceUtility.TraceAndDumpHash(roleLabel, snapshot);
 
-                    bool isAbortThresholdReached = syncState.consecutiveDesyncCount >= networkSettings.desyncAbortThreshold;
-                    if (isAbortThresholdReached)
+                    if (syncState.consecutiveDesyncCount >= networkSettings.desyncAbortThreshold)
                     {
-                        TriggerDesyncError(t, localHash, remoteHash);
+                        TriggerDesyncError(targetHash.tick, localHash, targetHash.hash);
                         return;
                     }
                 }
@@ -158,43 +167,15 @@ public class NetworkSyncController
                     syncState.isDesyncDetected = false;
                 }
 
-                verifiedTicks.Add(t);
+                localHashBuffer.Remove(targetHash.tick);
             }
         }
-
-        foreach (int t in verifiedTicks)
-        {
-            localHashBuffer.Remove(t);
-        }
     }
 
-    /*
-     * 외부 시뮬레이션에서 사용할 수 있도록 전체 P1 인풋 버퍼를 반환합니다.
-     */
-    public InputFlags[] GetP1InputBuffer()
-    {
-        return p1InputBuffer;
-    }
+    public InputFlags[] GetP1InputBuffer() { return p1InputBuffer; }
+    public InputFlags[] GetP2InputBuffer() { return p2InputBuffer; }
+    public NetworkSyncState GetSyncState() { return syncState; }
 
-    /*
-     * 외부 시뮬레이션에서 사용할 수 있도록 전체 P2 인풋 버퍼를 반환합니다.
-     */
-    public InputFlags[] GetP2InputBuffer()
-    {
-        return p2InputBuffer;
-    }
-
-    /*
-     * 동기화 상태 데이터를 반환합니다.
-     */
-    public NetworkSyncState GetSyncState()
-    {
-        return syncState;
-    }
-
-    /*
-     * 네트워크 수신 버퍼에서 실제 인풋을 꺼내와 예측과 다를 경우 콜백을 호출합니다.
-     */
     private void VerifyRemoteInputsAndRollback(bool isP1Local, int currentTick)
     {
         int rollbackTick = -1;
@@ -241,9 +222,6 @@ public class NetworkSyncController
         }
     }
 
-    /*
-     * 로컬 물리 입력을 샘플링하여 지연 버퍼에 넣고 P2P 망으로 발송합니다.
-     */
     private void UpdateLocalInput(bool isP1Local, int currentTick, bool isFacingRight, bool isCameraFlipped)
     {
         PlayerInput physicalInput = inputProvider.GetCurrentInput(currentTick, localPlayerSlot, isFacingRight, isCameraFlipped);
@@ -256,9 +234,6 @@ public class NetworkSyncController
         currentP2PNetwork.SendLocalInput(targetTick, (ushort)physicalInput.flags);
     }
 
-    /*
-     * 상대방의 입력이 지연되었을 경우 최신 입력을 유지할 것으로 추론합니다.
-     */
     private void PredictRemoteInput(bool isP1Local, int currentTick)
     {
         int idx = currentTick % rollbackWindow;
@@ -285,9 +260,6 @@ public class NetworkSyncController
         }
     }
 
-    /*
-     * 통신 불량 시 가장 최근에 전송한 로컬 입력을 한 번 더 전송합니다.
-     */
     private void ResendLastInput(bool isP1Local, int currentTick)
     {
         int lastTick = Mathf.Max(0, currentTick + networkSettings.inputDelayFrames - 1);
@@ -297,9 +269,6 @@ public class NetworkSyncController
         currentP2PNetwork.SendLocalInput(lastTick, (ushort)lastInput);
     }
 
-    /*
-     * 주기에 맞춰 게임 상태 버퍼의 해시를 생성하고 상대방에게 브로드캐스트합니다.
-     */
     private void BroadcastSyncHashes(int currentTick)
     {
         int maxHashTick = Mathf.Min(syncState.latestConfirmedTick, currentTick);
@@ -322,9 +291,6 @@ public class NetworkSyncController
         }
     }
 
-    /*
-     * 네트워크 핑을 바탕으로 한쪽 클라이언트의 연산을 일시 정지시킬지 판단합니다.
-     */
     private bool ShouldApplyTimeSync(int currentRollback, int currentTick)
     {
         float oneWayPingMs = syncState.currentPingMs / 2f;
@@ -332,20 +298,12 @@ public class NetworkSyncController
         int expectedRollback = Mathf.Max(0, oneWayFrames - networkSettings.inputDelayFrames);
         int timeSyncThreshold = expectedRollback + 2;
 
-        bool isOverThreshold = currentRollback > timeSyncThreshold;
-        bool isSkipFrame = currentTick % 3 == 0;
-
-        return isOverThreshold && isSkipFrame;
+        return currentRollback > timeSyncThreshold && currentTick % 3 == 0;
     }
 
-    /*
-     * 한계치 이상의 디싱크가 감지되면 즉시 게임 진행을 포기합니다.
-     */
     private void TriggerDesyncError(int tick, ulong local, ulong remote)
     {
-        bool isAlreadyDetected = syncState.isDesyncDetected;
-        if (isAlreadyDetected) return;
-
+        if (syncState.isDesyncDetected) return;
         syncState.isDesyncDetected = true;
         onDesyncAborted?.Invoke();
     }

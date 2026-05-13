@@ -28,7 +28,7 @@ public class RoundReferee
         if (!p1Attacking || !p2Attacking) return false;
 
         FPVector3 diff = p1.GetFPPosition() - p2.GetFPPosition();
-        diff.y = new FP64(0);
+        diff.y = FP64.Zero;
         FP64 distanceSqr = (diff.x * diff.x) + (diff.z * diff.z);
 
         FP64 climaxDist = FP64.FromFloat(config.climaxActivationDistance);

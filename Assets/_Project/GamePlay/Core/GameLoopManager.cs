@@ -126,7 +126,6 @@ public class GameLoopManager : MonoBehaviour
     public bool isShowAllHUD = false;
 
     private FP64 cachedClimaxSlowMoScale;
-    private readonly FP64 FP64_ONE = new FP64(65536);
 
     private void Awake()
     {
@@ -236,7 +235,7 @@ public class GameLoopManager : MonoBehaviour
         FPVector3 p2Pos = playerTwo.controller.GetFPPosition();
         FPVector3 diff = p2Pos - p1Pos;
         
-        FPVector3 upVector = new FPVector3(new FP64(0), FP64_ONE, new FP64(0));
+        FPVector3 upVector = new FPVector3(FP64.Zero, FP64.One, FP64.Zero);
         FPVector3 cameraRight = FPVector3.Cross(upVector, simState.sharedDepthAxis);
         FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
         
@@ -340,7 +339,7 @@ public class GameLoopManager : MonoBehaviour
         }
 
         simState.isResimulating = false;
-        simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
+        simState.sharedDepthAxis = new FPVector3(FP64.Zero, FP64.Zero, FP64.One);
 
         if (playerOne.instance != null) Destroy(playerOne.instance);
         if (playerTwo.instance != null) Destroy(playerTwo.instance);
@@ -459,13 +458,13 @@ public class GameLoopManager : MonoBehaviour
             simState.phaseDelayTicks = ruleConfig.preRoundDelayFrames;
         }
 
-        simState.simulationScale = FP64_ONE;
-        simState.timeAccumulator = new FP64(0);
-        simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
+        simState.simulationScale = FP64.One;
+        simState.timeAccumulator = FP64.Zero;
+        simState.sharedDepthAxis = new FPVector3(FP64.Zero, FP64.Zero, FP64.One);
         
         long recoveryTicksLong = (long)Mathf.Max(1, ruleConfig.climaxRecoveryFrames);
         long slowMoRaw = cachedClimaxSlowMoScale.rawValue;
-        climaxRecoveryStepFP = new FP64((FP64_ONE.rawValue - slowMoRaw) / recoveryTicksLong);
+        climaxRecoveryStepFP = new FP64((FP64.One.rawValue - slowMoRaw) / recoveryTicksLong);
 
         scoreContext.currentRound++;
 
@@ -503,9 +502,9 @@ public class GameLoopManager : MonoBehaviour
             playerOne.controller.ResetForNewRound();
             playerTwo.controller.ResetForNewRound();
             
-            simState.timeAccumulator = new FP64(0);
-            simState.simulationScale = FP64_ONE;
-            simState.sharedDepthAxis = new FPVector3(new FP64(0), new FP64(0), FP64_ONE);
+            simState.timeAccumulator = FP64.Zero;
+            simState.simulationScale = FP64.One;
+            simState.sharedDepthAxis = new FPVector3(FP64.Zero, FP64.Zero, FP64.One);
         }
     }
 
@@ -625,22 +624,22 @@ public class GameLoopManager : MonoBehaviour
             {
                 simState.simulationScale = cachedClimaxSlowMoScale;
             }
-            else if (simState.simulationScale.rawValue < FP64_ONE.rawValue)
+            else if (simState.simulationScale.rawValue < FP64.One.rawValue)
             {
                 simState.simulationScale += climaxRecoveryStepFP;
-                if (simState.simulationScale.rawValue > FP64_ONE.rawValue)
+                if (simState.simulationScale.rawValue > FP64.One.rawValue)
                 {
-                    simState.simulationScale = FP64_ONE;
+                    simState.simulationScale = FP64.One;
                 }
             }
 
             simState.timeAccumulator += simState.simulationScale;
             simState.isLogicStep = false;
 
-            while (simState.timeAccumulator.rawValue >= FP64_ONE.rawValue)
+            while (simState.timeAccumulator.rawValue >= FP64.One.rawValue)
             {
                 simState.isLogicStep = true;
-                simState.timeAccumulator -= FP64_ONE;
+                simState.timeAccumulator -= FP64.One;
             }
 
             simulationCore.SimulateFrame(playerOne.controller, playerTwo.controller, p1, p2, ref simState, HandleHitSpark);
@@ -855,7 +854,7 @@ public class GameLoopManager : MonoBehaviour
 
     private void SyncVisuals()
     {
-        float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64_ONE.rawValue;
+        float currentVisualScale = (float)simState.simulationScale.rawValue / (float)FP64.One.rawValue;
         
         if (visualWallController != null && currentStageData != null)
         {
@@ -887,14 +886,14 @@ public class GameLoopManager : MonoBehaviour
         }
     }
 
-    private void HandleHitSpark(PlayerController target, Vector3 point, EffectType effect)
+    private void HandleHitSpark(PlayerController target, FPVector3 point, EffectType effect)
     {
         if (simState.isResimulating) return;
         
         PlayerSessionContext ctx = (target == playerOne.controller) ? playerOne : playerTwo;
         if (ctx.renderer != null)
         {
-            ctx.renderer.PlayHitSpark(point, effect);
+            ctx.renderer.PlayHitSpark(point.ToVector3(), effect);
         }
     }
 

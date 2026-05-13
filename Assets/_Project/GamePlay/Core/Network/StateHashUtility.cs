@@ -2,11 +2,18 @@ using System;
 
 public static class StateHashUtility
 {
-    public static ulong ComputeHash(GameStateSnapshot snapshot)
+    public static unsafe ulong ComputeHash(GameStateSnapshot snapshot)
     {
         ulong hash = 14695981039346656037UL;
         
         hash = CombineHash(hash, (ulong)snapshot.tick);
+        
+        hash = CombineHash(hash, (ulong)snapshot.stageActiveWallBitmask);
+        for (int i = 0; i < 32; i++)
+        {
+            hash = CombineHash(hash, (ulong)snapshot.wallDurabilities[i]);
+        }
+
         hash = CombineHash(hash, ComputeFPVector3Hash(snapshot.sharedDepthAxis));
         hash = CombineHash(hash, ComputePlayerHash(snapshot.p1Snapshot));
         hash = CombineHash(hash, ComputePlayerHash(snapshot.p2Snapshot));
@@ -51,6 +58,7 @@ public static class StateHashUtility
         hash = CombineHash(hash, (ulong)p.sideStepDirection.rawValue);
         hash = CombineHash(hash, (ulong)p.currentStunFrames);
         hash = CombineHash(hash, p.isGroundBouncing ? 1UL : 0UL);
+        hash = CombineHash(hash, (ulong)p.currentWallBounceCount);
 
         hash = CombineHash(hash, (ulong)p.currentHealth);
         hash = CombineHash(hash, (ulong)p.hitstopCounter);
@@ -69,6 +77,13 @@ public static class StateHashUtility
 
         hash = CombineHash(hash, (ulong)p.actionControllerState.deterministicInputBuffer.count);
         hash = CombineHash(hash, (ulong)p.actionControllerState.deterministicInputBuffer.head);
+
+        for (int i = 0; i < p.actionControllerState.deterministicInputBuffer.count; i++)
+        {
+            int index = (p.actionControllerState.deterministicInputBuffer.head - i + 60) % 60;
+            hash = CombineHash(hash, (ulong)p.actionControllerState.deterministicInputBuffer.frames[index]);
+            hash = CombineHash(hash, (ulong)p.actionControllerState.deterministicInputBuffer.rawFlags[index]);
+        }
 
         hash = CombineHash(hash, (ulong)p.combatState.hitGroupCount);
         for (int i = 0; i < p.combatState.hitGroupCount; i++)
