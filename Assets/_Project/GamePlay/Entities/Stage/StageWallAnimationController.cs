@@ -14,7 +14,7 @@ public class StageWallAnimationController : MonoBehaviour
     public GameObject[] wallObjects;
     private DebrisGroup[] preSpawnedDebris;
 
-public void PreWarmDebris()
+    public void PreWarmDebris()
     {
         if (wallObjects == null) return;
         
@@ -81,6 +81,24 @@ public void PreWarmDebris()
         if (wallObjects[index] != null)
         {
             wallObjects[index].SetActive(isActive);
+        }
+
+        if (isActive && preSpawnedDebris != null && index < preSpawnedDebris.Length)
+        {
+            DebrisGroup group = preSpawnedDebris[index];
+            if (group != null && group.rootObject != null && group.rootObject.activeSelf)
+            {
+                group.rootObject.SetActive(false);
+
+                for (int j = 0; j < group.pieces.Length; j++)
+                {
+                    Rigidbody rb = group.pieces[j];
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                    rb.transform.localPosition = group.initialPositions[j];
+                    rb.transform.localRotation = group.initialRotations[j];
+                }
+            }
         }
     }
 

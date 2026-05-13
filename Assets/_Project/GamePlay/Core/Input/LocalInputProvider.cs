@@ -35,6 +35,13 @@ public class LocalInputProvider
         bool isPhysicalDown = Keyboard.current[binding.downKey].isPressed;
         bool isPhysicalLeft = Keyboard.current[binding.leftKey].isPressed;
         bool isPhysicalRight = Keyboard.current[binding.rightKey].isPressed;
+
+        if (isCameraFlipped)
+        {
+            bool temp = isPhysicalLeft;
+            isPhysicalLeft = isPhysicalRight;
+            isPhysicalRight = temp;
+        }
         
         bool isLP = Keyboard.current[binding.lpKey].isPressed;
         bool isRP = Keyboard.current[binding.rpKey].isPressed;

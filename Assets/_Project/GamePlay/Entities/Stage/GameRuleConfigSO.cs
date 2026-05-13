@@ -13,6 +13,7 @@ public class GameRuleConfigSO : ScriptableObject
     public int climaxRecoveryFrames = 60;
     public float climaxActivationDistance = 2.0f;
 
+    public FP64 FP_MaxPlayerDistance = new FP64(60 * 65536); // 60
     public int maxWallBouncesPerCombo = 2;
     public float wallBounceYBoost = 0.2f; 
     public float minBounceXZSpeed = 0.05f;

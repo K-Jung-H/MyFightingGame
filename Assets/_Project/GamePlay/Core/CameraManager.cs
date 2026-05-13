@@ -24,6 +24,15 @@ public class CameraManager : MonoBehaviour
     private Vector3 currentVelocity;
     private Vector3 shakeOffset;
 
+    private Vector3 currentDepthAxis = Vector3.forward;
+
+    private CameraBoundsData[] boundsDataList;
+    private uint lastProcessedBitmask = uint.MaxValue;
+
+    private float currentMinX, currentMaxX, currentMinZ, currentMaxZ;
+    private float targetMinX, targetMaxX, targetMinZ, targetMaxZ;
+    private bool hasBoundaryLimits = false;
+
     private void LateUpdate()
     {
         bool isTargetMissing = playerOne == null || playerTwo == null;
@@ -39,10 +48,70 @@ public class CameraManager : MonoBehaviour
         playerTwo = p2.transform;
     }
 
-    // Phase 4: 외부(GameLoopManager)에서 진영 데이터에 따라 카메라 반전을 명령하는 메서드
     public void SetCameraFlip(bool isFlipped)
     {
         isReverseView = isFlipped;
+    }
+
+    public void InitializeBounds(CameraBoundsData[] bounds)
+    {
+        boundsDataList = bounds;
+        lastProcessedBitmask = uint.MaxValue;
+        hasBoundaryLimits = bounds != null && bounds.Length > 0;
+    }
+
+    public void UpdateWallBitmask(uint currentBitmask)
+    {
+        if (!hasBoundaryLimits || boundsDataList == null) return;
+        if (lastProcessedBitmask == currentBitmask) return;
+
+        lastProcessedBitmask = currentBitmask;
+
+        float finalMinX = float.MaxValue, finalMinZ = float.MaxValue;
+        float finalMaxX = float.MinValue, finalMaxZ = float.MinValue;
+        bool anyZoneActive = false;
+
+        for (int i = 0; i < boundsDataList.Length; i++)
+        {
+            CameraBoundsData zone = boundsDataList[i];
+            bool isZoneActive = false;
+
+            if (zone.unlockWallIndex == -1) 
+            {
+                isZoneActive = true;
+            }
+            else 
+            {
+                bool isWallBroken = (currentBitmask & (1u << zone.unlockWallIndex)) == 0;
+                if (isWallBroken) isZoneActive = true;
+            }
+
+            if (isZoneActive)
+            {
+                finalMinX = Mathf.Min(finalMinX, zone.minX);
+                finalMaxX = Mathf.Max(finalMaxX, zone.maxX);
+                finalMinZ = Mathf.Min(finalMinZ, zone.minZ);
+                finalMaxZ = Mathf.Max(finalMaxZ, zone.maxZ);
+                anyZoneActive = true;
+            }
+        }
+
+        if (anyZoneActive)
+        {
+            float padding = 1.5f;
+            targetMinX = finalMinX + padding;
+            targetMaxX = finalMaxX - padding;
+            targetMinZ = finalMinZ + padding;
+            targetMaxZ = finalMaxZ - padding;
+
+            if (currentMinX == 0 && currentMaxX == 0)
+            {
+                currentMinX = targetMinX; 
+                currentMaxX = targetMaxX;
+                currentMinZ = targetMinZ; 
+                currentMaxZ = targetMaxZ;
+            }
+        }
     }
 
     public void TriggerEventZoom(float multiplier, float duration)
@@ -77,18 +146,19 @@ public class CameraManager : MonoBehaviour
         return dotP1 > dotP2;
     }
 
+    public void UpdateDepthAxis(Vector3 depthAxis)
+    {
+        currentDepthAxis = depthAxis;
+    }
+    
     private void UpdateCameraTransform()
     {
         Vector3 positionP1 = playerOne.position;
         Vector3 positionP2 = playerTwo.position;
         Vector3 centerPosition = Vector3.Lerp(positionP1, positionP2, 0.5f);
 
-        Vector3 directionP1ToP2 = positionP2 - positionP1;
-        directionP1ToP2.y = 0f;
-
-        // isReverseView 값에 따라 카메라가 바라보는 기준 각도를 180도(90도 -> -90도) 반전합니다.
-        float targetAngle = Mathf.Atan2(directionP1ToP2.x, directionP1ToP2.z) * Mathf.Rad2Deg;
-        targetAngle += isReverseView ? -90f : 90f;
+        float targetAngle = Mathf.Atan2(currentDepthAxis.x, currentDepthAxis.z) * Mathf.Rad2Deg;
+        targetAngle += isReverseView ? 0f : 180f;
 
         currentOrbitAngle = Mathf.SmoothDampAngle(currentOrbitAngle, targetAngle, ref orbitAngleVelocity, rotationSmoothTime);
         Vector3 cameraOffsetDirection = Quaternion.Euler(0, currentOrbitAngle, 0) * Vector3.forward;
@@ -96,6 +166,33 @@ public class CameraManager : MonoBehaviour
         float distance3D = Vector3.Distance(positionP1, positionP2);
         float desiredDistance = ((distance3D * zoomSensitivity) + distanceOffset) * currentZoomMultiplier;
         desiredDistance = Mathf.Clamp(desiredDistance, minDistance, maxDistance);
+
+        if (hasBoundaryLimits)
+        {
+            float transitionSpeed = 3f;
+            currentMinX = Mathf.Lerp(currentMinX, targetMinX, Time.deltaTime * transitionSpeed);
+            currentMaxX = Mathf.Lerp(currentMaxX, targetMaxX, Time.deltaTime * transitionSpeed);
+            currentMinZ = Mathf.Lerp(currentMinZ, targetMinZ, Time.deltaTime * transitionSpeed);
+            currentMaxZ = Mathf.Lerp(currentMaxZ, targetMaxZ, Time.deltaTime * transitionSpeed);
+
+            float requiredPaddingX = Mathf.Abs(cameraOffsetDirection.x * desiredDistance);
+            float requiredPaddingZ = Mathf.Abs(cameraOffsetDirection.z * desiredDistance);
+
+            float clampedMinX = currentMinX + requiredPaddingX;
+            float clampedMaxX = currentMaxX - requiredPaddingX;
+            float clampedMinZ = currentMinZ + requiredPaddingZ;
+            float clampedMaxZ = currentMaxZ - requiredPaddingZ;
+
+            if (clampedMinX <= clampedMaxX) 
+                centerPosition.x = Mathf.Clamp(centerPosition.x, clampedMinX, clampedMaxX);
+            else 
+                centerPosition.x = (currentMinX + currentMaxX) * 0.5f;
+
+            if (clampedMinZ <= clampedMaxZ) 
+                centerPosition.z = Mathf.Clamp(centerPosition.z, clampedMinZ, clampedMaxZ);
+            else 
+                centerPosition.z = (currentMinZ + currentMaxZ) * 0.5f;
+        }
 
         Vector3 targetPosition = centerPosition + (cameraOffsetDirection * desiredDistance);
         targetPosition.y = centerPosition.y + heightOffset;

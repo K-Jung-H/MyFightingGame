@@ -3,8 +3,8 @@ using System;
 
 public class GameSimulationCore
 {
+    private FP64 cachedMaxPlayerDistance;
     private BoundaryPlane[] stageBoundaryPlanes;
-
     private int cachedMaxWallBounces;
     private FP64 cachedWallBounceYBoost;
     private FP64 cachedMinBounceXZSpeed;
@@ -17,6 +17,7 @@ public class GameSimulationCore
 
         if (gameRule != null)
         {
+            cachedMaxPlayerDistance = gameRule.FP_MaxPlayerDistance;
             cachedMaxWallBounces = gameRule.maxWallBouncesPerCombo;
             cachedWallBounceYBoost = gameRule.FP_WallBounceYBoost;
             cachedMinBounceXZSpeed = gameRule.FP_MinBounceXZSpeed;
@@ -56,6 +57,7 @@ public class GameSimulationCore
                 ResolveAttacks(p1Controller, p2Controller, onHitSpark);
                 ResolveAttacks(p2Controller, p1Controller, onHitSpark);
                 ResolvePlayerCollision(p1Controller, p2Controller, p1Cornered, p2Cornered);
+                ResolveMaxDistanceConstraint(p1Controller, p2Controller);
             }
         }
     }
@@ -99,6 +101,35 @@ public class GameSimulationCore
 
         p1.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
         p2.GetPhysics().SetFPDepthAxis(sharedDepthAxis);
+    }
+
+    private void ResolveMaxDistanceConstraint(PlayerController p1, PlayerController p2)
+    {
+        if (cachedMaxPlayerDistance.rawValue <= 0) return; 
+
+        FPVector3 p1Pos = p1.GetFPPosition();
+        FPVector3 p2Pos = p2.GetFPPosition();
+
+        FPVector3 diff = p1Pos - p2Pos;
+        diff.y = new FP64(0); 
+
+        FP64 distSqr = (diff.x * diff.x) + (diff.z * diff.z);
+        FP64 maxDistSqr = cachedMaxPlayerDistance * cachedMaxPlayerDistance;
+
+        if (distSqr.rawValue > maxDistSqr.rawValue)
+        {
+            FP64 distance = FP64.Sqrt(distSqr);
+            FP64 excessDistance = distance - cachedMaxPlayerDistance; 
+
+            FPVector3 dirToP1 = new FPVector3(diff.x / distance, new FP64(0), diff.z / distance);
+            FP64 halfExcess = new FP64(excessDistance.rawValue / 2);
+
+            FPVector3 p1Pushback = new FPVector3(-dirToP1.x * halfExcess, new FP64(0), -dirToP1.z * halfExcess);
+            FPVector3 p2Pushback = new FPVector3(dirToP1.x * halfExcess, new FP64(0), dirToP1.z * halfExcess);
+
+            p1.GetPhysics().ApplyFPPushback(p1Pushback);
+            p2.GetPhysics().ApplyFPPushback(p2Pushback);
+        }
     }
 
     private bool ResolveStageCollision(PlayerController player, ref SimulationState simState)

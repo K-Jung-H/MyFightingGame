@@ -67,6 +67,11 @@ public struct FP64
         
         return new FP64((long)res << (fractionalBits / 2));
     }
+    
+    public static FP64 operator -(FP64 value)
+    {
+        return new FP64(-value.rawValue);
+    }
 
     public static FP64 operator +(FP64 a, FP64 b)
     {

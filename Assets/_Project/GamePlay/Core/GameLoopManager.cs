@@ -102,6 +102,7 @@ public class GameLoopManager : MonoBehaviour
     private StageWallAnimationController visualWallController;
     private GameObject spawnedStageVisual;
 
+    private CameraManager cameraManager;
 
     [Header("Public States (For Logic Classes)")]
     public NetworkSyncController syncController = new NetworkSyncController();
@@ -239,7 +240,9 @@ public class GameLoopManager : MonoBehaviour
         FPVector3 cameraRight = FPVector3.Cross(upVector, simState.sharedDepthAxis);
         FP64 dotProduct = FPVector3.Dot(diff, cameraRight);
         
-        return dotProduct.rawValue > 0;
+        bool isLeft = dotProduct.rawValue > 0;
+        
+        return simState.isCameraFlipped ? !isLeft : isLeft;
     }
 
     private void OnWallBroken(int wallIndex, FPVector3 normal, float explosionForce)
@@ -311,6 +314,12 @@ public class GameLoopManager : MonoBehaviour
             {
                 visualWallController.PreWarmDebris();
             }
+        }
+
+        cameraManager = Camera.main != null ? Camera.main.GetComponent<CameraManager>() : null;
+        if (cameraManager != null && currentStageData != null)
+        {
+            cameraManager.InitializeBounds(currentStageData.cameraBoundsList);
         }
 
         simulationCore = new GameSimulationCore();
@@ -855,6 +864,12 @@ public class GameLoopManager : MonoBehaviour
                 bool isWallActive = (simState.stageActiveWallBitmask & (1u << i)) != 0;
                 visualWallController.SetWallVisualActive(i, isWallActive);
             }
+        }
+
+        if (cameraManager != null)
+        {
+            cameraManager.UpdateWallBitmask(simState.stageActiveWallBitmask);
+            cameraManager.UpdateDepthAxis(simState.sharedDepthAxis.ToVector3());
         }
 
         if (VfxManager.Instance != null)

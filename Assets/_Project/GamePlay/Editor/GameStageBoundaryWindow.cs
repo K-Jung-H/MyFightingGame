@@ -70,6 +70,40 @@ public class GameStageBoundaryWindow : EditorWindow
             };
         }
 
+        CameraBoundsMarker[] camMarkers = sourceObject.GetComponentsInChildren<CameraBoundsMarker>(true);
+        CameraBoundsData[] boundsDataArray = new CameraBoundsData[camMarkers.Length];
+
+        for (int i = 0; i < camMarkers.Length; i++)
+        {
+            CameraBoundsMarker camMarker = camMarkers[i];
+            BoxCollider box = camMarker.GetComponent<BoxCollider>();
+            
+            Vector3 pos = camMarker.transform.position;
+            Vector3 scale = camMarker.transform.lossyScale;
+            Vector3 center = box.center;
+            Vector3 size = box.size;
+
+            float calcMinX = pos.x + (center.x - size.x * 0.5f) * scale.x;
+            float calcMaxX = pos.x + (center.x + size.x * 0.5f) * scale.x;
+            float calcMinZ = pos.z + (center.z - size.z * 0.5f) * scale.z;
+            float calcMaxZ = pos.z + (center.z + size.z * 0.5f) * scale.z;
+
+            int resolvedIndex = -1; 
+            if (camMarker.targetBreakableWall != null)
+            {
+                resolvedIndex = System.Array.FindIndex(markers, m => m.gameObject == camMarker.targetBreakableWall);
+            }
+
+            boundsDataArray[i] = new CameraBoundsData
+            {
+                minX = calcMinX,
+                maxX = calcMaxX,
+                minZ = calcMinZ,
+                maxZ = calcMaxZ,
+                unlockWallIndex = resolvedIndex 
+            };
+        }
+        
         GameObject duplicate = Instantiate(sourceObject);
         duplicate.name = sourceObject.name + "_VisualOnly";
 
@@ -114,9 +148,10 @@ public class GameStageBoundaryWindow : EditorWindow
         Undo.RecordObject(targetSO, "Bake Stage Data");
         targetSO.boundary = new StageBoundary { Planes = bakedPlanes };
         targetSO.visualPrefab = savedPrefab;
+        targetSO.cameraBoundsList = boundsDataArray; 
         EditorUtility.SetDirty(targetSO);
         AssetDatabase.SaveAssets();
 
-        Debug.Log($"[Stage Baker] {markers.Length}개의 벽 데이터를 저장하고, 컨트롤러가 포함된 시각용 프리팹을 생성했습니다: {finalPath}");
+        Debug.Log($"[Stage Baker] 베이킹 완료: {markers.Length}개의 벽 데이터 저장 (카메라 바운즈 {camMarkers.Length}개 적용됨). 시각용 프리팹 생성됨 - {finalPath}");
     }
 }
