@@ -58,12 +58,6 @@ public class PlayingUI_Manager : MonoBehaviour
         if (cameraManager != null) cameraManager.SetTargetPlayers(p1, p2);
     }
 
-    public bool IsPlayerOneOnRightSide()
-    {
-        if (cameraManager != null) return cameraManager.IsPlayerOneOnRightSide();
-        return false;
-    }
-
     public void InitializeHealthBars(PlayerController p1, PlayerController p2, bool isFlipped)
     {
         if (leftHealthBar != null) leftHealthBar.Initialize(isFlipped ? p2.GetCombat() : p1.GetCombat(), false);

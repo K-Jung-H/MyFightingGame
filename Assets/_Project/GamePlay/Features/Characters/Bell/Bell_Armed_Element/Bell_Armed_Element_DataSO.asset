@@ -16,6 +16,6 @@ MonoBehaviour:
   config: {fileID: 11400000, guid: a9908e57cc83b614a876ce6e4e72fedf, type: 2}
   animationMap:
     stateMap: {fileID: 11400000, guid: 0e111d9fe5fd3e34299724a27d51cca1, type: 2}
-    commandList: {fileID: 11400000, guid: ecb9dcf01cd8c4f49bff691ea37601f9, type: 2}
-    comboTree: {fileID: 11400000, guid: cf6f06399e57461468086a956d9d9d83, type: 2}
+    commandList: {fileID: 11400000, guid: 2e9498155d438bc40991a186bb867196, type: 2}
+    comboTree: {fileID: 11400000, guid: 6367a73a7cf32a546aae7b58330ace94, type: 2}
   effectTable: {fileID: 11400000, guid: ed133634e1659dd48bfddce1a98bf939, type: 2}

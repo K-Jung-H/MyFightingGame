@@ -120,20 +120,4 @@ MonoBehaviour:
       isBreakable: 0
       durability: 1
       explosionForce: 0.1
-  cameraBoundsList:
-  - minX: -15
-    maxX: 15
-    minZ: -15
-    maxZ: 15
-    unlockWallIndex: -1
-  - minX: -15
-    maxX: 15
-    minZ: 15
-    maxZ: 30
-    unlockWallIndex: -1
-  - minX: -15
-    maxX: 15
-    minZ: -30
-    maxZ: -15
-    unlockWallIndex: -1
-  visualPrefab: {fileID: 5473091644003375446, guid: f2484a10c73715347bd53ed89e2eaff4, type: 3}
+  visualPrefab: {fileID: 2627070429115262200, guid: f2484a10c73715347bd53ed89e2eaff4, type: 3}

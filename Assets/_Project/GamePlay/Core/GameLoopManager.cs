@@ -315,12 +315,6 @@ public class GameLoopManager : MonoBehaviour
             }
         }
 
-        cameraManager = Camera.main != null ? Camera.main.GetComponent<CameraManager>() : null;
-        if (cameraManager != null && currentStageData != null)
-        {
-            cameraManager.InitializeBounds(currentStageData.cameraBoundsList);
-        }
-
         simulationCore = new GameSimulationCore();
         simulationCore.Initialize(initialBoundary, ruleConfig);
         simulationCore.HandleWallBreak += OnWallBroken;
@@ -863,12 +857,6 @@ public class GameLoopManager : MonoBehaviour
                 bool isWallActive = (simState.stageActiveWallBitmask & (1u << i)) != 0;
                 visualWallController.SetWallVisualActive(i, isWallActive);
             }
-        }
-
-        if (cameraManager != null)
-        {
-            cameraManager.UpdateWallBitmask(simState.stageActiveWallBitmask);
-            cameraManager.UpdateDepthAxis(simState.sharedDepthAxis.ToVector3());
         }
 
         if (VfxManager.Instance != null)
