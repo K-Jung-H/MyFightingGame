@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class OfflineSelectLogic : ICharacterSelectLogic
+public class OfflineCharacterSelectLogic : ICharacterSelectLogic
 {
     private CharacterSelectManager manager;
     public void Initialize(CharacterSelectManager manager) { this.manager = manager; }
@@ -19,7 +19,7 @@ public class OfflineSelectLogic : ICharacterSelectLogic
             if (manager.GetSelectInput(context) && !manager.isStartRequestSent)
             {
                 manager.SetStartRequestSent();
-                GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
+                GameFlowManager.Instance.ChangeScene(GameSceneType.StageSelect);
             }
             return;
         }

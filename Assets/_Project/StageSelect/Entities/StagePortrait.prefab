@@ -437,6 +437,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4562664528406112746}
   - component: {fileID: 8438548856373862575}
+  - component: {fileID: 294058639933645601}
   m_Layer: 5
   m_Name: StagePortrait
   m_TagString: Untagged
@@ -475,3 +476,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9222460181635196176}
   m_CullTransparentMesh: 1
+--- !u!114 &294058639933645601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9222460181635196176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c16cfd1a893d43345a6f1c12ddcb2d31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StagePortraitUI
+  imageThumbnail: {fileID: 4416935680246331835}
+  imageSelectP1: {fileID: 3579564869814429354}
+  imageSelectP2: {fileID: 8674717193199380082}
+  stageData: {fileID: 0}

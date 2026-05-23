@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TrainingSelectLogic : ICharacterSelectLogic
+public class TrainingCharacterSelectLogic : ICharacterSelectLogic
 {
     private CharacterSelectManager manager;
     private int playerSide = 0;
@@ -15,6 +15,11 @@ public class TrainingSelectLogic : ICharacterSelectLogic
             manager.changeSideButton.onClick.AddListener(OnSideChanged);
         }
         RefreshSideState();
+    }
+
+    public int GetPlayerSide()
+    {
+        return playerSide;
     }
 
     private void OnSideChanged()
@@ -61,7 +66,8 @@ public class TrainingSelectLogic : ICharacterSelectLogic
             if (manager.GetSelectInput(context) && !manager.isStartRequestSent)
             {
                 manager.SetStartRequestSent();
-                GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
+                MatchDataManager.TrainingLocalPlayerSide = playerSide;
+                GameFlowManager.Instance.ChangeScene(GameSceneType.StageSelect);
             }
             return;
         }

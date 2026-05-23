@@ -324,6 +324,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 15502367665970008}
+  - component: {fileID: 7176533691599935934}
   m_Layer: 5
   m_Name: Select_Status
   m_TagString: Untagged
@@ -352,6 +353,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7176533691599935934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7787456477854128184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef4d5da73c1ff184183a913d07fe8c49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectStatusUI
+  selectedStageThumbnail: {fileID: 4623410484288930198}
+  frameSelect: {fileID: 572580372056326822}
+  frameReady: {fileID: 5456065414444342526}
 --- !u!1 &9203132645104814069
 GameObject:
   m_ObjectHideFlags: 0

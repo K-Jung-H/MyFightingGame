@@ -97,9 +97,9 @@ public class CharacterSelectManager : MonoBehaviour
 
         BattleType currentBattle = GameFlowManager.Instance.currentBattleType;
         
-        if (currentBattle == BattleType.Training) currentLogic = new TrainingSelectLogic();
-        else if (currentBattle == BattleType.OnlineBattle) currentLogic = new OnlineSelectLogic();
-        else currentLogic = new OfflineSelectLogic();
+        if (currentBattle == BattleType.Training) currentLogic = new TrainingCharacterSelectLogic();
+        else if (currentBattle == BattleType.OnlineBattle) currentLogic = new OnlineCharacterSelectLogic();
+        else currentLogic = new OfflineCharacterSelectLogic();
 
         currentLogic.Initialize(this);
 

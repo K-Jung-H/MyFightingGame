@@ -25,6 +25,7 @@ public enum GameSceneType
     OnlineLobby,
     OnlineMatchedRoom,
     CharacterSelect,
+    StageSelect,
     GamePlay,
     Server
 }
@@ -42,6 +43,7 @@ public class GameFlowManager : MonoBehaviour
     [SerializeField] private string onlineMatchingSceneName = "OnlineMatchingScene";
     [SerializeField] private string onlineMatchedRoomSceneName = "OnlineMatchedRoomScene";
     [SerializeField] private string characterSelectSceneName = "CharacterSelectScene";
+    [SerializeField] private string stageSelectSceneName = "StageSelectScene";
     [SerializeField] private string gamePlaySceneName = "GamePlayScene";
     [SerializeField] private string serverSceneName = "EmptyServerScene";
 
@@ -67,6 +69,7 @@ public class GameFlowManager : MonoBehaviour
         else if (currentScene == GameSceneType.OnlineLobby) SceneManager.LoadScene(onlineMatchingSceneName);
         else if (currentScene == GameSceneType.OnlineMatchedRoom) SceneManager.LoadScene(onlineMatchedRoomSceneName);
         else if (currentScene == GameSceneType.CharacterSelect) SceneManager.LoadScene(characterSelectSceneName);
+        else if (currentScene == GameSceneType.StageSelect) SceneManager.LoadScene(stageSelectSceneName);
         else if (currentScene == GameSceneType.GamePlay) SceneManager.LoadScene(gamePlaySceneName);
         else if (currentScene == GameSceneType.Server) SceneManager.LoadScene(serverSceneName);
     }
@@ -118,10 +121,14 @@ public class GameFlowManager : MonoBehaviour
                     
                     ChangeScene(GameSceneType.GameModeSelect);
                     break;
+
                 case GameSceneType.OnlineMatchedRoom:
                     if (ServerNetworkManager.Instance != null) ServerNetworkManager.Instance.SendRoomLeaveRequest();
                     break;
                 case GameSceneType.CharacterSelect:
+                    if (ServerNetworkManager.Instance != null) ServerNetworkManager.Instance.SendCancelPhaseRequest();
+                    break;
+                case GameSceneType.StageSelect:
                     if (ServerNetworkManager.Instance != null) ServerNetworkManager.Instance.SendCancelPhaseRequest();
                     break;
             }
@@ -135,6 +142,9 @@ public class GameFlowManager : MonoBehaviour
                 break;
             case GameSceneType.CharacterSelect:
                 ChangeScene(GameSceneType.GameModeSelect);
+                break;
+            case GameSceneType.StageSelect:
+                ChangeScene(GameSceneType.CharacterSelect);
                 break;
         }
     }

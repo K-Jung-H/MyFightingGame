@@ -8,20 +8,34 @@ public class TrainingModeLogic : IGameModeLogic
     private Queue<string> inputLogQueue = new Queue<string>();
     private int maxLogCount = 10;
     private bool isShowDebugPanel = false;
+    private int localPlayerSide = 0;
 
     public void Initialize(GameLoopManager manager) 
     { 
         this.manager = manager; 
+        localPlayerSide = MatchDataManager.TrainingLocalPlayerSide;
     }
     
     public void StartGame() 
     {
         manager.InitializeMatch();
         
+        PlayerController p1 = manager.GetPlayerOneController();
         PlayerController p2 = manager.GetPlayerTwoController();
-        if (p2 != null && p2.GetCombat() != null)
+
+        if (localPlayerSide == 0)
         {
-            p2.GetCombat().SetTrainingMode(true); 
+            if (p2 != null && p2.GetCombat() != null)
+            {
+                p2.GetCombat().SetTrainingMode(true); 
+            }
+        }
+        else
+        {
+            if (p1 != null && p1.GetCombat() != null)
+            {
+                p1.GetCombat().SetTrainingMode(true); 
+            }
         }
     }
 
@@ -31,13 +45,24 @@ public class TrainingModeLogic : IGameModeLogic
 
         bool isP1Left = manager.GetIsP1VisuallyOnLeft();
         bool isP1FacingRight = manager.simState.isCameraFlipped ? !isP1Left : isP1Left;
+        bool isP2FacingRight = manager.simState.isCameraFlipped ? isP1Left : !isP1Left;
 
-        PlayerInput p1 = manager.inputProvider.GetCurrentInput(manager.simState.currentTick, 0, isP1FacingRight, manager.simState.isCameraFlipped);
-        PlayerInput p2 = new PlayerInput();
-        p2.flags = InputFlags.None;
+        PlayerInput p1Input = new PlayerInput();
+        p1Input.flags = InputFlags.None;
+        PlayerInput p2Input = new PlayerInput();
+        p2Input.flags = InputFlags.None;
+
+        if (localPlayerSide == 0)
+        {
+            p1Input = manager.inputProvider.GetCurrentInput(manager.simState.currentTick, 0, isP1FacingRight, manager.simState.isCameraFlipped);
+        }
+        else
+        {
+            p2Input = manager.inputProvider.GetCurrentInput(manager.simState.currentTick, 1, isP2FacingRight, manager.simState.isCameraFlipped);
+        }
 
         ProcessTrainingMechanics();
-        manager.ProcessTick(p1, p2);
+        manager.ProcessTick(p1Input, p2Input);
     }
 
     private void ProcessTrainingMechanics()
@@ -46,10 +71,20 @@ public class TrainingModeLogic : IGameModeLogic
         PlayerController p2 = manager.GetPlayerTwoController();
         if (p1 == null || p2 == null) return;
 
-        PlayerState_Type p2State = p2.GetStateMachine().GetCurrentState();
-        bool isP2Idle = (p2State == PlayerState_Type.Idle || p2State == PlayerState_Type.Crouching);
+        PlayerState_Type dummyState;
+        
+        if (localPlayerSide == 0)
+        {
+            dummyState = p2.GetStateMachine().GetCurrentState();
+        }
+        else
+        {
+            dummyState = p1.GetStateMachine().GetCurrentState();
+        }
 
-        if (isP2Idle)
+        bool isDummyIdle = dummyState == PlayerState_Type.Idle || dummyState == PlayerState_Type.Crouching;
+
+        if (isDummyIdle)
         {
             trainingRegenTimer++;
             if (trainingRegenTimer > 60)

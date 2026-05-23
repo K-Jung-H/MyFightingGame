@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class OnlineSelectLogic : ICharacterSelectLogic
+public class OnlineCharacterSelectLogic : ICharacterSelectLogic
 {
     private CharacterSelectManager manager;
 
