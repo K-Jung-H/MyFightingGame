@@ -471,6 +471,7 @@ MonoBehaviour:
   stageGridPanel: {fileID: 789495444}
   stagePortraitPrefab: {fileID: 9222460181635196176, guid: ad15042afbcabef4e92fe3c7fbf66821, type: 3}
   stageRoster:
+  - {fileID: 11400000, guid: 59fcd66865c5b624c87acdb545970021, type: 2}
   - {fileID: 11400000, guid: cbd0587a9166e084c988a210f051f90c, type: 2}
   - {fileID: 11400000, guid: 107d0ab981cd2b74e898ef547375afab, type: 2}
   - {fileID: 11400000, guid: ececc692708f73d45b7a279e2119a055, type: 2}
@@ -505,6 +506,8 @@ MonoBehaviour:
       rkKey: 0
       pauseKey: 0
       selectKey: 0
+  rouletteDuration: 3
+  postRouletteDelay: 1
 --- !u!4 &911801610
 Transform:
   m_ObjectHideFlags: 0

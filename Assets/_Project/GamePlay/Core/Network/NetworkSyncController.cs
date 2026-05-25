@@ -10,7 +10,6 @@ public struct RollbackNetworkSettings
     public int desyncAbortThreshold;
 }
 
-// [추가] 큐에 저장할 원격 해시 데이터 구조체
 public struct RemoteHashData
 {
     public int tick;

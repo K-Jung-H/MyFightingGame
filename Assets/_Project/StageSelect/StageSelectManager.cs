@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
+using System.Collections;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class StagePlayerContext
@@ -28,14 +30,20 @@ public class StageSelectManager : MonoBehaviour
     public StagePlayerContext p1Context;
     public StagePlayerContext p2Context;
 
+    [Header("Roulette Config")]
+    public float rouletteDuration = 3f;
+    public float postRouletteDelay = 1f;
+
     public bool isLobbyReady { get; private set; }
     public bool isLocalCountdownActive { get; private set; }
+    public bool isRouletteActive { get; private set; }
     
     private float localCountdownTimer;
     private int lastDisplayedCountdown = -1;
     private const int TotalPortraitCount = 10;
     private StagePortraitUI[] stageTiles;
     private IStageSelectLogic currentLogic;
+    private List<int> validStageIndices = new List<int>();
 
     private void Start()
     {
@@ -44,10 +52,10 @@ public class StageSelectManager : MonoBehaviour
 
     private void Update()
     {
-        if (!isLobbyReady) return;
+        if (!isLobbyReady || isRouletteActive) return;
 
         UpdateCountdownUI();
-        currentLogic.ProcessInput();
+        ProcessInputs();
     }
 
     private void InitializeManager()
@@ -58,6 +66,7 @@ public class StageSelectManager : MonoBehaviour
         if (buttonReturn != null) buttonReturn.onClick.AddListener(HandleReturnToCharacterSelect);
 
         GenerateStageGrid();
+        CacheValidStageIndices();
 
         BattleType currentBattle = GameFlowManager.Instance.currentBattleType;
         if (currentBattle == BattleType.Training) currentLogic = new TrainingStageSelectLogic();
@@ -70,6 +79,37 @@ public class StageSelectManager : MonoBehaviour
         isLobbyReady = true;
     }
 
+
+    private void CacheValidStageIndices()
+    {
+        validStageIndices.Clear();
+        if (stageRoster == null) return;
+
+        for (int i = 0; i < stageRoster.Length; i++)
+        {
+            if (stageRoster[i].stageName != "Random")
+            {
+                validStageIndices.Add(i);
+            }
+        }
+    }
+
+    public List<int> GetValidStageIndices()
+    {
+        return validStageIndices;
+    }
+
+    public void ProcessInputs()
+    {
+        int p1Move = GetMovementInput(p1Context);
+        bool p1Select = Keyboard.current[p1Context.inputBinding.selectKey].wasPressedThisFrame;
+        
+        int p2Move = GetMovementInput(p2Context);
+        bool p2Select = Keyboard.current[p2Context.inputBinding.selectKey].wasPressedThisFrame;
+
+        currentLogic.HandleInputs(p1Move, p1Select, p2Move, p2Select);
+    }
+
     public int GetMovementInput(StagePlayerContext context)
     {
         if (context.inputBinding.leftKey != Key.None && Keyboard.current[context.inputBinding.leftKey].wasPressedThisFrame) return -1;
@@ -77,6 +117,12 @@ public class StageSelectManager : MonoBehaviour
         return 0;
     }
 
+    public bool GetSelectInput(StagePlayerContext context)
+    {
+        if (context.inputBinding.selectKey == Key.None) return false;
+        return Keyboard.current[context.inputBinding.selectKey].wasPressedThisFrame;
+    }
+    
     public bool GetOfflineLockInput(StagePlayerContext context)
     {
         bool isLpPressed = context.inputBinding.lpKey != Key.None && Keyboard.current[context.inputBinding.lpKey].wasPressedThisFrame;
@@ -211,8 +257,52 @@ public class StageSelectManager : MonoBehaviour
 
     private void HandleReturnToCharacterSelect()
     {
-        MatchDataManager.P1CharacterData = null;
-        MatchDataManager.P2CharacterData = null;
-        GameFlowManager.Instance.ChangeScene(GameSceneType.CharacterSelect);
+        if (GameFlowManager.Instance.currentBattleType == BattleType.OnlineBattle)
+        {
+            if (ServerNetworkManager.Instance != null)
+            {
+                ServerNetworkManager.Instance.SendCancelPhaseRequest();
+            }
+        }
+        else
+        {
+            MatchDataManager.P1CharacterData = null;
+            MatchDataManager.P2CharacterData = null;
+            GameFlowManager.Instance.ChangeScene(GameSceneType.CharacterSelect);
+        }
+    }
+
+    public void StartRoulette(int finalIndex)
+    {
+        if (isRouletteActive) return;
+        StartCoroutine(RouletteCoroutine(finalIndex));
+    }
+
+
+    private IEnumerator RouletteCoroutine(int finalIndex)
+    {
+        isRouletteActive = true;
+        float elapsed = 0f;
+        float currentDelay = 0.05f;
+
+        while (elapsed < rouletteDuration)
+        {
+            if (validStageIndices.Count > 0)
+            {
+                int randomPick = validStageIndices[Random.Range(0, validStageIndices.Count)];
+                canvasBackgroundImage.sprite = stageRoster[randomPick].thumbnail;
+            }
+
+            yield return new WaitForSeconds(currentDelay);
+            elapsed += currentDelay;
+            currentDelay = Mathf.Lerp(0.05f, 0.4f, elapsed / rouletteDuration);
+        }
+
+        canvasBackgroundImage.sprite = stageRoster[finalIndex].thumbnail;
+        MatchDataManager.SelectedStageData = stageRoster[finalIndex];
+
+        yield return new WaitForSeconds(postRouletteDelay);
+        
+        GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
     }
 }

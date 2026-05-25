@@ -11,33 +11,33 @@ public class TrainingStageSelectLogic : IStageSelectLogic
         localPlayerSide = MatchDataManager.TrainingLocalPlayerSide;
     }
 
-    public void ProcessInput()
+    public void HandleInputs(int p1Move, bool p1Select, int p2Move, bool p2Select)
     {
         StagePlayerContext localContext = (localPlayerSide == 0) ? manager.p1Context : manager.p2Context;
+        int move = (localPlayerSide == 0) ? p1Move : p2Move;
+        bool select = (localPlayerSide == 0) ? p1Select : p2Select;
 
-        if (!localContext.isLocked)
+        if (move != 0 && !localContext.isLocked)
         {
-            int moveInput = manager.GetMovementInput(localContext);
-            if (moveInput != 0)
-            {
-                manager.MoveCursor(localContext, moveInput);
-                UpdateBackground();
-            }
+            manager.MoveCursor(localContext, move);
+            UpdateBackground();
+        }
 
-            if (manager.GetOfflineLockInput(localContext))
+        if (select)
+        {
+            if (!localContext.isLocked)
             {
                 manager.LockSelection(localContext);
                 EvaluateSceneTransition();
             }
-        }
-        else
-        {
-            if (manager.GetOfflineUnlockInput(localContext))
+            else
             {
                 manager.UnlockSelection(localContext);
             }
         }
     }
+
+
 
     public void OnStateUpdatedFromServer(int p1Idx, bool p1Lock, int p2Idx, bool p2Lock) { }
 

@@ -127,7 +127,7 @@ public class CharacterSelectManager : MonoBehaviour
         {
             RoomStateManager.Instance.OnCharacterSelectUpdated += HandleCharacterSelectUpdated;
             RoomStateManager.Instance.OnCountdownUpdated += HandleCountdownUpdated;
-            RoomStateManager.Instance.OnStartButtonActivated += HandleStartButtonActivated;
+            RoomStateManager.Instance.OnStageSelectTransitionAvailable += HandleStageSelectTransitionAvailable;
         }
     }
 
@@ -137,7 +137,7 @@ public class CharacterSelectManager : MonoBehaviour
         {
             RoomStateManager.Instance.OnCharacterSelectUpdated -= HandleCharacterSelectUpdated;
             RoomStateManager.Instance.OnCountdownUpdated -= HandleCountdownUpdated;
-            RoomStateManager.Instance.OnStartButtonActivated -= HandleStartButtonActivated;
+            RoomStateManager.Instance.OnStageSelectTransitionAvailable -= HandleStageSelectTransitionAvailable;
         }
     }
 
@@ -165,7 +165,7 @@ public class CharacterSelectManager : MonoBehaviour
                 
                 if (GameFlowManager.Instance.currentConnectionMode == ConnectionMode.Offline)
                 {
-                    HandleStartButtonActivated();
+                    HandleStageSelectTransitionAvailable();
                 }
             }
             else if (countdownText != null)
@@ -221,7 +221,7 @@ public class CharacterSelectManager : MonoBehaviour
         if (startButtonObject != null) startButtonObject.SetActive(false);
     }
 
-    private void HandleStartButtonActivated()
+    private void HandleStageSelectTransitionAvailable()
     {
         isLocalCountdownActive = false;
         isStartButtonReady = true;

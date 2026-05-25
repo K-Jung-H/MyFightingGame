@@ -6,7 +6,8 @@ public enum RoomStateType : byte
     None = 0,
     Lobby = 1,
     CharacterSelect = 2,
-    InGame = 3
+    StageSelect = 3,
+    InGame = 4
 }
 
 public class RoomStateManager : MonoBehaviour
@@ -17,7 +18,9 @@ public class RoomStateManager : MonoBehaviour
     
     public event Action<int, bool, int, int, bool, int> OnCharacterSelectUpdated;
     public event Action<bool> OnCountdownUpdated;
-    public event Action OnStartButtonActivated;
+    public event Action OnStageSelectTransitionAvailable;
+    public event Action<int, bool, int, bool> OnStageSelectUpdated;
+    public event Action<int> OnStageRouletteStarted;
 
     private RoomStateType currentRoomState;
     private string targetPeerIpAddress;
@@ -45,9 +48,11 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnSlotAssignedReceived += HandleSlotAssigned;
             ServerNetworkManager.Instance.OnSelectBroadcastReceived += HandleSelectBroadcast;
             ServerNetworkManager.Instance.OnCountdownUpdateReceived += HandleCountdownUpdate;
-            ServerNetworkManager.Instance.OnStartButtonActiveReceived += HandleStartButtonActive;
+            ServerNetworkManager.Instance.OnTransitionAvailableToStageSelectReceived += HandleStageSelectTransitionAvailable;
             ServerNetworkManager.Instance.OnSceneChangeReceived += HandleSceneChangeCommand;
             ServerNetworkManager.Instance.OnRoomStateBroadcastReceived += HandleRoomStateBroadcast;
+            ServerNetworkManager.Instance.OnStageSelectBroadcastReceived += HandleStageSelectBroadcast;
+            ServerNetworkManager.Instance.OnStageRouletteStartReceived += HandleStageRouletteStart;
         }
     }
 
@@ -58,9 +63,11 @@ public class RoomStateManager : MonoBehaviour
             ServerNetworkManager.Instance.OnSlotAssignedReceived -= HandleSlotAssigned;
             ServerNetworkManager.Instance.OnSelectBroadcastReceived -= HandleSelectBroadcast;
             ServerNetworkManager.Instance.OnCountdownUpdateReceived -= HandleCountdownUpdate;
-            ServerNetworkManager.Instance.OnStartButtonActiveReceived -= HandleStartButtonActive;
+            ServerNetworkManager.Instance.OnTransitionAvailableToStageSelectReceived -= HandleStageSelectTransitionAvailable;
             ServerNetworkManager.Instance.OnSceneChangeReceived -= HandleSceneChangeCommand;
             ServerNetworkManager.Instance.OnRoomStateBroadcastReceived -= HandleRoomStateBroadcast;
+            ServerNetworkManager.Instance.OnStageSelectBroadcastReceived -= HandleStageSelectBroadcast;
+            ServerNetworkManager.Instance.OnStageRouletteStartReceived -= HandleStageRouletteStart;
         }
 
         if (Instance == this)
@@ -95,6 +102,10 @@ public class RoomStateManager : MonoBehaviour
         else if (currentRoomState == RoomStateType.CharacterSelect)
         {
             GameFlowManager.Instance.ChangeScene(GameSceneType.CharacterSelect);
+        }
+        else if (currentRoomState == RoomStateType.StageSelect)
+        {
+            GameFlowManager.Instance.ChangeScene(GameSceneType.StageSelect);
         }
         else if (currentRoomState == RoomStateType.InGame)
         {
@@ -149,27 +160,72 @@ public class RoomStateManager : MonoBehaviour
         }
     }
 
-    private void HandleStartButtonActive()
+    private void HandleStageSelectTransitionAvailable()
     {
         if (currentRoomState == RoomStateType.CharacterSelect)
         {
-            OnStartButtonActivated?.Invoke();
+            OnStageSelectTransitionAvailable?.Invoke();
         }
     }
+
 
     private void HandleSceneChangeCommand(GameSceneType targetScene)
     {
         if (targetScene == GameSceneType.OnlineMatchedRoom)
         {
+            ResetLocalSelectionState();
             ChangeRoomState(RoomStateType.Lobby);
         }
         else if (targetScene == GameSceneType.CharacterSelect)
         {
+            ResetLocalSelectionState();
             ChangeRoomState(RoomStateType.CharacterSelect);
+        }
+        else if (targetScene == GameSceneType.StageSelect)
+        {
+            ChangeRoomState(RoomStateType.StageSelect);
         }
         else if (targetScene == GameSceneType.GamePlay)
         {
             ChangeRoomState(RoomStateType.InGame);
+        }
+    }
+
+
+    private void ResetLocalSelectionState()
+    {
+        roomModel.p1CharacterIndex = 0;
+        roomModel.p2CharacterIndex = 0;
+        roomModel.isP1CharacterLocked = false;
+        roomModel.isP2CharacterLocked = false;
+
+        roomModel.p1StageIndex = 0;
+        roomModel.p2StageIndex = 0;
+        roomModel.isP1StageLocked = false;
+        roomModel.isP2StageLocked = false;
+        roomModel.selectedStageIndex = 0;
+    }
+
+    private void HandleStageSelectBroadcast(int p1Idx, bool p1Lock, int p2Idx, bool p2Lock)
+    {
+        roomModel.p1StageIndex = p1Idx;
+        roomModel.isP1StageLocked = p1Lock;
+        roomModel.p2StageIndex = p2Idx;
+        roomModel.isP2StageLocked = p2Lock;
+
+        if (currentRoomState == RoomStateType.StageSelect)
+        {
+            OnStageSelectUpdated?.Invoke(p1Idx, p1Lock, p2Idx, p2Lock);
+        }
+    }
+
+    private void HandleStageRouletteStart(int finalIndex)
+    {
+        roomModel.selectedStageIndex = finalIndex;
+
+        if (currentRoomState == RoomStateType.StageSelect)
+        {
+            OnStageRouletteStarted?.Invoke(finalIndex);
         }
     }
 }

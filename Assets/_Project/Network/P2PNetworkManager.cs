@@ -315,7 +315,7 @@ public class P2PNetworkManager : MonoBehaviour
         
         if (ServerNetworkManager.Instance != null)
         {
-            // [주의] ServerNetworkManager에 24번 패킷을 보내는 SendReportDisconnect()가 존재해야 합니다.
+            // ServerNetworkManager에 24번 패킷을 보내는 SendReportDisconnect()가 존재해야 합니다.
             // ServerNetworkManager.Instance.SendReportDisconnect();
         }
 

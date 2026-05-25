@@ -18,6 +18,7 @@ public class RoomMetadata
     public bool HasPassword;
 }
 
+[System.Serializable]
 public class RoomStateModel
 {
     public bool isP1Connected;
@@ -44,19 +45,34 @@ public class RoomStateModel
     public int p2Wins = 0;
     public int p2Losses = 0;
 
+    public int p1StageIndex = 0;
+    public int p2StageIndex = 0;
+    public bool isP1StageLocked = false;
+    public bool isP2StageLocked = false;
+
+
     public RoomStateModel()
     {
         isP1Connected = true; 
         isP2Connected = false;
-        
-        p1CharacterIndex = 0;
-        p2CharacterIndex = 0;
-        maxRounds = 3;
-        roundTimeLimit = 90;
+        isP1CharacterLocked = false;
+        isP2CharacterLocked = false;
+        isStageLocked = false;
+        isP1Ready = false;
+        isP2Ready = false;
+        p1StageIndex = 0;
+        p2StageIndex = 0;
+        isP1StageLocked = false;
+        isP2StageLocked = false;
     }
 
-    public bool IsAllReadyToStart()
+    public bool IsAllCharacterSelected()
     {
-        return isP1CharacterLocked && isP2CharacterLocked && isStageLocked;
+        return isP1CharacterLocked && isP2CharacterLocked;
+    }
+
+    public bool IsAllStageSelected()
+    {
+        return isP1StageLocked && isP2StageLocked;
     }
 }

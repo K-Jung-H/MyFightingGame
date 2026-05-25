@@ -17,13 +17,17 @@ public class ServerNetworkManager : MonoBehaviour
 
     public event Action<int, bool, int, int, bool, int> OnSelectBroadcastReceived;
     public event Action<bool> OnCountdownUpdateReceived;
-    public event Action OnStartButtonActiveReceived;
+    public event Action OnTransitionAvailableToStageSelectReceived;
     public event Action<GameSceneType> OnSceneChangeReceived;
     public event Action OnGameStartReceived;
     public event Action<int> OnSlotAssignedReceived;
     public event Action<GameSceneType> OnMatchAbortedReceived;
     public event Action OnRoundVerifiedReceived;
     public event Action<bool, bool> OnRematchSyncReceived;
+
+
+    public event Action<int, bool, int, bool> OnStageSelectBroadcastReceived;
+    public event Action<int> OnStageRouletteStartReceived;
 
     private NetworkDriver serverDriver;
     private NetworkConnection serverConnection;
@@ -34,7 +38,6 @@ public class ServerNetworkManager : MonoBehaviour
     private float lastServerPacketReceiveTime;
     private const float PING_INTERVAL = 2.0f;
     private const float SERVER_TIMEOUT_LIMIT = 5.0f;
-
 
     private void Awake()
     {
@@ -247,11 +250,28 @@ public class ServerNetworkManager : MonoBehaviour
         int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
         if (sendStatus == 0)
         {
-            writer.WriteByte(NetworkPacketType.StartRequest);
+            writer.WriteByte(NetworkPacketType.TransitionRequestToStageSelect);
             serverDriver.EndSend(writer);
         }
     }
-    
+
+
+    public void SendStageSelectUpdate(int index, bool isLocked, bool isRandom, int validCount)
+    {
+        if (!isConnected || !serverConnection.IsCreated) return;
+
+        int sendStatus = serverDriver.BeginSend(NetworkPipeline.Null, serverConnection, out DataStreamWriter writer);
+        if (sendStatus == 0)
+        {
+            writer.WriteByte(NetworkPacketType.StageSelectUpdate);
+            writer.WriteInt(index);
+            writer.WriteByte((byte)(isLocked ? 1 : 0));
+            writer.WriteByte((byte)(isRandom ? 1 : 0));
+            writer.WriteInt(validCount);
+            serverDriver.EndSend(writer);
+        }
+    }
+
     public void SendHandshake()
     {
         if (!isConnected || !serverConnection.IsCreated) return;
@@ -466,9 +486,9 @@ public class ServerNetworkManager : MonoBehaviour
             bool isStarted = stream.ReadByte() == 1;
             OnCountdownUpdateReceived?.Invoke(isStarted);
         }
-        else if (packetType == NetworkPacketType.StartButtonActive)
+        else if (packetType == NetworkPacketType.TransitionAvailableToStageSelect)
         {
-            OnStartButtonActiveReceived?.Invoke();
+            OnTransitionAvailableToStageSelectReceived?.Invoke();
         }
         else if (packetType == NetworkPacketType.SceneChange)
         {
@@ -509,7 +529,19 @@ public class ServerNetworkManager : MonoBehaviour
             bool p2Ready = stream.ReadByte() == 1;
             OnRematchSyncReceived?.Invoke(p1Ready, p2Ready);
         }
-
+        else if (packetType == NetworkPacketType.StageSelectBroadcast)
+        {
+            int p1Idx = stream.ReadInt();
+            bool p1Lock = stream.ReadByte() == 1;
+            int p2Idx = stream.ReadInt();
+            bool p2Lock = stream.ReadByte() == 1;
+            OnStageSelectBroadcastReceived?.Invoke(p1Idx, p1Lock, p2Idx, p2Lock);
+        }
+        else if (packetType == NetworkPacketType.StageRouletteStart)
+        {
+            int finalIndex = stream.ReadInt();
+            OnStageRouletteStartReceived?.Invoke(finalIndex);
+        }
     }
 
     private void SendPingReport(int pingMs)
@@ -547,8 +579,6 @@ public class ServerNetworkManager : MonoBehaviour
             OnConnectionFailed?.Invoke("Server connection timed out.");
         }
     }
-
-
 
     private void CleanupDriver()
     {

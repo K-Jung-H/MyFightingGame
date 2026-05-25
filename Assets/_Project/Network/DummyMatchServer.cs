@@ -21,8 +21,9 @@ public class ServerRoom
     public bool isCountdownStarted;
     public bool isCountdownFinished;
     public float countdownTimer;
-    public bool isP1StartRequested;
-    public bool isP2StartRequested;
+
+    public bool isP1StageSelectRequested;
+    public bool isP2StageSelectRequested;
 
     public bool isP1RoundReported;
     public bool isP2RoundReported;
@@ -49,6 +50,10 @@ public class ServerRoom
     public List<string> roomLogs;
     private const int MAX_ROOM_LOGS = 8;
 
+    public bool p1StageRandom;
+    public bool p2StageRandom;
+    public int stageValidCount;
+
     public ServerRoom(string code, string title, bool isPriv, string pwd)
     {
         roomCode = code;
@@ -66,8 +71,8 @@ public class ServerRoom
         isCountdownStarted = false;
         isCountdownFinished = false;
         countdownTimer = 3f;
-        isP1StartRequested = false;
-        isP2StartRequested = false;
+        isP1StageSelectRequested = false;
+        isP2StageSelectRequested = false;
 
         isP1RoundReported = false;
         isP2RoundReported = false;
@@ -89,6 +94,10 @@ public class ServerRoom
         votingTimer = 15f;
 
         roomLogs = new List<string>();
+
+        p1StageRandom = false;
+        p2StageRandom = false;
+        stageValidCount = 0;
     }
 
     public void LogRoomEvent(string msg)
@@ -329,7 +338,7 @@ public class DummyMatchServer : MonoBehaviour
                     room.isCountdownStarted = false;
                     room.isCountdownFinished = true;
                     room.LogRoomEvent($"[Server] Select countdown finished.");
-                    BroadcastStartButtonActive(room);
+                    BroadcastStageSelectTransitionAvailable(room);
                 }
             }
 
@@ -342,7 +351,9 @@ public class DummyMatchServer : MonoBehaviour
                     room.isVotingStarted = false;
                     room.LogRoomEvent("[Server] Vote timeout. Forcing return to lobby.");
                     
-                    ResetRoomForRematch(room);
+                    ResetRoomVotingState(room);
+                    ResetRoomSelectionState(room);
+
                     room.currentState = RoomStateType.Lobby;
                     BroadcastRoomState(room);
                     BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
@@ -413,12 +424,19 @@ public class DummyMatchServer : MonoBehaviour
                     LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
                 break;
             case NetworkPacketType.SelectUpdate:
-            case NetworkPacketType.StartRequest:
+            case NetworkPacketType.TransitionRequestToStageSelect:
                 if (currentRoom.currentState == RoomStateType.CharacterSelect) 
                     HandleCharacterSelectPackets(packetType, conn, currentRoom, ref stream);
                 else
                     LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
                 break;
+            case NetworkPacketType.StageSelectUpdate:
+                if (currentRoom.currentState == RoomStateType.StageSelect)
+                    HandleStageSelectUpdate(conn, currentRoom, ref stream);
+                else
+                    LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
+                break;
+
             case NetworkPacketType.Handshake:
             case NetworkPacketType.RoundEndReport:
             case NetworkPacketType.MatchEndActionRequest:
@@ -500,7 +518,7 @@ public class DummyMatchServer : MonoBehaviour
 
                 BroadcastSelectState(room);
 
-                if (room.stateModel.IsAllReadyToStart())
+                if (room.stateModel.IsAllCharacterSelected())
                 {
                     if (!room.isCountdownStarted && !room.isCountdownFinished)
                     {
@@ -514,25 +532,149 @@ public class DummyMatchServer : MonoBehaviour
                     room.isCountdownStarted = false;
                     room.isCountdownFinished = false;
                     room.countdownTimer = 3f;
-                    room.isP1StartRequested = false;
-                    room.isP2StartRequested = false;
+                    room.isP1StageSelectRequested = false;
+                    room.isP2StageSelectRequested = false;
                     BroadcastCountdownState(room, false);
                 }
                 break;
-            case NetworkPacketType.StartRequest:
+            case NetworkPacketType.TransitionRequestToStageSelect:
                 if (room.isCountdownFinished)
                 {
-                    if (conn == room.p1) room.isP1StartRequested = true;
-                    else if (conn == room.p2) room.isP2StartRequested = true;
+                    if (conn == room.p1) room.isP1StageSelectRequested = true;
+                    else if (conn == room.p2) room.isP2StageSelectRequested = true;
 
-                    if (room.isP1StartRequested && room.isP2StartRequested)
+                    if (room.isP1StageSelectRequested && room.isP2StageSelectRequested)
                     {
-                        room.currentState = RoomStateType.InGame;
-                        room.LogRoomEvent($"[Server] State Changed to InGame. Broadcasting SceneChange.");
-                        BroadcastSceneChange(room, (int)GameSceneType.GamePlay); 
+                        room.currentState = RoomStateType.StageSelect;
+                        room.LogRoomEvent($"[Server] State Changed to StageSelect. Broadcasting SceneChange.");
+                        BroadcastSceneChange(room, (int)GameSceneType.StageSelect); 
                     }
                 }
                 break;
+        }
+    }
+
+    private void HandleStageSelectUpdate(NetworkConnection conn, ServerRoom room, ref DataStreamReader stream)
+    {
+        bool isP1 = (conn == room.p1);
+        int index = stream.ReadInt();
+        bool isLocked = stream.ReadByte() == 1;
+        bool isRandom = stream.ReadByte() == 1;
+        int validCount = stream.ReadInt();
+
+        if (isP1)
+        {
+            room.stateModel.p1StageIndex = index;
+            room.stateModel.isP1StageLocked = isLocked;
+            room.p1StageRandom = isRandom;
+        }
+        else
+        {
+            room.stateModel.p2StageIndex = index;
+            room.stateModel.isP2StageLocked = isLocked;
+            room.p2StageRandom = isRandom;
+        }
+
+        room.stageValidCount = validCount;
+
+        BroadcastStageSelectState(room);
+
+        if (room.stateModel.IsAllStageSelected())
+        {
+            EvaluateFinalStageSelection(room);
+        }
+    }
+
+    private void EvaluateFinalStageSelection(ServerRoom room)
+    {
+        int p1Idx = room.stateModel.p1StageIndex;
+        int p2Idx = room.stateModel.p2StageIndex;
+        int finalIndex = 0;
+        bool triggerRoulette = false;
+
+        if (room.p1StageRandom || room.p2StageRandom)
+        {
+            if (room.stageValidCount > 0)
+            {
+                finalIndex = UnityEngine.Random.Range(0, room.stageValidCount);
+            }
+            triggerRoulette = true;
+        }
+        else if (p1Idx != p2Idx)
+        {
+            finalIndex = (UnityEngine.Random.Range(0, 2) == 0) ? p1Idx : p2Idx;
+            triggerRoulette = true;
+        }
+        else
+        {
+            finalIndex = p1Idx;
+            triggerRoulette = false;
+        }
+
+        room.stateModel.selectedStageIndex = finalIndex;
+        room.currentState = RoomStateType.InGame;
+
+        if (triggerRoulette)
+        {
+            BroadcastStageRouletteStart(room, finalIndex);
+        }
+        else
+        {
+            BroadcastSceneChange(room, (int)GameSceneType.GamePlay);
+        }
+    }
+
+    private void BroadcastStageSelectState(ServerRoom room)
+    {
+        if (room.p1.IsCreated)
+        {
+            int sendStatus = driver.BeginSend(NetworkPipeline.Null, room.p1, out DataStreamWriter writer);
+            if (sendStatus == 0)
+            {
+                writer.WriteByte(NetworkPacketType.StageSelectBroadcast);
+                writer.WriteInt(room.stateModel.p1StageIndex);
+                writer.WriteByte((byte)(room.stateModel.isP1StageLocked ? 1 : 0));
+                writer.WriteInt(room.stateModel.p2StageIndex);
+                writer.WriteByte((byte)(room.stateModel.isP2StageLocked ? 1 : 0));
+                driver.EndSend(writer);
+            }
+        }
+        if (room.p2.IsCreated)
+        {
+            int sendStatus = driver.BeginSend(NetworkPipeline.Null, room.p2, out DataStreamWriter writer);
+            if (sendStatus == 0)
+            {
+                writer.WriteByte(NetworkPacketType.StageSelectBroadcast);
+                writer.WriteInt(room.stateModel.p1StageIndex);
+                writer.WriteByte((byte)(room.stateModel.isP1StageLocked ? 1 : 0));
+                writer.WriteInt(room.stateModel.p2StageIndex);
+                writer.WriteByte((byte)(room.stateModel.isP2StageLocked ? 1 : 0));
+                driver.EndSend(writer);
+            }
+        }
+    }
+
+    private void BroadcastStageRouletteStart(ServerRoom room, int finalIndex)
+    {
+        if (room.p1.IsCreated)
+        {
+            int sendStatus = driver.BeginSend(NetworkPipeline.Null, room.p1, out DataStreamWriter writer);
+            if (sendStatus == 0)
+            {
+                writer.WriteByte(NetworkPacketType.StageRouletteStart);
+                writer.WriteInt(finalIndex);
+                driver.EndSend(writer);
+            }
+        }
+        if (room.p2.IsCreated)
+        {
+            int sendStatus = driver.BeginSend(NetworkPipeline.Null, room.p2, out DataStreamWriter writer);
+            if (sendStatus == 0)
+            {
+                writer.WriteByte(NetworkPacketType.StageRouletteStart);
+                writer.WriteInt(finalIndex);
+                driver.EndSend(writer);
+            }
         }
     }
 
@@ -541,25 +683,22 @@ public class DummyMatchServer : MonoBehaviour
         string sender = (conn == room.p1) ? "P1" : "P2";
         room.LogRoomEvent($"[{sender}] Requested Phase Cancel.");
 
-        if (room.currentState == RoomStateType.CharacterSelect)
+        if (room.currentState == RoomStateType.StageSelect)
+        {
+            room.currentState = RoomStateType.CharacterSelect;
+            ResetRoomStageData(room); 
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.CharacterSelect);
+            room.LogRoomEvent("[Server] Phase downgraded to CharacterSelect.");
+        }
+        else if (room.currentState == RoomStateType.CharacterSelect)
         {
             room.currentState = RoomStateType.Lobby;
-            
-            room.stateModel.isP1CharacterLocked = false;
-            room.stateModel.isP2CharacterLocked = false;
-            room.stateModel.isP1Ready = false;
-            room.stateModel.isP2Ready = false;
-            
-            room.isP1StartRequested = false;
-            room.isP2StartRequested = false;
-            room.isCountdownStarted = false;
-            room.isCountdownFinished = false;
-            room.countdownTimer = 3f;
-
-            room.LogRoomEvent("[Server] Phase downgraded to Lobby. Broadcasting SceneChange.");
-            
+            ResetRoomVotingState(room);
+            ResetRoomCharacterData(room); 
             BroadcastRoomState(room);
             BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
+            room.LogRoomEvent("[Server] Phase downgraded to Lobby.");
         }
     }
 
@@ -668,6 +807,111 @@ public class DummyMatchServer : MonoBehaviour
                 EvaluateMatchEndVotes(room);
                 break;
         }
+    }
+
+    /*
+     * 기능: 투표 결과에 따라 상태 초기화 로직을 분기 실행합니다.
+     */
+    private void EvaluateMatchEndVotes(ServerRoom room)
+    {
+        bool anyReturnToLobby = (room.hasP1Voted && room.p1VoteAction == MatchEndActionType.ReturnToMenu) || 
+                                (room.hasP2Voted && room.p2VoteAction == MatchEndActionType.ReturnToMenu);
+
+        bool anyCharacterSelect = (room.hasP1Voted && room.p1VoteAction == MatchEndActionType.ReturnToCharacterSelect) || 
+                                  (room.hasP2Voted && room.p2VoteAction == MatchEndActionType.ReturnToCharacterSelect);
+
+        bool bothRematch = room.hasP1Voted && room.p1VoteAction == MatchEndActionType.Rematch && 
+                           room.hasP2Voted && room.p2VoteAction == MatchEndActionType.Rematch;
+
+        if (anyReturnToLobby)
+        {
+            room.isVotingStarted = false;
+            ResetRoomVotingState(room);
+            ResetRoomSelectionState(room);
+            room.currentState = RoomStateType.Lobby;
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
+        }
+        else if (anyCharacterSelect)
+        {
+            room.isVotingStarted = false;
+            ResetRoomVotingState(room);
+            ResetRoomSelectionState(room);
+            room.currentState = RoomStateType.CharacterSelect;
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.CharacterSelect);
+        }
+        else if (bothRematch)
+        {
+            room.isVotingStarted = false;
+            ResetRoomVotingState(room);
+            room.currentState = RoomStateType.InGame;
+            BroadcastRoomState(room);
+            BroadcastSceneChange(room, (int)GameSceneType.GamePlay);
+        }
+    }
+
+    /*
+     * 기능: 라운드 카운트와 투표 등 매치 관련 상태만 초기화합니다.
+     */
+    private void ResetRoomVotingState(ServerRoom room)
+    {
+        room.hasP1Voted = false;
+        room.hasP2Voted = false;
+        
+        room.p1RoundWins = 0;
+        room.p2RoundWins = 0;
+        
+        room.isP1RoundReported = false;
+        room.isP2RoundReported = false;
+        room.isP1StageSelectRequested = false;
+        room.isP2StageSelectRequested = false;
+        room.stateModel.isP1Ready = false;
+        room.stateModel.isP2Ready = false;
+
+        room.isCountdownStarted = false;
+        room.isCountdownFinished = false;
+        room.countdownTimer = 3f;
+    }
+
+    private void ResetRoomCharacterData(ServerRoom room)
+    {
+        room.stateModel.p1CharacterIndex = 0;
+        room.stateModel.p2CharacterIndex = 0;
+        room.stateModel.isP1CharacterLocked = false;
+        room.stateModel.isP2CharacterLocked = false;
+        room.isP1StageSelectRequested = false;
+        room.isP2StageSelectRequested = false;
+    }
+
+    private void ResetRoomStageData(ServerRoom room)
+    {
+        room.stateModel.p1StageIndex = 0;
+        room.stateModel.p2StageIndex = 0;
+        room.stateModel.isP1StageLocked = false;
+        room.stateModel.isP2StageLocked = false;
+        room.p1StageRandom = false;
+        room.p2StageRandom = false;
+        room.stateModel.selectedStageIndex = 0;
+    }
+
+    /*
+     * 기능: 로비나 캐릭터 선택창으로 복귀 시 선택 상태를 완전히 초기화합니다.
+     */
+    private void ResetRoomSelectionState(ServerRoom room)
+    {
+        room.stateModel.isP1CharacterLocked = false;
+        room.stateModel.isP2CharacterLocked = false;
+        room.stateModel.p1CharacterIndex = 0;
+        room.stateModel.p2CharacterIndex = 0;
+
+        room.stateModel.isP1StageLocked = false;
+        room.stateModel.isP2StageLocked = false;
+        room.stateModel.p1StageIndex = 0;
+        room.stateModel.p2StageIndex = 0;
+        room.p1StageRandom = false;
+        room.p2StageRandom = false;
+        room.stateModel.selectedStageIndex = 0;
     }
 
     private void HandleCreateRoomRequest(NetworkConnection conn, ref DataStreamReader stream)
@@ -897,6 +1141,9 @@ public class DummyMatchServer : MonoBehaviour
         HandleDisconnect(conn);
     }
 
+    /*
+     * 기능: 클라이언트 연결 종료 시 선택 상태도 함께 초기화하여 잔존 데이터 제거
+     */
     private void HandleDisconnect(NetworkConnection conn)
     {
         if (!connectionToRoom.TryGetValue(conn, out ServerRoom room)) return;
@@ -926,10 +1173,18 @@ public class DummyMatchServer : MonoBehaviour
                 room.stateModel.p1CharacterIndex = room.stateModel.p2CharacterIndex;
                 room.stateModel.isP1CharacterLocked = room.stateModel.isP2CharacterLocked;
                 room.stateModel.p1PreferredSide = room.stateModel.p2PreferredSide;
+                
+                room.stateModel.p1StageIndex = room.stateModel.p2StageIndex;
+                room.stateModel.isP1StageLocked = room.stateModel.isP2StageLocked;
+                room.p1StageRandom = room.p2StageRandom;
 
                 room.stateModel.isP2Ready = false;
                 room.stateModel.p2CharacterIndex = 0;
                 room.stateModel.isP2CharacterLocked = false;
+                
+                room.stateModel.p2StageIndex = 0;
+                room.stateModel.isP2StageLocked = false;
+                room.p2StageRandom = false;
 
                 room.p1Ping = room.p2Ping;
                 room.p2Ping = 0;
@@ -944,7 +1199,11 @@ public class DummyMatchServer : MonoBehaviour
                 room.stateModel.p1Losses = 0;
                 room.stateModel.isP1CharacterLocked = false;
                 room.stateModel.isP1Ready = false;
-                room.isP1StartRequested = false;
+                room.isP1StageSelectRequested = false;
+                
+                room.stateModel.p1StageIndex = 0;
+                room.stateModel.isP1StageLocked = false;
+                room.p1StageRandom = false;
 
                 room.p1Ping = 0;
             }
@@ -962,7 +1221,11 @@ public class DummyMatchServer : MonoBehaviour
             room.stateModel.p2Losses = 0;
             room.stateModel.isP2CharacterLocked = false;
             room.stateModel.isP2Ready = false;
-            room.isP2StartRequested = false;
+            room.isP2StageSelectRequested = false;
+            
+            room.stateModel.p2StageIndex = 0;
+            room.stateModel.isP2StageLocked = false;
+            room.p2StageRandom = false;
 
             room.p2Ping = 0;
 
@@ -1104,16 +1367,16 @@ public class DummyMatchServer : MonoBehaviour
         driver.EndSend(writer);
     }
 
-    private void BroadcastStartButtonActive(ServerRoom room)
+    private void BroadcastStageSelectTransitionAvailable(ServerRoom room)
     {
-        if (room.p1.IsCreated) SendStartButtonActive(room.p1);
-        if (room.p2.IsCreated) SendStartButtonActive(room.p2);
+        if (room.p1.IsCreated) SendStageSelectTransitionAvailable(room.p1);
+        if (room.p2.IsCreated) SendStageSelectTransitionAvailable(room.p2);
     }
 
-    private void SendStartButtonActive(NetworkConnection conn)
+    private void SendStageSelectTransitionAvailable(NetworkConnection conn)
     {
         driver.BeginSend(NetworkPipeline.Null, conn, out DataStreamWriter writer);
-        writer.WriteByte(NetworkPacketType.StartButtonActive);
+        writer.WriteByte(NetworkPacketType.TransitionAvailableToStageSelect);
         driver.EndSend(writer);
     }
 
@@ -1171,62 +1434,6 @@ public class DummyMatchServer : MonoBehaviour
         writer.WriteByte((byte)(p1Ready ? 1 : 0));
         writer.WriteByte((byte)(p2Ready ? 1 : 0));
         driver.EndSend(writer);
-    }
-
-    private void EvaluateMatchEndVotes(ServerRoom room)
-    {
-        bool anyReturnToLobby = (room.hasP1Voted && room.p1VoteAction == MatchEndActionType.ReturnToMenu) || 
-                                (room.hasP2Voted && room.p2VoteAction == MatchEndActionType.ReturnToMenu);
-
-        bool anyCharacterSelect = (room.hasP1Voted && room.p1VoteAction == MatchEndActionType.ReturnToCharacterSelect) || 
-                                  (room.hasP2Voted && room.p2VoteAction == MatchEndActionType.ReturnToCharacterSelect);
-
-        bool bothRematch = room.hasP1Voted && room.p1VoteAction == MatchEndActionType.Rematch && 
-                           room.hasP2Voted && room.p2VoteAction == MatchEndActionType.Rematch;
-
-        if (anyReturnToLobby)
-        {
-            room.isVotingStarted = false;
-            ResetRoomForRematch(room);
-            room.currentState = RoomStateType.Lobby;
-            BroadcastRoomState(room);
-            BroadcastSceneChange(room, (int)GameSceneType.OnlineMatchedRoom);
-        }
-        else if (anyCharacterSelect)
-        {
-            room.isVotingStarted = false;
-            ResetRoomForRematch(room);
-            room.currentState = RoomStateType.CharacterSelect;
-            BroadcastRoomState(room);
-            BroadcastSceneChange(room, (int)GameSceneType.CharacterSelect);
-        }
-        else if (bothRematch)
-        {
-            room.isVotingStarted = false;
-            ResetRoomForRematch(room);
-            room.currentState = RoomStateType.InGame;
-            BroadcastRoomState(room);
-            BroadcastSceneChange(room, (int)GameSceneType.GamePlay);
-        }
-    }
-
-    private void ResetRoomForRematch(ServerRoom room)
-    {
-        room.hasP1Voted = false;
-        room.hasP2Voted = false;
-        
-        room.p1RoundWins = 0;
-        room.p2RoundWins = 0;
-        
-        room.isP1RoundReported = false;
-        room.isP2RoundReported = false;
-        room.isP1StartRequested = false;
-        room.isP2StartRequested = false;
-        room.stateModel.isP1Ready = false;
-        room.stateModel.isP2Ready = false;
-
-        room.stateModel.isP1CharacterLocked = false;
-        room.stateModel.isP2CharacterLocked = false;
     }
 
     private void BroadcastMatchAborted(NetworkConnection conn, int targetSceneInt)

@@ -9,8 +9,8 @@ public static class NetworkPacketType
     public const byte Handshake = 13;
     public const byte GameStart = 14;
     public const byte CountdownUpdate = 15;
-    public const byte StartButtonActive = 16;
-    public const byte StartRequest = 17;
+    public const byte TransitionAvailableToStageSelect = 16;
+    public const byte TransitionRequestToStageSelect = 17;
     public const byte AssignSlot = 18;
     public const byte SideUpdate = 19;
 
@@ -47,4 +47,8 @@ public static class NetworkPacketType
 
     public const byte ReportPing = 51;
     public const byte RoomPingUpdate = 52;
+
+    public const byte StageSelectUpdate = 60;
+    public const byte StageSelectBroadcast = 61;
+    public const byte StageRouletteStart = 62;
 }

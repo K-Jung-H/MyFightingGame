@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class OfflineStageSelectLogic : IStageSelectLogic
 {
@@ -10,34 +11,31 @@ public class OfflineStageSelectLogic : IStageSelectLogic
         this.manager = manager;
     }
 
-    public void ProcessInput()
+    public void HandleInputs(int p1Move, bool p1Select, int p2Move, bool p2Select)
     {
-        UpdatePlayerInput(manager.p1Context, 1);
-        UpdatePlayerInput(manager.p2Context, 2);
+        UpdatePlayerInput(manager.p1Context, 1, p1Move);
+        UpdatePlayerInput(manager.p2Context, 2, p2Move);
 
         EvaluateSceneTransition();
     }
 
-    private void UpdatePlayerInput(StagePlayerContext context, int playerId)
+    private void UpdatePlayerInput(StagePlayerContext context, int playerId, int move)
     {
         if (!context.isLocked)
         {
-            int moveInput = manager.GetMovementInput(context);
-            if (moveInput != 0)
-            {
-                manager.MoveCursor(context, moveInput);
-                lastChangedPlayerId = playerId;
-                UpdateBackground();
+            if (move != 0) 
+            { 
+                manager.MoveCursor(context, move); lastChangedPlayerId = playerId; UpdateBackground(); 
             }
-
-            if (manager.GetOfflineLockInput(context))
+            
+            if (manager.GetOfflineLockInput(context)) 
             {
                 manager.LockSelection(context);
             }
         }
         else
         {
-            if (manager.GetOfflineUnlockInput(context))
+            if (manager.GetOfflineUnlockInput(context)) 
             {
                 manager.UnlockSelection(context);
             }
@@ -60,23 +58,46 @@ public class OfflineStageSelectLogic : IStageSelectLogic
 
     public void EvaluateSceneTransition()
     {
-        if (manager.p1Context.isLocked && manager.p2Context.isLocked)
+        if (manager.p1Context.isLocked && manager.p2Context.isLocked && !manager.isRouletteActive)
         {
-            if (manager.p1Context.currentIndex == manager.p2Context.currentIndex)
+            int p1Idx = manager.p1Context.currentIndex;
+            int p2Idx = manager.p2Context.currentIndex;
+
+            bool isP1Random = manager.stageRoster[p1Idx].stageName == "Random";
+            bool isP2Random = manager.stageRoster[p2Idx].stageName == "Random";
+
+            int finalIndex = 0;
+            bool triggerRoulette = false;
+            List<int> validIndices = manager.GetValidStageIndices();
+
+            if (isP1Random || isP2Random)
             {
-                if (!manager.isLocalCountdownActive)
+                if (validIndices.Count > 0)
                 {
-                    manager.StartCountdown();
+                    finalIndex = validIndices[Random.Range(0, validIndices.Count)];
                 }
+                triggerRoulette = true;
+            }
+            else if (p1Idx != p2Idx)
+            {
+                finalIndex = (Random.Range(0, 2) == 0) ? p1Idx : p2Idx;
+                triggerRoulette = true;
             }
             else
             {
-                manager.StopCountdown();
+                finalIndex = p1Idx;
+                triggerRoulette = false;
             }
-        }
-        else
-        {
-            manager.StopCountdown();
+
+            if (triggerRoulette)
+            {
+                manager.StartRoulette(finalIndex);
+            }
+            else
+            {
+                MatchDataManager.SelectedStageData = manager.stageRoster[finalIndex];
+                GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
+            }
         }
     }
 
