@@ -11,6 +11,8 @@ public class TrainingStageSelectLogic : IStageSelectLogic
         localPlayerSide = MatchDataManager.TrainingLocalPlayerSide;
     }
 
+    public void Cleanup() {}
+
     public void HandleInputs(int p1Move, bool p1Select, int p2Move, bool p2Select)
     {
         StagePlayerContext localContext = (localPlayerSide == 0) ? manager.p1Context : manager.p2Context;
@@ -60,7 +62,8 @@ public class TrainingStageSelectLogic : IStageSelectLogic
 
         if (localContext.isLocked)
         {
-            MatchDataManager.SelectedStageData = manager.stageRoster[localContext.currentIndex];
+            int safeIndex = Mathf.Clamp(localContext.currentIndex, 0, manager.stageRoster.Length - 1);
+            MatchDataManager.SelectedStageData = manager.stageRoster[safeIndex];
             GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
         }
     }

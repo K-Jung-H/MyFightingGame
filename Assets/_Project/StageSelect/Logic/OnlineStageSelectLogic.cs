@@ -15,8 +15,8 @@ public class OnlineStageSelectLogic : IStageSelectLogic
             UpdateFromRoomModel(RoomStateManager.Instance.roomModel);
         }
     }
-
-    ~OnlineStageSelectLogic()
+    
+    public void Cleanup()
     {
         if (RoomStateManager.Instance != null)
         {
@@ -90,6 +90,15 @@ public class OnlineStageSelectLogic : IStageSelectLogic
         }
         
         manager.UpdateAllVisuals();
+
+        if (p1Lock && p2Lock && p1Idx == p2Idx)
+        {
+            bool isRandom = manager.stageRoster[p1Idx].stageName == "Random";
+            if (!isRandom)
+            {
+                MatchDataManager.SelectedStageData = manager.stageRoster[Mathf.Clamp(p1Idx, 0, manager.stageRoster.Length - 1)];
+            }
+        }
     }
 
     private void UpdateRemoteState(StagePlayerContext context, int newIdx, bool newLock)
@@ -105,6 +114,10 @@ public class OnlineStageSelectLogic : IStageSelectLogic
 
     private void HandleRouletteStarted(int finalIndex)
     {
+        if (manager == null) return;
+
+        int safeIndex = Mathf.Clamp(finalIndex, 0, manager.stageRoster.Length - 1);
+        MatchDataManager.SelectedStageData = manager.stageRoster[safeIndex];
         manager.StartRoulette(finalIndex);
     }
 

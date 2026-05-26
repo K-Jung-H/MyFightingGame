@@ -248,6 +248,12 @@ public class DummyMatchServer : MonoBehaviour
             GUILayout.Label($"P1: {p1State}  |  P2: {p2State}");
             GUILayout.Label($"<color=white><b>Match Score -> P1: {room.stateModel.p1Wins}  |  P2: {room.stateModel.p2Wins}</b></color>");
             
+            GUILayout.Space(3);
+            GUILayout.Label("<color=#87CEFA><b>[ Stage Info ]</b></color>");
+            string p1StageStr = room.p1StageRandom ? "Random" : room.stateModel.p1StageIndex.ToString();
+            string p2StageStr = room.p2StageRandom ? "Random" : room.stateModel.p2StageIndex.ToString();
+            GUILayout.Label($"P1 Pick: {p1StageStr}  |  P2 Pick: {p2StageStr}  |  Final Index: {room.stateModel.selectedStageIndex}");
+
             GUILayout.Space(5);
             GUILayout.Label("<b>--- Packet Logs ---</b>");
             for (int i = 0; i < room.roomLogs.Count; i++)
@@ -418,7 +424,7 @@ public class DummyMatchServer : MonoBehaviour
                     LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
                 break;
             case NetworkPacketType.CancelPhaseRequest:
-                if (currentRoom.currentState == RoomStateType.CharacterSelect)
+                if (currentRoom.currentState == RoomStateType.CharacterSelect || currentRoom.currentState == RoomStateType.StageSelect)
                     HandleCancelPhaseRequest(conn, currentRoom);
                 else
                     LogEvent($"<color=red>Dropped Packet [{packetType}] - Invalid State ({currentRoom.currentState}).</color>");
@@ -1141,9 +1147,6 @@ public class DummyMatchServer : MonoBehaviour
         HandleDisconnect(conn);
     }
 
-    /*
-     * 기능: 클라이언트 연결 종료 시 선택 상태도 함께 초기화하여 잔존 데이터 제거
-     */
     private void HandleDisconnect(NetworkConnection conn)
     {
         if (!connectionToRoom.TryGetValue(conn, out ServerRoom room)) return;

@@ -12,8 +12,112 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d44358ea9faec0d4e8658b8a6207adb4, type: 3}
   m_Name: StageData_1
   m_EditorClassIdentifier: Assembly-CSharp::GameStageDataSO
-  stageName: 
-  thumbnail: {fileID: 21300000, guid: 783e541564acceb408be7a74213e82fe, type: 3}
+  stageName: Stage_1
+  thumbnail: {fileID: 21300000, guid: 44a4c346e5b0bcb48900b4b19cdfa8cd, type: 3}
   boundary:
-    Planes: []
-  visualPrefab: {fileID: 0}
+    Planes:
+    - Normal:
+        x:
+          rawValue: -65536
+        y:
+          rawValue: 0
+        z:
+          rawValue: 0
+      Distance:
+        rawValue: -983040
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 0.1
+    - Normal:
+        x:
+          rawValue: 65536
+        y:
+          rawValue: 0
+        z:
+          rawValue: 0
+      Distance:
+        rawValue: -983040
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 0.1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: -65536
+      Distance:
+        rawValue: -983040
+      isActive: 1
+      isBreakable: 1
+      durability: 1
+      explosionForce: 1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: -65536
+      Distance:
+        rawValue: -1966080
+      isActive: 1
+      isBreakable: 1
+      durability: 1
+      explosionForce: 1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: -65536
+      Distance:
+        rawValue: -2949120
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 65536
+      Distance:
+        rawValue: -983040
+      isActive: 1
+      isBreakable: 1
+      durability: 1
+      explosionForce: 1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 65536
+      Distance:
+        rawValue: -1966080
+      isActive: 1
+      isBreakable: 1
+      durability: 1
+      explosionForce: 1
+    - Normal:
+        x:
+          rawValue: 0
+        y:
+          rawValue: 0
+        z:
+          rawValue: 65536
+      Distance:
+        rawValue: -2949120
+      isActive: 1
+      isBreakable: 0
+      durability: 1
+      explosionForce: 1
+  visualPrefab: {fileID: 88681334354387641, guid: 398d9d00c8de8f148afef17b2b6224da, type: 3}

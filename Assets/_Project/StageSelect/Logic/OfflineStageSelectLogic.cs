@@ -11,6 +11,8 @@ public class OfflineStageSelectLogic : IStageSelectLogic
         this.manager = manager;
     }
 
+    public void Cleanup() {}
+
     public void HandleInputs(int p1Move, bool p1Select, int p2Move, bool p2Select)
     {
         UpdatePlayerInput(manager.p1Context, 1, p1Move);
@@ -95,7 +97,9 @@ public class OfflineStageSelectLogic : IStageSelectLogic
             }
             else
             {
-                MatchDataManager.SelectedStageData = manager.stageRoster[finalIndex];
+                int safeIndex = Mathf.Clamp(finalIndex, 0, manager.stageRoster.Length - 1);
+                MatchDataManager.SelectedStageData = manager.stageRoster[safeIndex];
+                
                 GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
             }
         }

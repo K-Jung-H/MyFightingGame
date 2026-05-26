@@ -132,6 +132,9 @@ public class GameLoopManager : MonoBehaviour
         if (MatchDataManager.P1CharacterData != null) playerOne.characterData = MatchDataManager.P1CharacterData;
         if (MatchDataManager.P2CharacterData != null) playerTwo.characterData = MatchDataManager.P2CharacterData;
 
+        if (MatchDataManager.SelectedStageData != null) currentStageData = MatchDataManager.SelectedStageData;
+        Debug.Log($"[GameLoopManager] Awake - Loaded  Stage Data. Stage: {currentStageData?.stageName}");
+        
         Time.fixedDeltaTime = 1f / 60f;
         Application.targetFrameRate = 120;
 

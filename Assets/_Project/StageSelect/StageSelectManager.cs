@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -19,7 +18,6 @@ public class StageSelectManager : MonoBehaviour
     [Header("UI References")]
     public Image canvasBackgroundImage;
     public Button buttonReturn;
-    public TextMeshProUGUI countdownText;
 
     [Header("Stage Grid Config")]
     public Transform stageGridPanel;
@@ -35,11 +33,8 @@ public class StageSelectManager : MonoBehaviour
     public float postRouletteDelay = 1f;
 
     public bool isLobbyReady { get; private set; }
-    public bool isLocalCountdownActive { get; private set; }
     public bool isRouletteActive { get; private set; }
     
-    private float localCountdownTimer;
-    private int lastDisplayedCountdown = -1;
     private const int TotalPortraitCount = 10;
     private StagePortraitUI[] stageTiles;
     private IStageSelectLogic currentLogic;
@@ -54,8 +49,15 @@ public class StageSelectManager : MonoBehaviour
     {
         if (!isLobbyReady || isRouletteActive) return;
 
-        UpdateCountdownUI();
-        ProcessInputs();
+        ProcessInputs(); 
+    }
+
+    private void OnDestroy()
+    {
+        if (currentLogic != null)
+        {
+            currentLogic.Cleanup();
+        }
     }
 
     private void InitializeManager()
@@ -78,7 +80,6 @@ public class StageSelectManager : MonoBehaviour
 
         isLobbyReady = true;
     }
-
 
     private void CacheValidStageIndices()
     {
@@ -167,42 +168,6 @@ public class StageSelectManager : MonoBehaviour
         UpdateAllVisuals();
     }
 
-    public void StartCountdown()
-    {
-        isLocalCountdownActive = true;
-        localCountdownTimer = 3f;
-    }
-
-    public void StopCountdown()
-    {
-        isLocalCountdownActive = false;
-        if (countdownText != null) countdownText.text = "";
-    }
-
-    private void UpdateCountdownUI()
-    {
-        if (!isLocalCountdownActive) return;
-
-        localCountdownTimer -= Time.deltaTime;
-
-        if (localCountdownTimer <= 0f)
-        {
-            isLocalCountdownActive = false;
-            int selectedIndex = p1Context.isLocked ? p1Context.currentIndex : p2Context.currentIndex;
-            MatchDataManager.SelectedStageData = stageRoster[selectedIndex];
-            GameFlowManager.Instance.ChangeScene(GameSceneType.GamePlay);
-        }
-        else if (countdownText != null)
-        {
-            int currentSeconds = Mathf.CeilToInt(localCountdownTimer);
-            if (currentSeconds != lastDisplayedCountdown)
-            {
-                lastDisplayedCountdown = currentSeconds;
-                countdownText.text = currentSeconds.ToString();
-            }
-        }
-    }
-
     private void GenerateStageGrid()
     {
         if (stageGridPanel == null || stagePortraitPrefab == null) return;
@@ -277,7 +242,6 @@ public class StageSelectManager : MonoBehaviour
         if (isRouletteActive) return;
         StartCoroutine(RouletteCoroutine(finalIndex));
     }
-
 
     private IEnumerator RouletteCoroutine(int finalIndex)
     {
